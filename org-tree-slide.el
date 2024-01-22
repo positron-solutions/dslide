@@ -113,9 +113,24 @@ When nil, the body of the subtrees will be revealed."
   :type 'boolean
   :group 'org-tree-slide)
 
+(defcustom org-tree-slide-header-author t
+  "Show the email in the header.
+If there is a #+author: header, it will be used."
+  :type 'boolean
+  :group 'org-tree-slide)
+
+(defcustom org-tree-slide-header-email t
+  "Show the email in the header.
+If there is a #+email: header, it will be used."
+  :type 'boolean
+  :group 'org-tree-slide)
+
 (defcustom org-tree-slide-header-date t
   "Show the date in the header.
-If there is a #+date: header, it will be used.")
+If there is a #+date: header, it will be used.
+The current time will be used as a fallback."
+  :type 'boolean
+  :group 'org-tree-slide)
 
 (defcustom org-tree-slide-content-margin-top 2
   "Specify the margin between the slide header and its content."
@@ -865,11 +880,14 @@ Some number of BLANK-LINES will be shown below the header."
                    (concat (if org-tree-slide-title org-tree-slide-title
                              (buffer-name))
                            "\n"
-                           (when org-tree-slide-header-date
-                             (concat  org-tree-slide-date " "))
-                           (when org-tree-slide-author
+                           (when (and org-tree-slide-header-date
+                                      org-tree-slide-date)
+                             (concat  org-tree-slide-date "  "))
+                           (when (and org-tree-slide-header-author
+                                      org-tree-slide-author)
                              (concat org-tree-slide-author "  "))
-                           (when org-tree-slide-email
+                           (when (and org-tree-slide-header-email
+                                      org-tree-slide-email)
                              (concat "<" org-tree-slide-email ">"))
                            (when org-tree-slide-breadcrumbs
                              (concat "\n" (org-tree-slide--get-parents
