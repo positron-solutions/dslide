@@ -827,19 +827,28 @@ concat the headers."
   "Face for `org-tree-slide--header-overlay'."
   :group 'org-tree-slide)
 
+(defun org-tree-slide--breadcrumbs-reducer (delim)
+  (lambda (prev next)
+    (if (not prev) next
+      (let ((props (text-properties-at (1- (length prev)) prev)))
+        (concat prev
+                (apply #'propertize delim props)
+                next)))))
+
 (defun org-tree-slide--get-parents (&optional delim)
   "Get parent headings and concat them with DELIM."
   (setq delim (or delim " > "))
   (save-excursion
     (save-restriction
       (widen)
-      (let ((parents nil))
+      (let ((parents nil)
+            (reducer (org-tree-slide--breadcrumbs-reducer delim)))
         (while (org-up-heading-safe)
           (push (org-get-heading
                  'no-tags
                  org-tree-slide-breadcrumbs-hide-todo-state)
                 parents))
-        (mapconcat 'identity parents delim)))))
+        (seq-reduce reducer parents nil)))))
 
 (defun org-tree-slide--set-slide-header (blank-lines)
   "Set the header with overlay.
