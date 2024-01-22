@@ -113,6 +113,10 @@ When nil, the body of the subtrees will be revealed."
   :type 'boolean
   :group 'org-tree-slide)
 
+(defcustom org-tree-slide-header-date t
+  "Show the date in the header.
+If there is a #+date: header, it will be used.")
+
 (defcustom org-tree-slide-content-margin-top 2
   "Specify the margin between the slide header and its content."
   :type 'integer
@@ -374,7 +378,8 @@ Profiles:
      ((or
        (or (and (org-tree-slide--before-first-heading-p)
                 (not (org-at-heading-p)))
-           (and (= (point-at-bol) 1) (not (buffer-narrowed-p))))
+           (and (= (line-beginning-position) 1)
+                (not (buffer-narrowed-p))))
        (or (org-tree-slide--first-heading-with-narrow-p)
            (not (org-at-heading-p))))
       (run-hooks 'org-tree-slide-before-move-next-hook)
@@ -602,13 +607,13 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
     (when org-tree-slide-activate-message
       (message "%s" org-tree-slide-activate-message))))
 
-(defvar org-tree-slide-startup "overview"
-  "If you have \"#+startup:\" line in your org buffer, the org buffer will be shown with corresponding status \(content, showall, overview:default\).")
+(defvar-local org-tree-slide-startup "overview"
+  "Set your #+startup: line to \"content\" \"overview\" or \"outline\".")
 
 (defun org-tree-slide--stop ()
   "Stop the slide view, and redraw the orgmode buffer with #+STARTUP:."
   (widen)
-  (org-show-siblings)
+  (org-fold-show-siblings)
   (when (or org-tree-slide-cursor-init (org-tree-slide--before-first-heading-p))
     (goto-char (point-min))
     (org-overview)
@@ -635,10 +640,10 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
     (setq org-tree-slide--slide-number
           (format " %s" (org-tree-slide--count-slide (point))))
     (setq org-tree-slide--previous-line (org-tree-slide--line-number-at-pos)))
-  (goto-char (point-at-bol))
+  (goto-char (line-beginning-position))
   (unless (org-tree-slide--before-first-heading-p)
     (outline-hide-subtree)	; support CONTENT (subtrees are shown)
-    (org-show-entry)
+    (org-fold-show-entry)
     ;; If this is the last level to be displayed, show the full content
     (if (and (not org-tree-slide-fold-subtrees-skipped)
              (org-tree-slide--heading-level-skip-p (1+ (org-outline-level))))
@@ -851,7 +856,8 @@ Some number of BLANK-LINES will be shown below the header."
                    (concat (if org-tree-slide-title org-tree-slide-title
                              (buffer-name))
                            "\n"
-                           org-tree-slide-date "  "
+                           (when org-tree-slide-header-date
+                             (concat  org-tree-slide-date " "))
                            (when org-tree-slide-author
                              (concat org-tree-slide-author "  "))
                            (when org-tree-slide-email
@@ -980,7 +986,8 @@ If the cursor exist before first heading, do nothing."
 *** second         ; nil
     hoge           ; nil
 *** third          ; nil"
-  (and (buffer-narrowed-p) (= (point-at-bol) (point-min))))
+  (and (buffer-narrowed-p) (= (line-beginning-position)
+                              (point-min))))
 
 (defun org-tree-slide--all-skip-p ()
   "Check the buffer has at least one slide to be shown."
