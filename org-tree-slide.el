@@ -171,6 +171,14 @@ nil: keep the same position.  The slideshow will start from the heading
   :type 'boolean
   :group 'org-tree-slide)
 
+(defcustom org-tree-slide-breadcrumb-face nil
+  "Face added to the list of faces for breadcrumbs.
+This can be a face name symbol or an anonymous font spec.  It
+will be added to the face list, meaning it the original face's
+properties remain unless shadowed."
+  :type 'face
+  :group 'org-tree-slide)
+
 (defcustom org-tree-slide-skip-done nil
   "Specify to show TODO item only or not."
   :type 'boolean
@@ -863,7 +871,13 @@ concat the headers."
                  'no-tags
                  org-tree-slide-breadcrumbs-hide-todo-state)
                 parents))
-        (seq-reduce reducer parents nil)))))
+        (let ((breadcrumbs (seq-reduce reducer parents nil)))
+          (when org-tree-slide-breadcrumb-face
+            (add-face-text-property 0 (length breadcrumbs)
+                                    org-tree-slide-breadcrumb-face
+                                    nil
+                                    breadcrumbs))
+          breadcrumbs)))))
 
 (defun org-tree-slide--set-slide-header (blank-lines)
   "Set the header with overlay.
