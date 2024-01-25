@@ -922,11 +922,8 @@ Some number of BLANK-LINES will be shown below the header."
 
 (defun org-tree-slide--get-blank-lines (lines)
   "Return breaks by LINES."
-  (let ((breaks ""))
-    (while (< 0 lines)
-      (setq lines (1- lines))
-      (setq breaks (concat breaks "\n")))
-    breaks))
+  (propertize (make-string lines 10) ; 10 is \n
+              'face 'default))
 
 (defun org-tree-slide--show-slide-header (&optional lines)
   "Show header.  When LINES is nil, the default value is 2."
