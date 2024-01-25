@@ -598,7 +598,7 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
      (t
       org-tree-slide--lighter))))
 
-(defvar org-tree-slide--header-overlay nil
+(defvar-local org-tree-slide--header-overlay nil
   "Flag to check the status of overlay for a slide header.")
 
 (defvar org-tree-slide--header-face-autoconfig nil)
