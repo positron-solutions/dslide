@@ -394,10 +394,10 @@ Profiles:
       (when msg
         (message "%s" msg)))
     (cond
-     ;; displaying a slide, not the contents
      ((and (buffer-narrowed-p)
            (org-tree-slide--last-tree-p (point)))
       (org-tree-slide-content))
+     ;; displaying a slide, not the contents
      ((or
        (or (and (org-tree-slide--before-first-heading-p)
                 (not (org-at-heading-p)))
@@ -665,7 +665,7 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
     (setq org-tree-slide--previous-line (org-tree-slide--line-number-at-pos)))
   (goto-char (line-beginning-position))
   (unless (org-tree-slide--before-first-heading-p)
-    (outline-hide-subtree)	; support CONTENT (subtrees are shown)
+    (outline-hide-subtree)              ; support CONTENT (subtrees are shown)
     (org-fold-show-entry)
     ;; If this is the last level to be displayed, show the full content
     (if (and (not org-tree-slide-fold-subtrees-skipped)
