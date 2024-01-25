@@ -1,4 +1,4 @@
-;;; org-tree-slide.el --- A presentation tool for org-mode
+;;; org-tree-slide.el --- A presentation tool for org-mode -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2011-2023 Takaaki ISHIKAWA
 ;;
