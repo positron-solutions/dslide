@@ -266,6 +266,9 @@ If you want to show anything, just specify nil."
 (defvar-local org-tree-slide-heading-level-3-cookie nil)
 (defvar-local org-tree-slide-heading-level-4-cookie nil)
 
+(defvar-local org-tree-slide--content-overlays nil
+  "Overlays used to hide or change contents display.")
+
 (defvar org-tree-slide-mode nil)
 (defvar org-tree-slide-play-hook nil
   "A hook run when `org-tree-slide--play' is evaluated to start the slideshow.")
@@ -648,6 +651,7 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
            (org-cycle '(64)))
           (t nil)))
   (org-tree-slide--hide-slide-header)
+  (org-tree-slide--delete-content-overlays)
   (when org-timer-start-time
     (org-timer-stop))
   (when org-tree-slide-heading-emphasis
@@ -664,6 +668,7 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
           (format " %s" (org-tree-slide--count-slide (point))))
     (setq org-tree-slide--previous-line (org-tree-slide--line-number-at-pos)))
   (goto-char (line-beginning-position))
+  (org-tree-slide--delete-content-overlays)
   (unless (org-tree-slide--before-first-heading-p)
     (outline-hide-subtree)              ; support CONTENT (subtrees are shown)
     (org-fold-show-entry)
@@ -673,7 +678,16 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
         (org-tree-slide--show-subtree)
       (outline-show-children))
     ;;    (org-cycle-hide-drawers 'all) ; disabled due to performance reduction
-    (org-narrow-to-subtree))
+    (org-narrow-to-subtree)
+    (when-let* ((elem (org-element-at-point-no-context))
+                (beg (save-excursion
+                       (when (org-goto-first-child)
+                         (let ((buffer-invisibility-spec nil))
+                           (1- (line-beginning-position))))))
+                (end (org-element-contents-end elem))
+                (ov (make-overlay beg end)))
+      (overlay-put ov 'invisible t)
+      (push ov org-tree-slide--content-overlays)))
   (when org-tree-slide-slide-in-effect
     (org-tree-slide--slide-in org-tree-slide-slide-in-blank-lines))
   (when org-tree-slide-header
@@ -922,6 +936,11 @@ Some number of BLANK-LINES will be shown below the header."
   "Show header.  When LINES is nil, the default value is 2."
   (org-tree-slide--set-slide-header
    (or lines org-tree-slide-content-margin-top)))
+
+(defun org-tree-slide--delete-content-overlays ()
+  "Delete content overlays."
+  (while org-tree-slide--content-overlays
+    (delete-overlay (pop org-tree-slide--content-overlays))))
 
 (defun org-tree-slide--hide-slide-header ()
   "Hide header."
