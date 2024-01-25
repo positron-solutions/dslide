@@ -1051,7 +1051,7 @@ If every heading is specified as skip, return nil.
       (goto-char target)
       (org-tree-slide--beginning-of-tree)
       (let ((p (point))
-            (v (goto-char (1+ (buffer-size))))
+            (_ (goto-char (1+ (buffer-size))))
             (l (org-tree-slide--last-point-at-bot)))
         (if l
             (= p l)
