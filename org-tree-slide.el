@@ -899,12 +899,8 @@ Some number of BLANK-LINES will be shown below the header."
   (org-tree-slide--hide-slide-header)
   (setq org-tree-slide--header-overlay
         (make-overlay (point-min) (+ 1 (point-min))))
-  (overlay-put org-tree-slide--header-overlay 'after-string " ")
-  (overlay-put org-tree-slide--header-overlay
-               'face
-               'org-tree-slide-header-overlay-face)
   (if org-tree-slide-header
-      (overlay-put org-tree-slide--header-overlay 'display
+      (overlay-put org-tree-slide--header-overlay 'before-string
                    (concat (if org-tree-slide-title org-tree-slide-title
                              (buffer-name))
                            "\n"
@@ -921,7 +917,7 @@ Some number of BLANK-LINES will be shown below the header."
                              (concat "\n" (org-tree-slide--get-parents
                                            org-tree-slide-breadcrumbs)))
                            (org-tree-slide--get-blank-lines blank-lines)))
-    (overlay-put org-tree-slide--header-overlay 'display
+    (overlay-put org-tree-slide--header-overlay 'before-string
                  (org-tree-slide--get-blank-lines blank-lines))))
 
 (defun org-tree-slide--get-blank-lines (lines)
