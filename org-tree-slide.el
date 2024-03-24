@@ -391,53 +391,56 @@ Profiles:
 (defun org-tree-slide-move-next-tree ()
   "Display the next slide."
   (interactive)
-  (when (org-tree-slide--active-p)
-    (let ((msg (plist-get org-tree-slide-indicator :next))
-          (message-log-max nil))
-      (when msg
-        (message "%s" msg)))
-    (cond
-     ((and (buffer-narrowed-p)
-           (org-tree-slide--last-tree-p (point)))
-      (org-tree-slide-content))
-     ;; displaying a slide, not the contents
-     ((or
-       (or (and (org-tree-slide--before-first-heading-p)
-                (not (org-at-heading-p)))
-           (and (= (line-beginning-position) 1)
-                (not (buffer-narrowed-p))))
-       (or (org-tree-slide--first-heading-with-narrow-p)
-           (not (org-at-heading-p))))
-      (run-hooks 'org-tree-slide-before-move-next-hook)
-      (widen)
-      (org-tree-slide--outline-next-heading)
-      (org-tree-slide--display-tree-with-narrow))
-     ;; stay the same slide (for CONTENT MODE, on the subtrees)
-     (t (org-tree-slide--display-tree-with-narrow)))))
+  (unless (org-tree-slide--active-p)
+    (user-error "org-tree-slide-mode inactive"))
+  (let ((msg (plist-get org-tree-slide-indicator :next))
+        (message-log-max nil))
+    (when msg
+      (message "%s" msg)))
+  (cond
+   ((and (buffer-narrowed-p)
+         (org-tree-slide--last-tree-p (point)))
+    (org-tree-slide-content))
+   ;; displaying a slide, not the contents
+   ((or
+     (or (and (org-tree-slide--before-first-heading-p)
+              (not (org-at-heading-p)))
+         ;; TODO when does this happen?
+         (and (= (line-beginning-position) 1)
+              (not (buffer-narrowed-p))))
+     (or (org-tree-slide--first-heading-with-narrow-p)
+         (not (org-at-heading-p))))
+    (run-hooks 'org-tree-slide-before-move-next-hook)
+    (widen)
+    (org-tree-slide--outline-next-heading)
+    (org-tree-slide--display-tree-with-narrow))
+   ;; stay the same slide (for CONTENT MODE, on the subtrees)
+   (t (org-tree-slide--display-tree-with-narrow))))
 
 ;;;###autoload
 (defun org-tree-slide-move-previous-tree ()
   "Display the previous slide."
   (interactive)
-  (when (org-tree-slide--active-p)
-    (let ((msg (plist-get org-tree-slide-indicator :previous))
-          (message-log-max nil))
-      (when msg
-        (message "%s" msg)))
-    (org-tree-slide--hide-slide-header)		; for at the first heading
-    (run-hooks 'org-tree-slide-before-move-previous-hook)
-    (widen)
-    (cond
-     ((org-tree-slide--before-first-heading-p)
-      (message "before first heading (org-tree-slide)" ))
-     ((not (org-at-heading-p))
-      (org-tree-slide--outline-previous-heading)
-      (org-tree-slide--outline-previous-heading))
-     (t (org-tree-slide--outline-previous-heading)))
-    (org-tree-slide--display-tree-with-narrow)
-    ;; To avoid error of missing header in Emacs24
-    (if (= emacs-major-version 24)
-        (goto-char (point-min)))))
+  (unless (org-tree-slide--active-p)
+    (user-error "org-tree-slide-mode inactive"))
+  (let ((msg (plist-get org-tree-slide-indicator :previous))
+        (message-log-max nil))
+    (when msg
+      (message "%s" msg)))
+  (org-tree-slide--hide-slide-header)		; for at the first heading
+  (run-hooks 'org-tree-slide-before-move-previous-hook)
+  (widen)
+  (cond
+   ((org-tree-slide--before-first-heading-p)
+    (message "before first heading (org-tree-slide)" ))
+   ((not (org-at-heading-p))
+    (org-tree-slide--outline-previous-heading)
+    (org-tree-slide--outline-previous-heading))
+   (t (org-tree-slide--outline-previous-heading)))
+  (org-tree-slide--display-tree-with-narrow)
+  ;; To avoid error of missing header in Emacs24
+  (if (= emacs-major-version 24)
+      (goto-char (point-min))))
 
 ;;;###autoload
 (defun org-tree-slide-simple-profile ()
