@@ -538,6 +538,8 @@ Profiles:
   (if org-tree-slide-skip-done
       (message "TODO Pursuit: ON") (message "TODO Pursuit: OFF")))
 
+(defvar org-tree-slide--skip-comments-mode nil)
+
 ;;;###autoload
 (defun org-tree-slide-skip-comments-toggle ()
   "Toggle show COMMENT item or not.
@@ -650,7 +652,6 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
       (face-remap-remove-relative org-tree-slide-heading-level-4-cookie)))))
 
 (defvar org-tree-slide--header-face-autoconfig nil)
-(defvar org-tree-slide--skip-comments-mode nil)
 (defun org-tree-slide--all-skip-p ()
   "Check the buffer has at least one slide to be shown."
   (save-excursion
