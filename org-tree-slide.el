@@ -603,6 +603,25 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
 
 (defvar-local org-tree-slide--header-overlay nil
   "Flag to check the status of overlay for a slide header.")
+(defun org-tree-slide--apply-custom-heading-face (status)
+  "Change status of heading face.  If STATUS is nil, apply the default values."
+  (unless org-tree-slide-never-touch-face
+    (cond
+     (status
+      (setq
+       org-tree-slide-heading-level-1-cookie
+       (face-remap-add-relative 'org-level-1 org-tree-slide-heading-level-1)
+       org-tree-slide-heading-level-2-cookie
+       (face-remap-add-relative 'org-level-2 org-tree-slide-heading-level-2)
+       org-tree-slide-heading-level-3-cookie
+       (face-remap-add-relative 'org-level-3 org-tree-slide-heading-level-3)
+       org-tree-slide-heading-level-4-cookie
+       (face-remap-add-relative 'org-level-4 org-tree-slide-heading-level-4)))
+     (t
+      (face-remap-remove-relative org-tree-slide-heading-level-1-cookie)
+      (face-remap-remove-relative org-tree-slide-heading-level-2-cookie)
+      (face-remap-remove-relative org-tree-slide-heading-level-3-cookie)
+      (face-remap-remove-relative org-tree-slide-heading-level-4-cookie)))))
 
 (defvar org-tree-slide--header-face-autoconfig nil)
 (defvar org-tree-slide--skip-comments-mode nil)
@@ -954,26 +973,6 @@ Otherwise, return the point.  This doesn't check whether skipping or not."
         (beginning-of-line)
         (point))
     (outline-next-heading)))
-
-(defun org-tree-slide--apply-custom-heading-face (status)
-  "Change status of heading face.  If STATUS is nil, apply the default values."
-  (unless org-tree-slide-never-touch-face
-    (cond
-     (status
-      (setq
-       org-tree-slide-heading-level-1-cookie
-       (face-remap-add-relative 'org-level-1 org-tree-slide-heading-level-1)
-       org-tree-slide-heading-level-2-cookie
-       (face-remap-add-relative 'org-level-2 org-tree-slide-heading-level-2)
-       org-tree-slide-heading-level-3-cookie
-       (face-remap-add-relative 'org-level-3 org-tree-slide-heading-level-3)
-       org-tree-slide-heading-level-4-cookie
-       (face-remap-add-relative 'org-level-4 org-tree-slide-heading-level-4)))
-     (t
-      (face-remap-remove-relative org-tree-slide-heading-level-1-cookie)
-      (face-remap-remove-relative org-tree-slide-heading-level-2-cookie)
-      (face-remap-remove-relative org-tree-slide-heading-level-3-cookie)
-      (face-remap-remove-relative org-tree-slide-heading-level-4-cookie)))))
 
 (defun org-tree-slide--count-slide (&optional pos)
   "Return formatted the slide number.  If POS is nil, `point' will be used."
