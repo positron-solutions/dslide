@@ -572,6 +572,35 @@ See also `org-tree-slide-skip-comments'."
           (format " %s" (org-tree-slide--count-slide (point))))))
 
 ;;; Internal functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun org-tree-slide--last-tree-p (target)
+  "Check if the TARGET point is in the last heading or it's body.
+If every heading is specified as skip, return nil.
+** n-1             ; nil
+** n               ; t
+   hoge            ; t"
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char target)
+      (org-tree-slide--beginning-of-tree)
+      (let ((p (point))
+            (_ (goto-char (1+ (buffer-size))))
+            (l (org-tree-slide--last-point-at-bot)))
+        (if l
+            (= p l)
+          nil)))))
+
+(defun org-tree-slide--first-heading-with-narrow-p ()
+  "Check the current point is on the first heading with narrowing.
+** first           ; t
+   hoge            ; nil
+   hoge            ; nil
+*** second         ; nil
+    hoge           ; nil
+*** third          ; nil"
+  (and (buffer-narrowed-p) (= (line-beginning-position)
+                              (point-min))))
+
 (defvar org-tree-slide--slide-number nil)
 (make-variable-buffer-local 'org-tree-slide--slide-number)
 
@@ -1033,17 +1062,6 @@ If the cursor exist before first heading, do nothing."
 ** third           ; nil"
   (and (org-before-first-heading-p) (not (buffer-narrowed-p))))
 
-(defun org-tree-slide--first-heading-with-narrow-p ()
-  "Check the current point is on the first heading with narrowing.
-** first           ; t
-   hoge            ; nil
-   hoge            ; nil
-*** second         ; nil
-    hoge           ; nil
-*** third          ; nil"
-  (and (buffer-narrowed-p) (= (line-beginning-position)
-                              (point-min))))
-
 (defun org-tree-slide--all-skip-p ()
   "Check the buffer has at least one slide to be shown."
   (save-excursion
@@ -1052,24 +1070,6 @@ If the cursor exist before first heading, do nothing."
       (goto-char (1+ (buffer-size)))
       (unless (org-tree-slide--last-point-at-bot)
         t))))
-
-(defun org-tree-slide--last-tree-p (target)
-  "Check if the TARGET point is in the last heading or it's body.
-If every heading is specified as skip, return nil.
-** n-1             ; nil
-** n               ; t
-   hoge            ; t"
-  (save-excursion
-    (save-restriction
-      (widen)
-      (goto-char target)
-      (org-tree-slide--beginning-of-tree)
-      (let ((p (point))
-            (_ (goto-char (1+ (buffer-size))))
-            (l (org-tree-slide--last-point-at-bot)))
-        (if l
-            (= p l)
-          nil)))))
 
 (provide 'org-tree-slide)
 
