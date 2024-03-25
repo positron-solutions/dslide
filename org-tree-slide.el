@@ -629,8 +629,6 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
      (t
       org-tree-slide--lighter))))
 
-(defvar-local org-tree-slide--header-overlay nil
-  "Flag to check the status of overlay for a slide header.")
 (defun org-tree-slide--apply-custom-heading-face (status)
   "Change status of heading face.  If STATUS is nil, apply the default values."
   (unless org-tree-slide-never-touch-face
@@ -959,6 +957,10 @@ concat the headers."
                                     nil
                                     breadcrumbs))
           breadcrumbs)))))
+
+
+(defvar-local org-tree-slide--header-overlay nil
+  "Flag to check the status of overlay for a slide header.")
 
 (defun org-tree-slide--set-slide-header (blank-lines)
   "Set the header with overlay.
