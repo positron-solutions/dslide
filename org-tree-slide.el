@@ -670,8 +670,9 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
 
 (defun org-tree-slide--abort ()
   "Abort."
-  (when (equal major-mode 'org-mode)
-    (org-tree-slide--stop)))
+  (unless (equal major-mode 'org-mode)
+    (user-error "Not an org mode buffer"))
+  (org-tree-slide--stop))
 
 (defun org-tree-slide--play ()
   "Start slide view with the first tree of the org mode buffer."
