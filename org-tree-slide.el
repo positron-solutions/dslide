@@ -266,9 +266,6 @@ If you want to show anything, just specify nil."
 (defvar-local org-tree-slide-heading-level-3-cookie nil)
 (defvar-local org-tree-slide-heading-level-4-cookie nil)
 
-(defvar-local org-tree-slide--content-overlays nil
-  "Overlays used to hide or change contents display.")
-
 (defvar org-tree-slide-mode nil)
 (defvar org-tree-slide-play-hook nil
   "A hook run when `org-tree-slide--play' is evaluated to start the slideshow.")
@@ -697,6 +694,14 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
 (defvar-local org-tree-slide-startup "overview"
   "Set your #+startup: line to \"content\" \"overview\" or \"outline\".")
 
+(defvar-local org-tree-slide--content-overlays nil
+  "Overlays used to hide or change contents display.")
+
+(defun org-tree-slide--delete-content-overlays ()
+  "Delete content overlays."
+  (while org-tree-slide--content-overlays
+    (delete-overlay (pop org-tree-slide--content-overlays))))
+
 (defun org-tree-slide--stop ()
   "Stop the slide view, and redraw the orgmode buffer with #+STARTUP:."
   (widen)
@@ -990,11 +995,6 @@ Some number of BLANK-LINES will be shown below the header."
   "Show header.  When LINES is nil, the default value is 2."
   (org-tree-slide--set-slide-header
    (or lines org-tree-slide-content-margin-top)))
-
-(defun org-tree-slide--delete-content-overlays ()
-  "Delete content overlays."
-  (while org-tree-slide--content-overlays
-    (delete-overlay (pop org-tree-slide--content-overlays))))
 
 (defun org-tree-slide--hide-slide-header ()
   "Hide header."
