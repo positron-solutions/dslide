@@ -654,6 +654,15 @@ This is displayed by default if `org-tree-slide-modeline-display' is nil.")
 
 (defvar org-tree-slide--header-face-autoconfig nil)
 (defvar org-tree-slide--skip-comments-mode nil)
+(defun org-tree-slide--all-skip-p ()
+  "Check the buffer has at least one slide to be shown."
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (1+ (buffer-size)))
+      (unless (org-tree-slide--last-point-at-bot)
+        t))))
+
 (defun org-tree-slide--setup ()
   "Setup."
   (when (org-tree-slide--active-p)
@@ -1061,15 +1070,6 @@ If the cursor exist before first heading, do nothing."
 ** second          ; nil
 ** third           ; nil"
   (and (org-before-first-heading-p) (not (buffer-narrowed-p))))
-
-(defun org-tree-slide--all-skip-p ()
-  "Check the buffer has at least one slide to be shown."
-  (save-excursion
-    (save-restriction
-      (widen)
-      (goto-char (1+ (buffer-size)))
-      (unless (org-tree-slide--last-point-at-bot)
-        t))))
 
 (provide 'org-tree-slide)
 
