@@ -1,315 +1,194 @@
-#+title:	README for Org Tree Slide
-#+author:	Takaaki Ishikawa
-#+email:	takaxp@ieee.org
-#+date:		[2023-08-26 Sat 22:20]
-#+startup:	content
+#+title:	Macro Slides
+#+author:	Positron
+#+email:	contact@positron.solutions
 
-[[http://melpa.org/#/org-tree-slide][http://melpa.org/packages/org-tree-slide-badge.svg]]
-[[http://stable.melpa.org/#/org-tree-slide][http://stable.melpa.org/packages/org-tree-slide-badge.svg]]
+* Installation
+This isn't on a package archive yet.  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates.
+ #+begin_src elisp
+   ;; package-vc
+   (package-vc-install
+    '(macro-slides
+      :url "https://github.com/positron-solutions/macro-slides.git"))
 
-#+caption: An example demo of org-tree-slide
-[[https://github.com/takaxp/contents/blob/master/org-tree-slide/demo1.gif]]
+   ;; using elpaca's with explicit recipe
+   (use-package macro-slides
+     :elpaca (macro-slides :host github
+                           :repo "positron-solutions/macro-slides"))
 
-* 1. What's this?
+   ;; straight with explicit recipe
+   (use-package macro-slides
+     :straight (macro-slides :type git :host github
+                             :repo "positron-solutions/macro-slides"))
 
-The main purpose of this elisp is to handle each tree in an org buffer as a slide by simple narrowing. This emacs lisp is a minor mode for Emacs Org-mode.
+   ;; or use manual load-path & require, you brave yak shaver
+ #+end_src
+** Try It Out
+With just defaults, run ~ms-start~ on your existing documents.  You can load the examples in the =/test= directory to see a showcase of configuration behavior.
+* Overview
+- A presentation framework that can incorporate *anything* Emacs does
+- Any buffer can be part of a presentation sequence
+- Present Org documents with babel integration
+- Extensible presentation sequences and display options
+** Simple User Interface
+Fully programmable sequences behind a two-button interface:
+- ~ms-forward~
+- ~ms-backward~
+** Present Org Documents
+- Document header generated from keywords
+- Breadcrumbs
+- Every heading and child heading is a slide
+** Fully Programmable
+- Configurable slide behavior using pre-built actions
+- Convenient API for quickly writing reliable custom actions
+- Integration with Elisp programs, arbitrary Emacs buffers, and scripting with Org Babel
+- Custom class support for extending the framework
+** Status
+👷🛠️ Version 0.1.0 to begin receiving API feedback and feature requests etc.  Please check the issues and weigh in on other users proposals and PR's.
+* Features
+** Contents Navigation
+Call ~ms-contents~ to show a contents overview.  Calling ~ms-forward~ and ~ms-backward~ in the contents can quickly move through headings.  Call ~ms-start~ again to resume the presentation from that point.
+** Clean Buffer State
+The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy.
+** Follow Along
+If you display the slideshow in one window or frame, you can configure the point to follow the slide in the base buffer, enabling you to see the full markup and even edit the presentation while developing your customizations.
+* Glossary
+- *Deck*: an object that is used to relate the display and base buffer and is the root of all sequences
+- *Slide*: an object that interprets an org heading to hydrate its actions
+- *Action*: an object that responds to ~ms-forward~ and ~ms-backward~ calls and implements lifecycle methods to initialize and clean up state
+- *Step*: a single call to ~ms-foward~ or ~ms-backward~, usually delegated down to ~ms-step-forward~ and ~ms-step-backward~ methods
 
-Main features:
+- *Contents*: use org folding to create a view of folded headings to quickly navigate slides
+- *Display Buffer*: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name
+- *Buffer-Slide*: When integrating a buffer into the presentation, ~ms-buffer-slide-mode~ sets up the keybindings and links the buffers via the deck object, enabling the presentation to control the buffer.
+* Configuring
+Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared custom variables.
 
-  - Live editable presentation
-  - Fast switching of narrowing/widen
-  - TODO pursuit with narrowing
-  - Displaying the current number of slides in mode line
-  - CONTENT view during a presentation
-  - Slide-in effect
-  - Slide header from org file's header
-  - Countdown timer
+Many settings can be configured at the global level through customize variables, the document level through keywords, and the slide level through the property drawer.
 
-** 1-1. Related packages
+There's a lot of hooks and variables.  All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
+** Recommended MOC Settings
+The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  Master of Ceremonies contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
+*** TODO Hooks
+** Heading Properties
+Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
-There are various packages to make a presentation with org-mode. See [[http://orgmode.org/worg/org-tutorials/non-beamer-presentations.html]]. For more simple use, [[https://github.com/zonuexe/emacs-presentation-mode][presentation.el]] may suitable.
+- =SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
+- =SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+- =CHILD_ACTION=: Used to customize if and how child headings become slides
 
-* 2. Install
+Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 
-1. Put this elisp into your load-path
-2. Add =(require 'org-tree-slide)= in your =.emacs=
-
-OR
-
-1. Eval: =(auto-install-from-url "https://raw.github.com/takaxp/org-tree-slide/master/org-tree-slide.el")= (for auto-install users)
-2. Add =(require 'org-tree-slide)= in your =.emacs=
-
-Then open an org file, just type =C-<= and =C->=, which means =C-M-,= and =C-M-.=, you can see a presentation will begin with a header, slide-in effect, and slide number in mode line.
-
-It is recommended to change the keybindings to make your presentation smoothly. Here is an example.
-
-#+begin_src emacs-lisp
-(with-eval-after-load "org-tree-slide"
-  (define-key org-tree-slide-mode-map (kbd "<f9>") 'org-tree-slide-move-previous-tree)
-  (define-key org-tree-slide-mode-map (kbd "<f10>") 'org-tree-slide-move-next-tree)
-  )
+🚧 Likely in the future, actions will be composable and accept arguments, using Lisp s-expressions.  This API should be forward compatible by wrapping section actions in the slide action and running the child after the slide action.
+*** Example
+Regular Org Mode markup is used to add actions to headings.  See more examples in the [[../test]] directory.
+#+begin_src org
+  ,* Full Screen Images
+  :PROPERTIES:
+  :SLIDE_ACTIONS: ms-action-images
+  :END:
+  ,#+attr_html: :width 50%
+  [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
 #+end_src
+* Customizing
+** Sub-classing
+The deck and slide class as well as actions can all be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.
+** Babel Scripting
+You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~ms-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~ms-action-babel~ class
+** Buffer Slides
+Use ~ms-buffer-slide-mode~ to integrate any buffer into your presentation.  Script your buffer-slide steps with regular babel blocks.
+** ~ms-start-function~
+Typically the mode is entered via commands that are to be bound outside of the minor mode keymap.  If these commands want to start the mode a specific way, but they need to start the mode first, they just bind ~ms-start-function~ to override the last step of starting the mode.
+* Package Pairings
+This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~ms-forward~ ~ms-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
+** Master of Ceremonies
+The [[https://github.com/positron-solutions/master-of-ceremonies][moc]] package contains utilities for display & presentation frame setup that are not specific to using Macro Slides.
+- *hide markup*
+- display a region full-screen
+- silence messages during presentation
+- hide the cursor or make it very subtle
+- extract notes and display them in a separate frame
+** Open Broadcaster Software
+Sacha Chua has written an OBS plugin integration helpful for video integration [[https://github.com/sachac/obs-websocket-el][obs-websocket-el]].
+** Orgit
+~orgit~ can be used to show commits as links, which open with =ms-action-links=
+** moom.el
+The [[https://github.com/takaxp/moom#org-mode-org-tree-slide][moom]] package contains some commands for resizing text and repositioning frames.
+* Domain Model
+This is a description of how the pieces of the program *must* fit together.  For any deep customization or hacking, the section is essential reading.  At the least, it will *greatly improve your success*.
 
-** 2.1 el-get recipe
+⚠️ Even if the current implementation differs, trust this domain model and expect the implementation to approach it.
 
-If you are an [[https://github.com/dimitri/el-get][el-get]] user, just do
+- The user interface ~ms-forward~ and ~ms-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
+- There are several ways to linearize the tree structure of org headings and to compose their presentation.  Sequences of forward and backward actions must be nested to accomplish many desirable goals.
+- Supporting nested sequences can be made to implement just about anything while still keeping the user interface simple.
+** Stateful Sequence Class
+This class is the heart of providing the common user interface and convenient implementation interface for extending the package.
+*** Command Pattern
+The basis of all undo systems is to implement reverse actions that decide their behavior from the updated state or to save mementos that allow undoing forward actions.  This is the [[https://en.wikipedia.org/wiki/Command_pattern][command pattern]].
 
-: M-x el-get-install RET org-tree-slide
+Navigating the linear sequence of a presentation is very similar to an undo system.  Log-backed architectures such as git or event-sourcing can similarly be viewed as navigating to any point in a sequence by applying or rolling back a sequence of changes.
+*** Setup & Teardown
+At the boundaries of a sequence of forward and reverse actions, it may be necessary to build up or tear down some state.  The stateful sequence adds ~ms-init~, ~ms-final~, and a variation of ~ms-init~, ~ms-end~.
 
-** 2.2 MELPA
+The role of ~ms-end~ is to perform initialization at the end.  It is optional as the default implementation is to call ~ms-int~ and then ~ms-step-forward~ until no more progress can be made.  However, this may be costly or undesirable due to side-effects.
+*** Indexing Via Point
+In order to support contents based navigation, we need to be able to play a slide forward up to the current point.  This may require instantiating some parent slides and playing them forward to a child.  To avoid the need for parents to know about children, the ~goto~ method was introduced.
+*** Stateful Sequence Interface
+The conclusion of the command pattern, setup & teardown, and indexing via point is the ~ms-stateful-sequence~ class.  Anything that implements its interface can be controlled by ~ms-forward~ and ~ms-backward~.  The full interface:
 
-Now, you can install `org-tree-slide' via [[http://melpa.org/#/org-tree-slide][MELPA]].
+- ~ms-init~ & ~ms-end~
+- ~ms-final~
+- ~ms-step-forward~ & ~ms-step-backward~
+- ~ms-goto~
 
-** 2.2 Requirements
-  - Org-mode 6.33x or higher version is required.
-  - This elisp doesn't require any additional packages.
-  - Emacs 25.2 or later is required. But users of Emacs 25.1 or earlier (at least 24.4) can still use this package. Please load =org-tree-slide-compt.el= before activating org-tree-slide.el.
+**** Re-Using Implementations
++ The default implementation of ~ms-end~ is achieved by just walking forward from ~ms-init~, calling ~ms-step-forward~ until it returns =nil=.
 
-** 2.3 additional package (moom.el)
++ Implementing ~ms-goto~ is optional as long as ~ms-init~ and ~ms-step-forward~ can implement ~ms-end~ and report their furthest extent of progress accurately.
 
-Normally, presentations will appear in full screen or frame maximized. [[https://github.com/takaxp/moom#org-mode-org-tree-slide][moom]] is useful in such cases since the package can change frame position and size by keyboard and the font size will be increased suitably for your presentation.
++ Ideally ~ms-forward~ & ~ms-backward~ along with ~ms-init~ & ~ms-end~ form a closed system, but for the convenience of the implementer, it's fine to use an idempotent ~ms-init~ as the ~ms-backward~ step if granular backward is difficult or not valuable to implement.
+** Sequence Composition
+Navigating a tree involves depth.  Descendants may care about what happened in ancestors.  Ancestors may care about what descendants leave behind.  There may be conventions about what happens when descending into a child or returning from one.
+*** Call Stack Execution
+Like the command pattern is a helpful model for designing forward and backwards presentation navigation, the [[https://en.wikipedia.org/wiki/Call_stack][call stack]] is a helpful model for understanding composition of our stateful sequences.
 
-* 3. Recommended settings
+In the model call stack, the caller & callee only cooperate at the call site or by side-effects, aka globals.  If callee is pure, the call site is the only way that they communicate.
 
-Assigning a single key to =org-tree-slide-mode= is recommended.
+A slide action can be seen as an impure function.  Actions to display the section might look at the buffer restriction state to determine if they need to add themselves to the buffer restriction or completely take over display.
+*** Child, Section, and Slide
+It is extremely natural that a slide action will fill one of three roles:
+- Narrow to the contents its actions work on
+- Perform some steps on the region that has been narrowed to
+- Switch to child slides or orchestrate children in a shared buffer restriction
+**** Multiple Slide Property Keys
+These natural roles are why there are more than one heading property for configuring actions.  Each action is easier to implement if they only fill one role.  It is easier for the user to configure a slide if they only have to declare one action.  By breaking up the slide's typical actions, we can configure with enough granularity to usually only touch one heading property.
+*** Trees & Stacks
+If something depends on something else existing or having been set up, its lifetime must be fully encompassed by that other thing.  Especially since we are going forward & backward, cleanups must happen on both ends of a sequence.
 
-#+begin_src emacs-lisp
-(global-set-key (kbd "<f8>") 'org-tree-slide-mode)
-(global-set-key (kbd "S-<f8>") 'org-tree-slide-skip-done-toggle)
+It is natural that a parent heading out-lives its child.  User can take advantage of this by using the document or higher level headings to store state that needs to be shared by children.  The ~final~ calls for those things can call cleanup.
+*** Slides & Action Lifetime
+Actions live, for the most part, as long as the slide.  Their ~ms-init~ method is called at the very beginning.  An action that reveals items must hide them before the user first sees them.
+
+A consequence of this is that there are usually multiple actions alive at once.  Something has to hold onto them.  Right now, it's the slide.   There is only one slide usually in play, and it holds a reference to its parent so that it can "return".  🚧 In the future, the actions may hold onto child actions and only one action might be alive at a time.  This would be desirable.  It just takes some mild rework of the implementation.
+* Work In Progress 🚧
+Open issues and give feedback on feature requests.  Contributions welcome.
+** Non-Graphic Display
+For terminals, the line-height based slide-in effect is not supported.
+** Descendant and Fallback Actions
+Cooperative child action configuration by looking up through parents, calling through to the deck if there is no other default.
+** Composable Actions With Arguments
+We want to configure actions with lisp expressions:
+#+begin_src elisp :eval never
+  (ms-action-narrow :children t)
 #+end_src
-
-OR
-
-#+begin_src emacs-lisp
-(define-key org-mode-map (kbd "<f8>") 'org-tree-slide-mode)
-(define-key org-mode-map (kbd "S-<f8>") 'org-tree-slide-skip-done-toggle)
+#+begin_src elisp :eval never
+  (ms-action-narrow (ms-action-items :animate nil))
 #+end_src
-
-* 4. Profiles
-
-Three useful profiles are available. Please select a profile that is the most suitable for your using scenario.
-
-If you select =simple= profile, call the following command while =org-tree-slide-mode= is ON.
-
-#+begin_src emacs-lisp
-M-x org-tree-slide-simple-profile
-#+end_src
-
-If you want to use this setting as the default, put the following configuration including recommended settings into your =.emacs=.
-
-#+begin_src emacs-lisp
-(when (require 'org-tree-slide nil t)
-  (global-set-key (kbd "<f8>") 'org-tree-slide-mode)
-  (global-set-key (kbd "S-<f8>") 'org-tree-slide-skip-done-toggle)
-  (org-tree-slide-simple-profile))
-#+end_src
-
-=org-tree-slide-presentation-profile= and =org-tree-slide-narrowing-control-profile= are also available.
-
-** 4-1. `Simple'
-
-This profile will display trees in your org buffer by simple narrowing. You can change trees without =widen= command. Most of the visual effect is disabled.
-
-Type =M-x org-tree-slide-simple-profile= while =org-tree-slide-mode= is ON.
-
-    1. No header display
-    2. No slide-in effect
-    3. The cursor will move to the head of the buffer when exit
-    4. No slide number display in mode line
-    5. Display every type of tree except =org-comment-string= (e.g. COMMENT)
-
-** 4-2. `Presentation'
-
-This profile is the default setting of org-tree-slide. If an org buffer includes =#+title:=, =#+email:=, and =#+author:=, org-tree-slide attempts to use those variables in the slide header. A date in the header will be set with the presentation of the day. You can enjoy a slide-in effect, the current slide number in mode line.
-
-# A presentation with a count down timer is started by =M-x org-tree-slide-play-with-timer=.
-
-If you want to show the content of your presentation, type =C-x s c= or =M-x org-tree-slide-content=. All of the headings will be shown in a buffer like a Table Of Content except some headings configured as skipping by =org-tree-slide-skip-outline-level=. Find a heading that you want to show, and type =C->=, the presentation will be resumed.
-
-It is possible to skip slides when a heading level is higher than or equal to a  value of =org-tree-slide-skip-outline-level=. see User variables.
-
-To exit a presentation, set =org-tree-slide-mode= OFF. The cursor move to the head of the buffer and the trees will be rendered according to the value of =#+startup:= if possible.
-
-=M-x org-tree-slide-presentation-profile=
-
-    1. Display header
-    2. Enable slide-in effect
-    3. The cursor will move to the head of buffer when exit
-    4. Display slide number in mode line
-    5. Display every type of tree except =org-comment-string= (e.g. COMMENT)
-
-** 4-3. `TODO Pursuit with narrowing'
-
-This profile will display trees restricted to =TODO status= without a header and slide-in effect. It is very useful to concentrate your focus on the current TODO item that is not done, and go to the next task by typing of =C->=. This is "TODO Pursuit with narrowing". If you want to track every kind of tree including finished items, toggle =M-x org-tree-slide-skip-done-toggle= OFF.
-
-When you exit =org-tree-slide-mode=, the cursor will keep the same position, it is therefore possible to focus again by toggle =M-x org-tree-slide-mode=.
-
-If you feel the cursor moving is very slow, please change a value of =org-tree-slide-modeline-display= to ='outside= or =nil=.
-
-=M-x org-tree-slide-narrowing-control-profile=
-
-    1. No header display
-    2. No slide-in effect
-    3. The cursor will keep the same position when exit
-    4. Display slide number in mode line
-    5. Display TODO trees only except =org-comment-string= (e.g. COMMENT)
-
-* 5. User variables
-
-#+caption: User variables
-|----+--------------------------------------------+---------------+---------|
-|    | Variable                                   | Default value | Select  |
-|----+--------------------------------------------+---------------+---------|
-|  1 | org-tree-slide-skip-outline-level          | 0             | Numeric |
-|  2 | org-tree-slide-header                      | t             | Boolean |
-|  3 | org-tree-slide-slide-in-effect             | t             | Boolean |
-|  4 | org-tree-slide-cursor-init                 | t             | Boolean |
-|  5 | org-tree-slide-slide-in-blank-lines        | 10            | Numeric |
-|  6 | org-tree-slide-slide-in-waiting            | 0.02          | Float   |
-|  7 | org-tree-slide-heading-emphasis            | nil           | Boolean |
-|  8 | org-tree-slide-never-touch-face            | nil           | Boolean |
-|  9 | org-tree-slide-skip-done                   | nil           | Boolean |
-| 10 | org-tree-slide-skip-comments               | t             | [*1]    |
-| 11 | org-tree-slide-activate-message            | Hello...      | String  |
-| 12 | org-tree-slide-deactivate-message          | Quit, Bye!    | String  |
-| 13 | org-tree-slide-modeline-display            | 'outside      | [*2]    |
-| 14 | org-tree-slide-fold-subtrees-skipped       | t             | Boolean |
-| 15 | org-tree-slide-breadcrumbs                 | " > "         | String  |
-| 16 | org-tree-slide-breadcrumbs-hide-todo-state | t             | Boolean |
-| 17 | org-tree-slide-indicator                   | plist         | [*3]    |
-
-#+begin_quote
-[*1] { nil | t | 'inherit }
-         t: skip only the current heading with COMMENT, child headings without COMMENT will be shown,
-  'inherit: skip headings with COMMENT and its child headings,
-       nil: show even if it has COMMENT.
-(note) =org-tree-slide-skip-comments-toggle= will switch between ~t~ and ~nil~ normally, but if =org-tree-slide-skip-comments= is specified as ~'inherit~, then the toggle will switch between ~'inherit~ and ~t~.
-
-[*2] { nil | 'lighter | 'outside }
-  'outside: shown in the mode line outside of lighter,
-  'lighter: shown in lighter (slow),
-       nil: nothing to be shown.
-
-[*3] '(:next "   Next >>" :previous "<< Previous" :content "<<  CONTENT  >>")
-   If you prefer to show nothing for entering content mode, then specify as
-   '(:next "   Next >>" :previous "<< Previous" :content nil)
-#+end_quote
-
-** 5-1. Useful settings for experts
-
-If you like this elisp, the following setting is more useful. Try it!
-
-In this case, =<f8>= / =<f9>= / =<f10>= / =<f11>= are assigned in order to control org-tree-slide.
-
-#+begin_src emacs-lisp
-(when (require 'org-tree-slide nil t)
-  (global-set-key (kbd "<f8>") 'org-tree-slide-mode)
-  (global-set-key (kbd "S-<f8>") 'org-tree-slide-skip-done-toggle)
-  (define-key org-tree-slide-mode-map (kbd "<f9>")
-    'org-tree-slide-move-previous-tree)
-  (define-key org-tree-slide-mode-map (kbd "<f10>")
-    'org-tree-slide-move-next-tree)
-  (define-key org-tree-slide-mode-map (kbd "<f11>")
-    'org-tree-slide-content)
-  (setq org-tree-slide-skip-outline-level 4)
-  (org-tree-slide-narrowing-control-profile)
-  (setq org-tree-slide-skip-comments 'inherit)
-  (setq org-tree-slide-skip-done nil))
-#+end_src
-
-* 6. Functions
-** Control functions
-
-  - org-tree-slide-move-next-tree (=C->=)
-  - org-tree-slide-move-previous-tree (=C-<=)
-  - org-tree-slide-content (=C-x s c=)
-
-** Startup options
-
-These functions will toggle =org-tree-slide-mode= ON, automatically.
-
-  - org-tree-slide-without-init-play
-  - org-tree-slide-play-with-timer
-
-** Toggle variables
-
-  - org-tree-slide-display-header-toggle
-  - org-tree-slide-slide-in-effect-toggle
-  - org-tree-slide-skip-done-toggle
-  - org-tree-slide-skip-comments-toggle
-  - org-tree-slide-heading-emphasis-toggle
-
-** Batch setting of user variables
-
-  - org-tree-slide-simple-profile
-  - org-tree-slide-presentation-profile
-  - org-tree-slide-narrowing-control-profile
-
-** Hooks
-
-  - org-tree-slide-play-hook
-  - org-tree-slide-stop-hook
-  - org-tree-slide-before-narrow-hook
-  - org-tree-slide-after-narrow-hook
-  - org-tree-slide-before-move-next-hook
-  - org-tree-slide-before-move-previous-hook
-
-NOTE: For senior user, some hook were renamed, please update your configurations
-
-* 7. Additional settings
-** Hide org-meta-line
-
-The following code could be useful if you want to make =#+= lines invisible during presentation.
-
-#+begin_src emacs-lisp
-(with-eval-after-load "org-tree-slide"
-  (defvar my-hide-org-meta-line-p nil)
-  (defun my-hide-org-meta-line ()
-    (interactive)
-    (setq my-hide-org-meta-line-p t)
-    (set-face-attribute 'org-meta-line nil
-			                  :foreground (face-attribute 'default :background)))
-  (defun my-show-org-meta-line ()
-    (interactive)
-    (setq my-hide-org-meta-line-p nil)
-    (set-face-attribute 'org-meta-line nil :foreground nil))
-
-  (defun my-toggle-org-meta-line ()
-    (interactive)
-    (if my-hide-org-meta-line-p
-	      (my-show-org-meta-line) (my-hide-org-meta-line)))
-
-  (add-hook 'org-tree-slide-play-hook #'my-hide-org-meta-line)
-  (add-hook 'org-tree-slide-stop-hook #'my-show-org-meta-line))
-#+end_src
-
-
-* 8. History
-
-see also [[https://github.com/takaxp/org-tree-slide/blob/master/ChangeLog][ChangeLog]] for details
-
-|---------+------------------+-----------------------------------------|
-| Version | Date             | Description                             |
-|---------+------------------+-----------------------------------------|
-| v2.8.0  | 2015-02-20@21:27 | Changed Keymap, and renamed/added hooks |
-| v2.7.0  | 2013-07-21@05:21 | Support buffers without headings        |
-| v2.6.0  | 2012-11-21@02:14 | Support dark color theme                |
-| v2.5.0  | 2011-12-12@18:16 | Remove auto-play function (TBD)         |
-| v2.4.0  | 2011-12-08@10:51 | Support TODO pursuit in a slideshow     |
-| v2.3.0  | 2011-12-07@16:17 | Support displaying a slide number       |
-| v2.2.0  | 2011-12-07@02:15 | Support minor mode                      |
-| v2.0.0  | 2011-12-01@17:41 | Add profiles and support org 6.33x      |
-| v1.0.0  | 2011-09-28@20:59 | Release the initial version             |
-
-* 9. Contact
-
-The author is Takaaki ISHIKAWA (takaxp@ieee.org).
-Feel free to email me or use a mention of twitter ([[https://twitter.com/#!/takaxp][@takaxp]])
-
-* 10. Videos
-
-We can watch some videos that kindly introduce =org-tree-slide.el=:
-- [[https://www.youtube.com/watch?v=vz9aLmxYJB0][Emacs Tips - How to Give Presentations with Org Mode]] (presented by [[https://www.youtube.com/channel/UCAiiOTio8Yu69c3XnR7nQBQ][System Crafters]])
-- [[https://www.youtube.com/watch?v=uSwJQIGMyPk][Show presentation using Org Mode]] (presented by [[https://www.youtube.com/channel/UC0ds7DW6IIl7mXcyz5vMEHQ][Blackberry Boy]])
-
-Thank you!
+** Sub-Sequence Call & Restore
+Sequences are often enclosed within other sequences, but there is currently no support for pushing or popping states when entering or exiting sequences.  It's just not clear yet what cooperation might be necessary at sub-sequence boundaries.  Slide display looking at the restriction state is one such boundary.
+** Non-Org Sequences
+There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
+** Heading Filtering
+This was not implemented yet, but evidently some had been filtering their headlines to only show TODO's in ~org-tree-slide~.  Perhaps it is convenient to filter some tags and prevent them from being instantiated, especially if they will fail.
+* Thanks & Acknowledgments
+This package is a direct descendant of Takaaki ISHIKAWA's [[https://github.com/takaxp/org-tree-slide][org-tree-slide]] package.  Many of the ideas and some of the implementations were either inherited or inspired by ideas from that package.  This package would not exist without the inspiration.  Thanks to everyone who contributed on org-tree-slide.
