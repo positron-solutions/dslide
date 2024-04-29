@@ -404,7 +404,8 @@ an SLIDE_FILTER keyword."
          ;; Create the indirect buffer and link it via the deck object.
          (ms--ensure-deck)
          (funcall (or ms-start-function
-                      #'ms-display-slides)))
+                      #'ms-display-slides))
+         (run-hooks 'ms-start-hook))
         (t
          (ms-stop))))
 
@@ -422,9 +423,7 @@ an SLIDE_FILTER keyword."
   (oset ms--deck display-state 'slides)
   (widen)
   (org-fold-show-all)
-  (ms-init ms--deck)
-  ;; TODO rename this hook?
-  (run-hooks 'ms-play-hook))
+  (ms-init ms--deck))
 
 (defun ms-display-contents ()
   "Switch to showing contents in the slide buffer.
@@ -450,7 +449,7 @@ each slide show from the contents view."
   ;; TODO filter slides that don't have a display action?
 
   (ms--feedback :contents)
-  (run-hooks 'ms-before-contents-view-hook))
+  (run-hooks 'ms-contents-hook))
 
 (defun ms-display-base ()
   "Switch to the base buffer for the slide show."
