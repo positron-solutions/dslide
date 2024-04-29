@@ -259,6 +259,12 @@ contents.  It is run after any slide actions."
   :group 'macro-slides
   :type 'hook)
 
+(defcustom ms-narrow-hook nil
+  "Runs whenever the slide buffer restriction is updated.
+Use this hook for behaviors that affect the displayed region.
+Slides and sequences that do not display themselves or only
+affect display in another buffer will not trigger this hook.")
+
 (defcustom ms-contents-hook nil
   "Runs last after switching to contents."
   :group 'macro-slides
@@ -833,7 +839,9 @@ their init."
     ;; already
     (error "No slide selected"))
 
-  (let (progress reached-end)
+  (let ((restriction-min (point-min))
+        (restriction-max (point-max))
+        progress reached-end)
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (and (slot-boundp obj 'step-callbacks)
                            (oref obj step-callbacks))))
@@ -903,6 +911,10 @@ their init."
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
     (when progress
+      ;; If the restriction was updated, call the after-narrow hook
+      (when (not (and (= restriction-min (point-min))
+                      (= restriction-max (point-max))))
+        (run-hooks 'ms-narrow-hook))
       (ms--feedback :forward))
 
     (when reached-end
@@ -922,7 +934,9 @@ their init."
   ;; and they should implement an actual `ms-end' method as well as idempotent
   ;; `ms-init' and `ms-final' if any support for going backwards is disireable.
 
-  (let (progress reached-beginning)
+  (let ((restriction-min (point-min))
+        (restriction-max (point-max))
+        progress reached-beginning)
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (and (slot-boundp obj 'step-callbacks)
                            (oref obj step-callbacks))))
@@ -1001,6 +1015,10 @@ their init."
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
     (cond (progress
+           ;; If the restriction was updated, call the after-narrow hook
+           (when (not (and (= restriction-min (point-min))
+                           (= restriction-max (point-max))))
+             (run-hooks 'ms-narrow-hook))
            (ms--feedback :backward))
           (reached-beginning
            (user-error "No more previous slides!")))))
