@@ -605,8 +605,9 @@ Errors when asked for a marker before one has been set."
 ;; and final.
 ;;
 ;; Sub-sequences currently don't have any special support for setup or teardown
-;; when entering or exiting the sub-sequence, but such cooperation is consistent
-;; with the rest of the implementation / usage.
+;; when entering or exiting the sub-sequence.  Such cooperation is present but
+;; implemented ad-hoc.  First-class support will be consistent with the
+;; architecture.
 ;;
 ;; End is essentially init for going in reverse.  While using init and going
 ;; forward to reach the end is theoretically viable, it does extra work and
@@ -626,7 +627,7 @@ Errors when asked for a marker before one has been set."
 
 ;; Generics.  TODO check on the use of generics.
 (cl-defgeneric ms-init (obj))
-n
+
 (cl-defgeneric ms-end (obj))
 
 (cl-defgeneric ms-final (obj))
@@ -931,7 +932,7 @@ their init."
   ;; the default implementation, which calls step-forward until progress is
   ;; exhausted, is fine.  Certain actions with side-effects may not like this,
   ;; and they should implement an actual `ms-end' method as well as idempotent
-  ;; `ms-init' and `ms-final' if any support for going backwards is disireable.
+  ;; `ms-init' and `ms-final' if any support for going backwards is desirable.
 
   (let ((restriction-min (point-min))
         (restriction-max (point-max))
