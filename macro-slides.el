@@ -1640,6 +1640,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
 ;; TODO extract buffer-slide setup logic a bit to make writing these easier.
+;; TODO make it just a link action?
 (cl-defmethod ms-step-forward
   ((obj ms-action-image))
   (save-excursion
@@ -1689,6 +1690,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
                       (ms-heading
                        (oref obj parent))))
       nil)))
+
 ;; ** Default Child Action
 (defclass ms-child-action-slide (ms-action) ()
   "Default child action.  Children are independent slides.")
@@ -2113,7 +2115,7 @@ TYPE is a list or type symbol."
         (goto-char (point-min))
         (let ((first-element (org-element-at-point)))
           (if (and first-element
-                   (eq (org-element-type first-element 'headline)
+                   (eq (org-element-type first-element)
                        'headline))
               (org-element-at-point)
             (when (re-search-forward org-outline-regexp-bol nil t)
