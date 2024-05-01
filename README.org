@@ -67,7 +67,7 @@ Many settings can be configured at the global level through customize variables,
 
 There's a lot of hooks and variables.  All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
 ** Recommended MOC Settings
-The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  Master of Ceremonies contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
+The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
 *** TODO Hooks
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
@@ -175,7 +175,7 @@ Open issues and give feedback on feature requests.  Contributions welcome.
 ** Non-Graphic Display
 For terminals, the line-height based slide-in effect is not supported.
 ** Descendant and Fallback Actions
-Cooperative child action configuration by looking up through parents, calling through to the deck if there is no other default.
+Parents or the deck deciding default actions.  A parent wishing to show children inline may alter arguments to descendant actions, keeping compatibility between various combinations of actions.
 ** Composable Actions With Arguments
 We want to configure actions with lisp expressions:
 #+begin_src elisp :eval never
@@ -190,5 +190,9 @@ Sequences are often enclosed within other sequences, but there is currently no s
 There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
 ** Heading Filtering
 This was not implemented yet, but evidently some had been filtering their headlines to only show TODO's in ~org-tree-slide~.  Perhaps it is convenient to filter some tags and prevent them from being instantiated, especially if they will fail.
+** Counting Slides
+Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees might be easier.  A ~children~ method for sequeneces works as long as sequences actually implement it.
+** Improper Levels
+Children with no parents or missing a level are currently not supported and likely cause bad behavior.
 * Thanks & Acknowledgments
 This package is a direct descendant of Takaaki ISHIKAWA's [[https://github.com/takaxp/org-tree-slide][org-tree-slide]] package.  Many of the ideas and some of the implementations were either inherited or inspired by ideas from that package.  This package would not exist without the inspiration.  Thanks to everyone who contributed on org-tree-slide.
