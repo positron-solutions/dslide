@@ -1241,26 +1241,6 @@ heading and stores actions and their states.")
                           :begin begin
                           :parent parent
                           args)))
-
-        ;; TODO circular reference between slide and actions.  Actions are either
-        ;; sequential or nested, but their lifecycle structure is driven by
-        ;; headings and their slides, causing some lifecycle overlap.  Actions
-        ;; might want to know about the current slide.  The current slide is
-        ;; accessible via the deck, but that is kind of obtuse for a child.  The
-        ;; inversion of control that allows the deck to only track one child slide
-        ;; is not possible when several children share a concurrent lifecycle
-        ;; unless children track siblings in a List.
-        ;;
-        ;; Composable actions, where an action can have child actions, using the
-        ;; `ms-stateful-sequence' model, are the eventual correct way
-        ;; to do this, but it does require the slide to do what the deck does,
-        ;; inverting control to the children.  Minor refactor.  The way it is done
-        ;; now should be okay for the design point, presentations.
-        (mapc (lambda (c) (when c
-                       (oset c parent slide)))
-              `(,slide-action
-                ,@section-actions
-                ,child-action))
         slide))))
 
 (cl-defmethod ms-next-sibling ((obj ms-slide) filter)
@@ -1276,15 +1256,6 @@ heading and stores actions and their states.")
 (cl-defmethod ms-heading ((obj ms-slide))
   "Return the slide's heading element."
   (org-element-at-point (oref obj begin)))
-
-(cl-defmethod ms-section-map
-  ((obj ms-slide) type fun &optional info first-match no-recursion)
-  "Map FUN over TYPE elements in SLIDE section.
-FIRST-MATCH only finds the first non-nil returned from FUN.
-NO-RECURSION will avoid descending into children."
-  (ms--section-map
-   (ms-heading obj)
-   type fun info first-match no-recursion))
 
 ;; * Actions
 ;;; Pre-built Actions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1336,6 +1307,15 @@ element is found."
         (ms-marker obj (org-element-begin previous)))
     (ms-marker obj (org-element-begin (ms-heading obj)))
     nil))
+
+(cl-defmethod ms-section-map
+  ((obj ms-action) type fun &optional info first-match no-recursion)
+  "Map FUN over TYPE elements in SLIDE section.
+FIRST-MATCH only finds the first non-nil returned from FUN.
+NO-RECURSION will avoid descending into children."
+  (ms--section-map
+   (ms-heading obj)
+   type fun info first-match no-recursion))
 
 (cl-defmethod ms-narrow ((obj ms-action) &optional with-children)
   "Narrow to this slide's heading and its contents.
@@ -1483,17 +1463,14 @@ instantiated from children, so their configuration is meaningless.")
   (overlays :initform nil)
   "Hide all items and then reveal them one by one.")
 
-(cl-defmethod ms-init :after
-  ((obj ms-action-item-reveal))
-  (oset obj overlays (ms-section-map
-                      (oref obj parent)
-                      'item #'ms-hide-element)))
+;; TODO may try to read uninitialized slot...
+(cl-defmethod ms-init :after ((obj ms-action-item-reveal))
+  (oset obj overlays (ms-section-map obj 'item #'ms-hide-element)))
 
 ;; The default `ms-end' method is sufficient since this action will
 ;; just add overlays starting from the end of items.
 
-(cl-defmethod ms-final :after
-  ((obj ms-action-item-reveal))
+(cl-defmethod ms-final :after ((obj ms-action-item-reveal))
   (when-let ((overlays (and (slot-boundp obj 'overlays)
                             (oref obj overlays))))
     (mapc #'delete-overlay overlays)))
@@ -1553,7 +1530,7 @@ only the first block found will actually be executed.")
 (cl-defmethod ms--clear-results ((obj ms-action-babel))
   (without-restriction
     (ms-section-map
-     (oref obj parent) 'src-block
+     obj 'src-block
      (lambda (e)
        (save-excursion
          (goto-char (org-element-begin e))
@@ -1586,8 +1563,7 @@ The keywords look like:
 The possible values for METHOD-NAME correspond to the
 stateful-sequence class methods.  METHOD-NAME is a string."
   (let ((predicate (ms--method-block-pred method-name)))
-    (ms-section-map
-     (oref obj parent) 'src-block predicate nil t)))
+    (ms-section-map obj 'src-block predicate nil t)))
 
 (cl-defmethod ms-step-forward ((obj ms-action-babel))
   (when-let* ((predicate (ms--method-block-pred
@@ -1675,14 +1651,15 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   ;; For child slides, we make a slide out of the next child heading and advance
   ;; our progress forward to the end of that child
   (when-let ((child (ms-forward-child obj)))
-    (ms--make-slide child (oref obj parent))))
+    ;; TODO this method of getting the parent
+    (ms--make-slide child (oref ms--deck slide))))
 
 (cl-defmethod ms-step-backward
   ((obj ms-child-action-slide))
   ;; For child slides, we make a slide out of the previous child heading and
   ;; advance our progress backward to the beginning of that child
   (when-let ((child (ms-backward-child obj)))
-    (ms--make-slide child (oref obj parent))))
+    (ms--make-slide child (oref ms--deck slide))))
 
 ;; ** Inline Child Action
 ;; While the basics of making a child out of the next heading are the same, an
@@ -1720,8 +1697,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
       ;; If the child didn't make progress, try to load up the next child
       (unless progress
         (if-let ((child-heading (ms-forward-child obj))
-                 (child (ms--make-slide child-heading
-                                        (oref obj parent))))
+                 (child (ms--make-slide child-heading (oref ms--deck slide))))
             (progn
               (push child children)
               (oset obj children children)
