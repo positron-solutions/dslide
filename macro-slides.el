@@ -265,7 +265,9 @@ contents.  It is run after any slide actions."
   "Runs whenever the slide buffer restriction is updated.
 Use this hook for behaviors that affect the displayed region.
 Slides and sequences that do not display themselves or only
-affect display in another buffer will not trigger this hook.")
+affect display in another buffer will not trigger this hook."
+  :group 'macro-slides
+  :type 'hook)
 
 (defcustom ms-contents-hook nil
   "Runs last after switching to contents."
