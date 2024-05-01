@@ -60,7 +60,7 @@
 ;; This package is a fork and mostly complete re-write of org-tree-slide by
 ;; Takaaki ISHIKAWA.  Thanks to everyone who worked on org-tree-slide over the
 ;; years.  The implementation ideas and features of org-tree-slide were a great
-;; inpsiration for this package.
+;; inspiration for this package.
 
 ;;; Code:
 
@@ -158,7 +158,7 @@ The current time will be used as a fallback."
   :group 'macro-slides)
 
 ;; TODO support partial lines
-(defcustom ms-slide-in-blank-lines 10
+(defcustom ms-slide-in-blank-lines 15
   "Line height of the slide-in effect."
   :type 'integer
   :group 'macro-slides)
@@ -661,8 +661,7 @@ just need to support a few methods and then rely on the generic
 implementations for the rest, unless they want to optimize or
 simplify their implementation.")
 
-(cl-defmethod ms-init
-  ((obj ms-stateful-sequence))
+(cl-defmethod ms-init ((obj ms-stateful-sequence))
   "Called when entering a sequence.
 Any state that must be set up for this sequence can run during
 the init method.  Init does not count as a step.  The guarantee
@@ -684,8 +683,7 @@ The parent sequence will not call its own `ms-final'
 until after it calls the sub-sequence's `ms-final'."
   nil)
 
-(cl-defmethod ms-end
-  ((obj ms-stateful-sequence))
+(cl-defmethod ms-end ((obj ms-stateful-sequence))
   "Init when going backwards.
 This method should be implemented so that the state is equivalent
 to having gone forward to the end of the slide.  The default
@@ -705,8 +703,7 @@ properly to children and section actions."
         (setq extent progress)))
     extent))
 
-(cl-defmethod ms-final
-  ((obj ms-stateful-sequence))
+(cl-defmethod ms-final ((obj ms-stateful-sequence))
   "Called when exiting a sequence.
 Implement this method to clean up any state that would interfere
 with the sequence succeeding when run again.  All side-effects
@@ -716,8 +713,7 @@ method must be cleaned up or otherwise managed or else
 will be brittle and likely fail when re-run."
   nil)
 
-(cl-defmethod ms-step-forward
-  ((obj ms-stateful-sequence))
+(cl-defmethod ms-step-forward ((obj ms-stateful-sequence))
   "Make on step and return the point of farthest advance.
 When no progress can be made, return nil.  For steps that don't
 need to advance the point, if they make progress, they should
@@ -725,16 +721,14 @@ return t or the point.  Every sequenece of `ms-step-forward'
 should return nil at some point."
   nil)
 
-(cl-defmethod ms-step-backward
-  ((obj ms-stateful-sequence))
+(cl-defmethod ms-step-backward ((obj ms-stateful-sequence))
   "Make one step backwards and return earliest point.
 Backwards steps are considered to advance to be beginning of the
 extent they affect.  This enables forward and backward
 implementations to act as conjugates."
   nil)
 
-(cl-defmethod ms-goto
-  ((obj ms-stateful-sequence) point)
+(cl-defmethod ms-goto ((obj ms-stateful-sequence) point)
   "Step forward until advancing beyond POINT.
 This method can usually be implemented on top of
 `ms-step-forward' by advancing until POINT is exceeded.
@@ -921,7 +915,7 @@ their init."
             ;; manage the children, so we never see them at the root.
             (narrow-to-region (point) (point))
             ;; We just run the init and then let the next loop call the first
-            ;; forward, handling the result of progress appopriately.
+            ;; forward, handling the result of progress appropriately.
             (ms-init next-slide))))))
 
     ;; A lot of progress may have happened, but there will be only one feedback
@@ -1175,6 +1169,13 @@ heading and stores actions and their states.")
   ;; Add an argument this function since children that manage their own slides
   ;; call this function directly.
 
+  ;; function doesn't error but results in nil begin marker if we don't fail
+  (unless heading
+    (error "No heading provided"))
+  (unless parent
+    (error "No parent provided"))
+
+
   ;; Share the beginning marker across all actions.  It's not unique and
   ;; shouldn't move.
   (let* ((begin-position (org-element-begin heading))
@@ -1238,8 +1239,8 @@ heading and stores actions and their states.")
                           :section-actions section-actions
                           :child-action child-action
                           :filter filter
-                          :begin begin
                           :parent parent
+                          :begin begin
                           args)))
         slide))))
 
@@ -1676,8 +1677,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
    (backward-hack :initform nil "Extra backward step from end."))
   "Display children inline with the parent.")
 
-(cl-defmethod ms-step-forward
-  ((obj ms-child-action-inline))
+(cl-defmethod ms-step-forward ((obj ms-child-action-inline))
 
   (let (progress
         exhausted
@@ -1775,6 +1775,8 @@ Return the heading unless it's filtered."
 ;; `org-cycle-tree' before calling if strange behavior is observed.
 
 ;; TODO keep-lines seems kind of slow
+;; TODO move this up into the action class and pass through to these as private
+;; methods.
 (defun ms-hide-region (beg end &optional keep-lines)
   "Return overlay hiding region between BEG and END.
 Optional KEEP-LINES will replace region with as many newlines as
@@ -1937,7 +1939,6 @@ matched."
   (save-restriction
     (widen)
     (seq-find #'identity
-              ;; TODO does children return nils?  Collect it without nils if so.
               (ms--children heading predicate))))
 
 (defun ms--last-child (heading &optional predicate)
@@ -2010,17 +2011,6 @@ be a list of types or a type from `org-element-all-elements.'"
         (member element-type type)
       (eq element-type type))))
 
-(defun ms-and (&rest predicates)
-  "Combine PREDICATES for filtering elements.
-Each predicate should take one argument, an org element."
-  (lambda (element)
-    (seq-reduce
-     (lambda (init pred)
-       (when (or (not pred)
-                 (and init (funcall pred init)))
-         init))
-     predicates element)))
-
 (defun ms--child-predicate (heading &optional predicate)
   "Returns a predicate to filter direct children matching PREDICATE.
 PREDICATE should return matching children."
@@ -2082,6 +2072,17 @@ Does not modifiy the point."
       (when (re-search-forward org-heading-regexp)
         (org-back-to-heading)
         (org-element-at-point)))))
+
+(defun ms-and (&rest predicates)
+  "Combine PREDICATES for filtering elements.
+Each predicate should take one argument, an org element."
+  (lambda (element)
+    (seq-reduce
+     (lambda (init pred)
+       (when (or (not pred)
+                 (and init (funcall pred init)))
+         init))
+     predicates element)))
 
 ;; * Slide Header
 
