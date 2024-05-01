@@ -1266,48 +1266,9 @@ heading and stores actions and their states.")
                                  heading filter)))
     (ms--make-slide previous-heading (oref obj parent))))
 
-;; ** Slide Methods for Writing Actions
-;; TODO A lot of the slide methods belong on actions.  Actions should just store
-;; a marker to the heading and work with the heading directly.  They rarely need
-;; to look into the actual slide object to see what other sequences might be in
-;; flight.
-
-(cl-defmethod ms-first-child ((obj ms-slide))
-  "Return first child heading element."
-  (ms--last-child
-   (ms-heading obj)))
-
-(cl-defmethod ms-last-child ((obj ms-slide))
-  "Return last child heading element."
-  (ms--last-child
-   (ms-heading obj)))
-
 (cl-defmethod ms-heading ((obj ms-slide))
   "Return the slide's heading element."
   (org-element-at-point (oref obj begin)))
-
-(cl-defmethod ms-goto-section ((obj ms-slide))
-  "Move point to the beginning of the slide's heading."
-  (when-let ((beg (ms-section-begin obj)))
-    (goto-char beg)))
-
-(cl-defmethod ms-section-begin ((obj ms-slide))
-  "Return the beginning location of the slide's section.
-Always return a point, even for empty headings."
-  (let ((heading (ms-heading obj)))
-    (ms--section-begin heading)))
-
-(cl-defmethod ms-section-end ((obj ms-slide))
-  "Return the end location of the slide's section.
-Always return a point, even for empty headings."
-  (let ((heading (ms-heading obj)))
-    (ms--section-end heading)))
-
-(cl-defmethod ms-in-section-p ((obj ms-slide) point)
-  "Check if POINT is within the section before child headings."
-  (let ((heading (ms-heading obj)))
-    (and (>= point (ms--section-begin heading))
-         (< point (ms--section-end heading)))))
 
 (cl-defmethod ms-section-map
   ((obj ms-slide) type fun &optional info first-match no-recursion)
