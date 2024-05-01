@@ -1170,100 +1170,107 @@ heading and stores actions and their states.")
 
 (defun ms--make-slide (heading parent)
   "Hydrate a slide object from a HEADING element."
-  ;; Hydration always begins within a tree that has been fully revealed and
-  ;; widened, so we don't need to widen or unfold anything.
+  ;; TODO Allow parent actions to configure child actions so that, for example,
+  ;; flat slides can modify children to not try to show slides independently.
+  ;; Add an argument this function since children that manage their own slides
+  ;; call this function directly.
 
-  ;; TODO access to parent can be used to inherit different default actions,
-  ;; allowing parents to configure children implicitly.
-  (let* ((beg (org-element-begin heading))
-         (keywords (org-collect-keywords
-                    '("SLIDE_ACTION"
-                      "SLIDE_SECTION_ACTIONS"
-                      "SLIDE_CHILD_ACTION"
-                      "SLIDE_FILTER"
-                      "SLIDE_CLASS")))
+  ;; Share the beginning marker across all actions.  It's not unique and
+  ;; shouldn't move.
+  (let* ((begin-position (org-element-begin heading))
+         (begin (make-marker)))
 
-         (slide-action-class
-          (ms--class
-           (or (org-element-property :SLIDE_ACTION heading)
-               (cdr (assoc-string "SLIDE_ACTION"
-                                  keywords))
-               ms-default-slide-action)))
-         (slide-action (when slide-action-class
-                         (make-instance
-                          slide-action-class)))
+    (set-marker begin begin-position (current-buffer))
 
-         (section-action-classes
-          (ms--classes
-           (or (org-element-property :SLIDE_SECTION_ACTIONS heading)
-               (cdr (assoc-string "SLIDE_SECTION_ACTIONS" keywords))
-               ms-default-section-actions)))
-         (section-actions (mapcar (lambda (c) (when c (make-instance c)))
-                                  section-action-classes))
+    ;; Hydrate the slide's configuration as classes and arguments and then
+    ;; instantiate them all.
+    (let* ((keywords (org-collect-keywords
+                      '("SLIDE_ACTION"
+                        "SLIDE_SECTION_ACTIONS"
+                        "SLIDE_CHILD_ACTION"
+                        "SLIDE_FILTER"
+                        "SLIDE_CLASS")))
+           (args nil)
 
-         (child-action-class
-          (ms--class
-           (or (org-element-property :SLIDE_CHILD_ACTION heading)
-               (cdr (assoc-string "SLIDE_CHILD_ACTION"
-                                  keywords))
-               ms-default-child-action)))
-         (child-action (when child-action-class
-                         (make-instance child-action-class)))
+           (slide-action-class
+            (ms--class
+             (or (org-element-property :SLIDE_ACTION heading)
+                 (cdr (assoc-string "SLIDE_ACTION"
+                                    keywords))
+                 ms-default-slide-action)))
+           (slide-action (when slide-action-class
+                           (apply slide-action-class
+                                  :begin begin args)))
 
-         (filter
-          (or (ms--filter
-               (or (org-element-property :SLIDE_FILTER heading)
-                   (cdr (assoc-string "SLIDE_FILTER" keywords))))
-              ms-default-filter))
+           (section-action-classes
+            (ms--classes
+             (or (org-element-property :SLIDE_SECTION_ACTIONS heading)
+                 (cdr (assoc-string "SLIDE_SECTION_ACTIONS" keywords))
+                 ms-default-section-actions)))
+           (section-actions (mapcar
+                             (lambda (c) (when c (apply c :begin begin args)))
+                             section-action-classes))
 
-         (class
-          (or (ms--class
-               (or (org-element-property :SLIDE_CLASS heading)
-                   (cdr (assoc-string "SLIDE_CLASS"
-                                      keywords))))
-              ms-default-class))
+           (child-action-class
+            (ms--class
+             (or (org-element-property :SLIDE_CHILD_ACTION heading)
+                 (cdr (assoc-string "SLIDE_CHILD_ACTION"
+                                    keywords))
+                 ms-default-child-action)))
+           (child-action (when child-action-class
+                           (apply child-action-class :begin begin args)))
 
-         (beg-marker (make-marker)))
-    (set-marker beg-marker beg (current-buffer))
+           (filter
+            (or (ms--filter
+                 (or (org-element-property :SLIDE_FILTER heading)
+                     (cdr (assoc-string "SLIDE_FILTER" keywords))))
+                ms-default-filter))
 
-    (let ((slide (make-instance class
-                                :slide-action slide-action
-                                :section-actions section-actions
-                                :child-action child-action
-                                :filter filter
-                                :begin beg-marker
-                                :parent parent)))
+           (class
+            (or (ms--class
+                 (or (org-element-property :SLIDE_CLASS heading)
+                     (cdr (assoc-string "SLIDE_CLASS"
+                                        keywords))))
+                ms-default-class)))
 
-      ;; TODO circular reference between slide and actions.  Actions are either
-      ;; sequential or nested, but their lifecycle structure is driven by
-      ;; headings and their slides, causing some lifecycle overlap.  Actions
-      ;; might want to know about the current slide.  The current slide is
-      ;; accessible via the deck, but that is kind of obtuse for a child.  The
-      ;; inversion of control that allows the deck to only track one child slide
-      ;; is not possible when several children share a concurrent lifecycle
-      ;; unless children track siblings in a List.
-      ;;
-      ;; Composable actions, where an action can have child actions, using the
-      ;; `ms-stateful-sequence' model, are the eventual correct way
-      ;; to do this, but it does require the slide to do what the deck does,
-      ;; inverting control to the children.  Minor refactor.  The way it is done
-      ;; now should be okay for the design point, presentations.
-      (mapc (lambda (c) (when c (oset c parent slide)))
-            `(,slide-action
-              ,@section-actions
-              ,child-action))
-      slide)))
+      (let ((slide (apply class
+                          :slide-action slide-action
+                          :section-actions section-actions
+                          :child-action child-action
+                          :filter filter
+                          :begin begin
+                          :parent parent
+                          args)))
+
+        ;; TODO circular reference between slide and actions.  Actions are either
+        ;; sequential or nested, but their lifecycle structure is driven by
+        ;; headings and their slides, causing some lifecycle overlap.  Actions
+        ;; might want to know about the current slide.  The current slide is
+        ;; accessible via the deck, but that is kind of obtuse for a child.  The
+        ;; inversion of control that allows the deck to only track one child slide
+        ;; is not possible when several children share a concurrent lifecycle
+        ;; unless children track siblings in a List.
+        ;;
+        ;; Composable actions, where an action can have child actions, using the
+        ;; `ms-stateful-sequence' model, are the eventual correct way
+        ;; to do this, but it does require the slide to do what the deck does,
+        ;; inverting control to the children.  Minor refactor.  The way it is done
+        ;; now should be okay for the design point, presentations.
+        (mapc (lambda (c) (when c
+                       (oset c parent slide)))
+              `(,slide-action
+                ,@section-actions
+                ,child-action))
+        slide))))
 
 (cl-defmethod ms-next-sibling ((obj ms-slide) filter)
   (when-let* ((heading (ms-heading obj))
-              (next-heading (ms--next-sibling
-                             heading filter)))
+              (next-heading (ms--next-sibling heading filter)))
     (ms--make-slide next-heading (oref obj parent))))
 
 (cl-defmethod ms-previous-sibling ((obj ms-slide) filter)
   (when-let* ((heading (ms-heading obj))
-              (previous-heading (ms--previous-sibling
-                                 heading filter)))
+              (previous-heading (ms--previous-sibling heading filter)))
     (ms--make-slide previous-heading (oref obj parent))))
 
 (cl-defmethod ms-heading ((obj ms-slide))
@@ -1279,36 +1286,73 @@ NO-RECURSION will avoid descending into children."
    (ms-heading obj)
    type fun info first-match no-recursion))
 
+;; * Actions
+;;; Pre-built Actions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Actions are stateful sequences.  They live on a slide.  They usually work on
+;; either the section or the children, but there is no requirement that they are
+;; exclusive to either.  Child actions should compose with section actions, such
+;; as round-robin children cycling through each child's action's forward and
+;; backward methods. TODO TODO TODO 🚧
+
+;; ** Base Action
+(defclass ms-action (ms-stateful-sequence
+                     ms-progress-tracking)
+  ((begin :initform nil :initarg :begin "Marker for beginning of heading.
+Used to re-hydrate the org element for use in mapping over the section etc."))
+  "Base class for most slide actions that work on a heading's contents.")
+
+(cl-defmethod ms-heading ((obj ms-action))
+  "Return the slide's heading element."
+  (let ((heading (org-element-at-point (oref obj begin))))
+    (if (eq (org-element-type heading) 'headline)
+        heading
+      (error "Begin marker no longer points at a heading"))))
+
 (cl-defmethod ms-section-next
-  ((obj ms-slide) type &optional pred info no-recursion)
-  "Move forward by one org element of TYPE and return element."
-  (ms--section-next (ms-heading obj)
-                    type pred info no-recursion))
+  ((obj ms-action) type &optional pred info no-recursion)
+  "Move marker forward by one org element of TYPE and return element.
+Marker is moved to the end of the heading if no matching element
+is found."
+  (if-let ((next (ms--section-next (ms-heading obj)
+                                   type
+                                   (ms-marker obj)
+                                   pred info no-recursion)))
+      (prog1 next
+        (ms-marker obj (org-element-begin next)))
+    (ms-marker obj (org-element-end (ms-heading obj)))
+    nil))
 
 (cl-defmethod ms-section-previous
-  ((obj ms-slide) type &optional pred info no-recursion)
-  "Move backward by one org element of TYPE and return element."
-  (ms--section-previous (ms-heading obj)
-                        type pred info no-recursion))
+  ((obj ms-action) type &optional pred info no-recursion)
+  "Move marker backward by one org element of TYPE and return element.
+Marker is moved to the beginning of the heading if no matching
+element is found."
+  (if-let ((previous (ms--section-previous (ms-heading obj)
+                                           type
+                                           (ms-marker obj)
+                                           pred info no-recursion)))
+      (prog1 previous
+        (ms-marker obj (org-element-begin previous)))
+    (ms-marker obj (org-element-begin (ms-heading obj)))
+    nil))
 
-(cl-defmethod ms-narrow ((obj ms-slide) &optional
-                         with-children)
-  "Switch to the slide buffer.  Narrow to this slide's headline
-and its contents.  With optional WITH-CHILDREN non-nil, narrow to
-include the child headings as well.
+(cl-defmethod ms-narrow ((obj ms-action) &optional with-children)
+  "Narrow to this slide's heading and its contents.
+With optional WITH-CHILDREN non-nil, narrow to include the child
+headings as well.
 
-This function cooperates with child actions.  If the child action
-wants the child to completely take over the buffer, it will
-widen.  If the child wants to include th slide, it will remain
-restricted.  This can be ambiguous when the entire buffer is just
-one heading, a degenerate case because there are no child or
-sibling slides."
+This function cooperates with child actions, inferring that if
+the buffer is narrowed to zero size, the child is responsible for
+all display.  TODO It should cooperate via hydration in the
+`make-slide' function."
   (let* ((progress)
+         (heading (ms-heading obj))
          (length  (buffer-size))
          (begin (oref obj begin))
          (end (if with-children
-                  (org-element-end (ms-heading obj))
-                (ms-section-end obj)))
+                  (org-element-end heading)
+                (ms--section-end heading)))
          ;; the following condition can only be true when narrowed to
          ;; zero-length unless the buffer is actually empty, a degenerate
          ;; condition as there are no headings from which to create slides.
@@ -1331,88 +1375,64 @@ sibling slides."
              (when ms-slide-in-effect
                (ms-animation-setup begin end))
              (setq progress t))))
+    ;; This progress is important because it's how we show a slide and count as
+    ;; a first step
     progress))
 
-;; * Actions
-;;; Pre-built Actions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; Actions are stateful sequences.  They live on a slide.  They usually work on
-;; either the section or the children, but there is no requirement that they are
-;; exclusive to either.  Child actions should compose with section actions, such
-;; as round-robin children cycling through each child's action's forward and
-;; backward methods.
-
-;; ** Base Action
-(defclass ms-action (ms-stateful-sequence
-                     ms-progress-tracking)
-  ()
-  "Base class for most slide actions that work on a heading's contents.")
-
-;; Most methods will ensure the narrowing in their init and then return t if
-;; narrowing was performed.
-(cl-defmethod ms-narrow
-  ((obj ms-action) &optional with-children)
-  "Narrow to the slide.
-Optional WITH-CHILDREN will include child headings."
-  (ms-narrow (oref obj parent) with-children))
-
 (cl-defmethod ms-init ((obj ms-action))
-  (ms-marker obj (org-element-begin (ms-heading
-                                     (oref obj parent)))))
+  (ms-marker obj (org-element-begin (ms-heading obj))))
 
 (cl-defmethod ms-end ((obj ms-action))
-  (ms-marker obj (org-element-end (ms-heading
-                                   (oref obj parent)))))
+  (ms-marker obj (org-element-end (ms-heading obj))))
 
 (cl-defmethod ms-final ((obj ms-action))
   (when-let ((marker (oref obj marker)))
     (set-marker marker nil)))
 
-(cl-defmethod ms-narrow-forward ((obj ms-action)
-                                 &optional with-children)
-  "Make the buffer restiction include the slide's bounds.
+(cl-defmethod ms-narrow-forward ((obj ms-action) &optional with-children)
+  "Make the buffer restriction include the slide's bounds.
 Optional WITH-CHILDREN will include child headings.  The return
 value is a valid step return value, indicating if progress was
 made, so you can combine this with `or' when deriving new actions."
   ;; This method implements once-per-direction behavior.  When switching from
   ;; forward to backward, it is possible to trigger this action again.  However,
   ;; it will only return t when it actually updates the region.
-  (let* ((heading (ms-heading (oref obj parent)))
+  (let* ((heading (ms-heading obj))
          (position (ms-marker obj)))
     (when (< position (org-element-end heading))
       (ms-marker obj (org-element-end heading))
       (ms-narrow obj with-children))))
 
-(cl-defmethod ms-narrow-backward ((obj ms-action)
-                                  &optional with-children)
-  "Make the buffer restiction include the slide's bounds.
+(cl-defmethod ms-narrow-backward ((obj ms-action) &optional with-children)
+  "Make the buffer restriction include the slide's bounds.
 Optional WITH-CHILDREN will include child headings.  The return
 value is a valid step return value, indicating if progress was
 made, so you can combine this with `or' when deriving new actions."
   ;; This method implements once-per-direction behavior.  When switching from
   ;; forward to backward, it is possible to trigger this action again.  However,
   ;; it will only return t when it actually updates the region.
-  (let* ((heading (ms-heading (oref obj parent)))
+  (let* ((heading (ms-heading obj))
          (position (ms-marker obj)))
     (when (> position (org-element-begin heading))
       (ms-marker obj (org-element-begin heading))
       (ms-narrow obj with-children))))
 
+;; TODO wut?  It's calling `first-child'?
 (cl-defmethod ms-forward-child ((obj ms-action))
   "Go forward one child heading and return the org 'headline element.
 The returned element is the child you want to either display or call further
 methods on."
   ;; The slide tracks progress using a marker. This marker is advanced to the
   ;; end of a child it returns.
-  (let* ((heading (ms-heading (oref obj parent)))
+  (let* ((heading (ms-heading obj))
          (position (ms-marker obj))
          (pred (lambda (c) (> (org-element-begin c)
                          position)))
          (next-child (ms--first-child heading pred)))
     (ms-marker obj (if next-child
                        (org-element-begin next-child)
-                     ;; The marker is moved to the end if there was
-                     ;; no next child.
+                     ;; The marker is moved to the end if there was no next
+                     ;; child.
                      (org-element-end heading)))
     next-child))
 
@@ -1422,15 +1442,15 @@ The returned element is the child you want to either display or call further
 methods on."
   ;; The slide tracks progress using a marker. This marker is moved to the
   ;; beginning of the child it returns.
-  (let* ((heading (ms-heading (oref obj parent)))
+  (let* ((heading (ms-heading obj))
          (position (ms-marker obj))
          (pred (lambda (c) (< (org-element-begin c)
                          position)))
          (previous-child (ms--last-child heading pred)))
     (ms-marker obj (if previous-child
                        (org-element-begin previous-child)
-                     ;; The merker is moved to the beginning when
-                     ;; there was no previous child.
+                     ;; The marker is moved to the beginning when there was no
+                     ;; previous child.
                      (org-element-begin heading)))
     previous-child))
 
@@ -1474,34 +1494,36 @@ instantiated from children, so their configuration is meaningless.")
 
 (cl-defmethod ms-final :after
   ((obj ms-action-item-reveal))
-  (when-let ((overlays (oref obj overlays)))
+  (when-let ((overlays (and (slot-boundp obj 'overlays)
+                            (oref obj overlays))))
     (mapc #'delete-overlay overlays)))
 
-(cl-defmethod ms-step-forward
-  ((obj ms-action-item-reveal))
-  (when-let* ((overlays (when (slot-boundp obj 'overlays)
-                          (oref obj overlays)))
+;; TODO add hide / un-hide methods to the base action
+(cl-defmethod ms-step-forward ((obj ms-action-item-reveal))
+  ;; The implementation has mapped all of the items into overlays, so instead of
+  ;; calling `ms-section-next', we just use the overlay positions to walk
+  ;; through the items.
+  (when-let* ((overlays (and (slot-boundp obj 'overlays)
+                             (oref obj overlays)))
               (first (car overlays))
               (end (overlay-end first)))
     ;; TODO We can let-bind animations false for child slides.
+    ;; Or handle this via arguments in child actions
     (when ms-slide-in-effect
       (ms-animation-setup
        (overlay-start first) (overlay-end first)))
     (delete-overlay first)
     (oset obj overlays (cdr overlays))
-    (ms-marker obj end)))
+    (ms-marker obj end)
+    t))
 
-(cl-defmethod ms-step-backward
-  ((obj ms-action-item-reveal))
-  (save-excursion
-    (goto-char (ms-marker obj))
-    (when-let ((previous-item (ms-section-previous
-                               (oref obj parent) 'item )))
-      (oset obj overlays (cons (ms-hide-element
-                                previous-item)
-                               (when (slot-boundp obj 'overlays)
-                                 (oref obj overlays))))
-      (ms-marker obj (org-element-begin previous-item)))))
+(cl-defmethod ms-step-backward ((obj ms-action-item-reveal))
+  (when-let ((previous-item (ms-section-previous obj 'item)))
+    (oset obj overlays
+          (cons (ms-hide-element previous-item)
+                (and (slot-boundp obj 'overlays)
+                     (oref obj overlays))))
+    t))
 
 ;; ** Babel Action
 
@@ -1568,39 +1590,22 @@ stateful-sequence class methods.  METHOD-NAME is a string."
      (oref obj parent) 'src-block predicate nil t)))
 
 (cl-defmethod ms-step-forward ((obj ms-action-babel))
-  (save-excursion
-    (goto-char (ms-marker obj))
-    (if-let* ((predicate (ms--method-block-pred
+  (when-let* ((predicate (ms--method-block-pred
                           "step-forward" t))
-              (next (ms-section-next
-                     (oref obj parent) 'src-block predicate)))
-        (progn  (ms-marker obj (org-element-begin next))
-                (or (ms--block-execute next)
-                    ;; If we found a next block, we made progress regardless of the block's
-                    ;; return value
-                    t))
-      (ms-marker obj (org-element-begin
-                      (ms-heading
-                       (oref obj parent))))
-      nil)))
+              (next (ms-section-next obj 'src-block predicate)))
+    (or (ms--block-execute next)
+        ;; If we found a next block, we made progress regardless of the block's
+        ;; return value
+        t)))
 
 (cl-defmethod ms-step-backward ((obj ms-action-babel))
-  (save-excursion
-    (goto-char (ms-marker obj))
-
-    (if-let* ((predicate (ms--method-block-pred
+  (when-let* ((predicate (ms--method-block-pred
                           "step-backward"))
-              (prev (ms-section-previous
-                     (oref obj parent) 'src-block predicate)))
-        (progn (ms-marker obj (org-element-begin prev))
-               (or (ms--block-execute prev)
-                   ;; If we found a prev block, we made progress regardless of the
-                   ;; block's return value
-                   t))
-      (ms-marker obj (org-element-begin
-                      (ms-heading
-                       (oref obj parent))))
-      nil)))
+              (prev (ms-section-previous obj 'src-block predicate)))
+    (or (ms--block-execute prev)
+        ;; If we found a previous block, we made progress regardless of the
+        ;; block's return value
+        t)))
 
 (cl-defmethod ms-init :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "init")))
@@ -1630,55 +1635,36 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; check that image mode displays the link correctly.
 ;; TODO extract buffer-slide setup logic a bit to make writing these easier.
 ;; TODO make it just a link action?
-(cl-defmethod ms-step-forward
-  ((obj ms-action-image))
-  (save-excursion
-    (goto-char (ms-marker obj))
-    (if-let ((link (ms-section-next
-                    (oref obj parent) 'link)))
-        (progn (let ((deck ms--deck)
-                     (window-config (current-window-configuration)))
-                 ;; changes buffer, hopefully to image-mode
-                 (let ((org-link-frame-setup '((file . find-file)))
-                       (display-buffer-overriding-action '(display-buffer-full-frame)))
-                   (org-link-open link))
-                 ;; TODO success detection
-                 (when (eq (buffer-local-value 'major-mode (current-buffer))
-                           'image-mode)
-                   (image-transform-fit-to-window))
-                 (let* ((image-buffer (current-buffer))
-                        (callback (lambda (_)
-                                    (with-current-buffer image-buffer
-                                      (ms-buffer-slide-mode -1))
-                                    (when (buffer-live-p image-buffer)
-                                      ;; TODO optional kill ☠️🔪🩸
-                                      (bury-buffer image-buffer))
-                                    (set-window-configuration window-config)
-                                    ;; When callback returns nil, next forward
-                                    ;; step can proceed
-                                    nil)))
-                   (ms-run-as-next-step deck callback)
-                   (setq-local ms--deck deck)
-                   (ms-buffer-slide-mode 1)))
-               (ms-marker obj (org-element-begin link)))
-      (ms-marker obj (org-element-end
-                      (ms-heading
-                       (oref obj parent))))
-      nil)))
+(cl-defmethod ms-step-forward ((obj ms-action-image))
+  (when-let ((link (ms-section-next obj 'link)))
+      (let ((deck ms--deck)
+            (window-config (current-window-configuration)))
+        ;; changes buffer, hopefully to image-mode
+        (let ((org-link-frame-setup '((file . find-file)))
+              (display-buffer-overriding-action '(display-buffer-full-frame)))
+          (org-link-open link))
+        ;; TODO success detection
+        (when (eq (buffer-local-value 'major-mode (current-buffer))
+                  'image-mode)
+          (image-transform-fit-to-window))
+        (let* ((image-buffer (current-buffer))
+               (callback (lambda (_)
+                           (with-current-buffer image-buffer
+                             (ms-buffer-slide-mode -1))
+                           (when (buffer-live-p image-buffer)
+                             ;; TODO optional kill ☠️🔪🩸
+                             (bury-buffer image-buffer))
+                           (set-window-configuration window-config)
+                           ;; When callback returns nil, next forward
+                           ;; step can proceed
+                           nil)))
+          (ms-run-as-next-step deck callback)
+          (setq-local ms--deck deck)
+          (ms-buffer-slide-mode 1)))))
 
 ;; TODO this won't show the images going backward
-(cl-defmethod ms-step-backward
-  ((obj ms-action-image))
-  (save-excursion
-    (goto-char (ms-marker obj))
-    (if-let ((link (ms-section-previous
-                    (oref obj parent) 'link)))
-        (progn
-          (ms-marker obj (org-element-begin link)))
-      (ms-marker obj (org-element-begin
-                      (ms-heading
-                       (oref obj parent))))
-      nil)))
+(cl-defmethod ms-step-backward ((obj ms-action-image))
+  (ms-section-previous obj 'link))
 
 ;; ** Default Child Action
 (defclass ms-child-action-slide (ms-action) ()
@@ -1740,9 +1726,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
               (push child children)
               (oset obj children children)
               (ms-init child))
-          (ms-marker obj (org-element-end
-                          (ms-heading
-                           (oref obj parent))))
+          (ms-marker obj (org-element-end (ms-heading obj)))
           (setq exhausted t))))
     ;; Don't return any child objects to the deck or it will treat them like
     ;; slides
@@ -1757,9 +1741,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
   ;; Called for side-effect, moving the marker backwards.  What a hack.
   (or (ms-backward-child obj)
-      (ms-marker obj (org-element-begin
-                      (ms-heading
-                       (oref obj parent)))))
+      (ms-marker obj (org-element-begin (ms-heading obj))))
 
   (when-let* ((children (when (slot-boundp obj 'children)
                           (oref obj children)))
@@ -1779,7 +1761,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
           (setq progress t))
 
         ;; TODO same as in forward, this needs to be handled by overriding the
-        ;; child's child-action
+        ;; child's child-action.  See `make-slide'
         (if (eieio-object-p progress)
             (warn "Deep inline not supported yet!"))
 
@@ -1791,9 +1773,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   ((obj ms-child-action-inline))
   ;; TODO yeah, these are some state hacks.  Let's try to de-couple this better.
   (oset obj backward-hack t)
-  (ms-marker obj (org-element-begin
-                  (ms-heading
-                   (oref obj parent))))
+  (ms-marker obj (org-element-begin (ms-heading obj)))
   (ms-narrow obj t)
   (while (ms-step-forward obj)
     t))
@@ -1924,29 +1904,25 @@ This includes all text up to the rist child."
              first-match no-recursion)))
 
 (defun ms--section-next
-    (heading type &optional pred info no-recursion)
-  "Return next element of TYPE that begins after point.
+    (heading type after &optional pred info no-recursion)
+  "Return next element of TYPE that begins after AFTER.
 Optional PRED should accept ELEMENT and return non-nil if
 matched."
-  (let* ((current-point (point))
-         (combined-pred (ms-and
-                         pred (lambda (e)
-                                (> (org-element-begin e)
-                                   current-point)))))
+  (let* ((combined-pred (ms-and
+                         pred
+                         (lambda (e) (> (org-element-begin e) after)))))
     (ms--section-map
      heading type combined-pred info t no-recursion)))
 
 (defun ms--section-previous
-    (heading type &optional pred info no-recursion)
-  "Return previous element of TYPE that begins before point.
+    (heading type before &optional pred info no-recursion)
+  "Return previous element of TYPE that starts before BEFORE.
 Optional PRED should accept ELEMENT and return non-nil if
 matched."
-  (let* ((current-point (point))
-         (combined-pred (ms-and
-                         pred (lambda (e)
-                                (< (org-element-begin e)
-                                   current-point)))))
-    ;; We can't map in reverse, so just retrievel all matched elements and
+  (let* ((combined-pred (ms-and
+                         pred
+                         (lambda (e) (< (org-element-begin e) before)))))
+    ;; We can't map in reverse, so just retrieve all matched elements and
     ;; return the last one.
     (car (last (ms--section-map
                 heading type combined-pred info nil no-recursion)))))
