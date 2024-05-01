@@ -791,19 +791,20 @@ work as well.")
                    "Steps to run before next steps.
 When these return non-nil, they are considered to have made
 progress and will count as a step on their own.  When they return
-nil, they merely run and then allow the next stop to make
-progress.  See `ms-run-as-next-step'."))
+nil, they merely run and then allow the next step to make
+progress.  See `ms-run-as-next-step'.")
+   (sequence-callbacks :initform nil
+                       "Steps that run when the current sequence terminates.
+These callbacks want to have a lifecycle that out-lives the current sequence.
+After calling final for a sequence that has failed to progress or is being
+stopped, these callbacks may run.  When they return nil, they merely run and
+then allow the next step to make progress."))
   "The Deck is responsible for selecting the parent node and
 maintaining state between mode activations or when switching
 between slides and contents.  It also acts as a central control
 point that can be stored in a single buffer-local variable in
 other buffers.  Class can be overridden to affect root behaviors.
 See `ms-default-deck-class'")
-
-;; ... TODO something about buffer slides and optional actions before next slide.
-;; (cl-defmethod ms-before-next-slide ((obj ms-deck)
-;;                                                 momento)
-;;   "Store a callback with context p")
 
 (cl-defmethod ms-init ((obj ms-deck))
   "For the deck class, init needs to call init on slides until one succeeds.
@@ -863,8 +864,19 @@ their init."
             (setq next-slide result)
           (setq progress result))
 
+        ;; Before we might check for a parent or next tree, check for a slide
+        ;; callback and see if it can make progress.
         (unless result
-          ;; First check if there is a parent slide, which is true unless the
+          ;; Burn up a step callback until one returns non-nil
+          (when-let ((steps (and (slot-boundp obj 'sequence-callbacks)
+                                 (oref obj sequence-callbacks))))
+            (while (and (not progress)
+                        steps)
+              (setq progress (funcall (pop steps) 'forward)))
+            (oset obj sequence-callbacks steps)))
+
+        (unless (or progress result)
+          ;; Next check if there is a parent slide, which is true unless the
           ;; parent is the deck.  Then check if there is a next child.
           (let* ((parent (oref current-slide parent)))
             (if (not (eq obj parent))
@@ -958,8 +970,19 @@ their init."
             (setq previous-slide result)
           (setq progress result))
 
+        ;; Before we might check for a parent or next tree, check for a slide
+        ;; callback and see if it can make progress.
         (unless result
-          ;; First check if there is a parent slide, which is true unless the
+          ;; Burn up a step callback until one returns non-nil
+          (when-let ((steps (and (slot-boundp obj 'sequence-callbacks)
+                                 (oref obj sequence-callbacks))))
+            (while (and (not progress)
+                        steps)
+              (setq progress (funcall (pop steps) 'backward)))
+            (oset obj sequence-callbacks steps)))
+
+        (unless (or progress result)
+          ;; Next check if there is a parent slide, which is true unless the
           ;; parent is the deck.  Then check if there is a previous child.
           (let* ((parent (oref current-slide parent)))
             (if (not (eq obj parent))
@@ -1053,16 +1076,21 @@ find the slide that displays that POINT."
                                    (oref obj slide-buffer)))))
 
 (cl-defmethod ms-run-as-next-step
-  ((obj ms-deck) step-fun)
-
-  "Run STEP-FUN at the next step with a single argument, DIRECTION.
-DIRECTION is either `forward' or `backward'."
+  ((obj ms-deck) fun)
+  "Run FUN at the next step with a single argument, DIRECTION.
+DIRECTION is either `forward' or `backward'.  The return value of FUN is
+interpreted as whether progress was made and will be used to decide if further
+steps should be attempted."
   (oset obj step-callbacks
-        (cons step-fun (oref obj step-callbacks))))
+        (cons fun (oref obj step-callbacks))))
 
-;; TODO run at next slide
-;; TODO run at next tree
-
+(cl-defmethod ms-run-after-sequence
+  ((obj ms-deck) fun)
+  "Run FUN when the current sequence ends.
+FUN is a function of a single argument, DIRECTION, which is
+always `forwards' or `backwards'."
+  (oset obj sequence-callbacks
+        (cons fun (oref obj sequence-callbacks))))
 ;; * Slide
 (defclass ms-slide (ms-parent ms-stateful-sequence)
   ((slide-action :initform nil :initarg :slide-action
