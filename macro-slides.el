@@ -64,7 +64,9 @@
 
 ;;; Code:
 
-(require 'org)
+(require 'image-mode)
+(require 'eieio)
+(require 'org-element)
 (require 'org-fold)
 (require 'face-remap)
 
