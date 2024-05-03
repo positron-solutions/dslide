@@ -425,7 +425,7 @@ coordinate with it.")
 (defun ms-display-slides ()
   (ms--ensure-slide-buffer t)
   (ms--clean-up-state)
-  (oset ms--deck display-state 'slides)
+  (oset ms--deck slide-buffer-state 'slides)
   (widen)
   (org-fold-show-all)
   (ms-init ms--deck))
@@ -436,7 +436,7 @@ This is a valid `ms-start-function' and will start
 each slide show from the contents view."
   (ms--ensure-slide-buffer t)
   (ms--clean-up-state)
-  (oset ms--deck display-state 'contents)
+  (oset ms--deck slide-buffer-state 'contents)
 
   (widen)
   (org-overview)
@@ -460,7 +460,7 @@ each slide show from the contents view."
   "Switch to the base buffer for the slide show."
   (unless ms--deck
     (error "No deck exists"))
-  (oset ms--deck display-state 'base)
+  (oset ms--deck slide-buffer-state 'base)
   (switch-to-buffer (oref ms--deck base-buffer)))
 
 (defun ms-stop ()
@@ -756,8 +756,9 @@ work as well.")
    (window-config :initform nil :initarg :window-config
                   "Window configuration for restoring after stop.")
    ;; TODO this implementation doesn't work if more indirect buffers are used.
-   (display-state :initform nil
-                  "Initiated by display actions to `contents' or `slides'.")
+   (slide-buffer-state
+    :initform nil
+    "Initiated by display actions to `contents' or `slides'.")
    (step-callbacks
     :initform nil
     "Steps to run before next steps.
@@ -2363,13 +2364,13 @@ occur in the display buffer."
   "Return t if current buffer is displaying contents."
   (and ms--deck
        (eq (current-buffer) (oref ms--deck slide-buffer))
-       (eq 'contents (oref ms--deck display-state))))
+       (eq 'contents (oref ms--deck slide-buffer-state))))
 
 (defun ms--showing-slides-p ()
   "Return t if current buffer is displaying contents."
   (and ms--deck
        (eq (current-buffer) (oref ms--deck slide-buffer))
-       (eq 'slides (oref ms--deck display-state))))
+       (eq 'slides (oref ms--deck slide-buffer-state))))
 
 (defun ms--delete-overlays ()
   "Delete content overlays."
