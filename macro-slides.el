@@ -363,7 +363,6 @@ an SLIDE_FILTER keyword."
 
 ;; Tell the compiler that these variables exist
 (defvar ms-mode)
-(defvar ms-buffer-slide-mode)
 
 (defvar-local ms-heading-level-1-cookie nil)
 (defvar-local ms-heading-level-2-cookie nil)
@@ -376,8 +375,10 @@ an SLIDE_FILTER keyword."
 (defvar-local ms-document-title-cookie nil)
 (defvar-local ms-document-info-cookie nil)
 
-(defvar-local ms--deck nil
-  "Active deck object.")
+(defvar ms--deck nil
+  "Active deck object.
+This is global.  If a presentation is active, you can look at this variable to
+coordinate with it.")
 
 (defvar-local ms--overlays nil
   "Overlays used to hide or change contents display.")
@@ -400,6 +401,7 @@ an SLIDE_FILTER keyword."
   :init-value nil
   :keymap ms-mode-map
   :group 'macro-slides
+  :global t
   (unless (eq 'org-mode (buffer-local-value
                          'major-mode (current-buffer)))
     (user-error "Not an org buffer")
@@ -415,14 +417,13 @@ an SLIDE_FILTER keyword."
 
 (defun ms-live-p ()
   "Check if a deck is associated so that commands can complete."
-  (and (or ms-mode
-           ms-buffer-slide-mode)
-       (bound-and-true-p ms--deck)
+  (and ms-mode
+       ms--deck
        (ms-deck-live-p ms--deck)))
 
 ;; TODO rename these functions to `switch-to'?
 (defun ms-display-slides ()
-  (ms--ensure-slide-buffer)
+  (ms--ensure-slide-buffer t)
   (ms--clean-up-state)
   (oset ms--deck display-state 'slides)
   (widen)
@@ -433,7 +434,7 @@ an SLIDE_FILTER keyword."
   "Switch to showing contents in the slide buffer.
 This is a valid `ms-start-function' and will start
 each slide show from the contents view."
-  (ms--ensure-slide-buffer)
+  (ms--ensure-slide-buffer t)
   (ms--clean-up-state)
   (oset ms--deck display-state 'contents)
 
@@ -480,6 +481,8 @@ source buffer."
 
     ;; TODO `display-buffer'?
     ;; TODO restore window configuration?
+    ;; TODO make the deck a child sequence of a presentation ;-)
+    ;; TODO ensure cleanup is thorough even if there's a lot of failures
     (switch-to-buffer base-buffer)
 
     (when slide-buffer
@@ -488,36 +491,10 @@ source buffer."
     (when ms-mode
       (ms-mode -1))
 
-    (setq-local ms--deck nil)
+    (setq ms--deck nil)
 
     (run-hooks 'ms-stop-hook)
     (ms--feedback :stop)))
-
-;; ** Buffer Slide
-
-(defvar-keymap ms-buffer-slide-mode-map
-  :doc "Keymap for buffers displayed as slides in a deck.
-It uses the `ms-mode' as its parent so that your
-controls for slides are the same, but if this causes shadowing
-problems in buffers being used as slides, you can change the
-controls."
-  :parent ms-mode-map)
-
-(define-minor-mode ms-buffer-slide-mode
-  "A minor mode for buffers being used as slides.
-This ensures that when we delegate out to another buffer, the
-presentation bindings are still useable and various calls can
-find the presentation."
-  :keymap ms-buffer-slide-mode-map
-  :group 'macro-slides
-  (cond (ms-buffer-slide-mode
-         (unless (and (boundp 'ms--deck)
-                      ms--deck)
-           (error "Mode started directly without a deck")))
-        (t
-         ;; Completely wipe out the variable.
-         (when (boundp 'ms--deck)
-           (makunbound 'ms--deck)))))
 
 ;; * User Commands
 
@@ -781,18 +758,11 @@ work as well.")
    ;; TODO this implementation doesn't work if more indirect buffers are used.
    (display-state :initform nil
                   "Initiated by display actions to `contents' or `slides'.")
-   (step-callbacks :initform nil
-                   "Steps to run before next steps.
-When these return non-nil, they are considered to have made
-progress and will count as a step on their own.  When they return
-nil, they merely run and then allow the next step to make
-progress.  See `ms-run-as-next-step'.")
-   (sequence-callbacks :initform nil
-                       "Steps that run when the current sequence terminates.
-These callbacks want to have a lifecycle that out-lives the current sequence.
-After calling final for a sequence that has failed to progress or is being
-stopped, these callbacks may run.  When they return nil, they merely run and
-then allow the next step to make progress."))
+   (step-callbacks
+    :initform nil
+    "Steps to run before next steps.
+FORM is just a list as steps will always be run before any
+sequence ends or makes progress..")
   "The Deck is responsible for selecting the parent node and
 maintaining state between mode activations or when switching
 between slides and contents.  It also acts as a central control
@@ -1069,22 +1039,61 @@ find the slide that displays that POINT."
        (eq (oref obj base-buffer) (buffer-base-buffer
                                    (oref obj slide-buffer)))))
 
-(cl-defmethod ms-run-as-next-step
-  ((obj ms-deck) fun)
-  "Run FUN at the next step with a single argument, DIRECTION.
-DIRECTION is either `forward' or `backward'.  The return value of FUN is
-interpreted as whether progress was made and will be used to decide if further
-steps should be attempted."
-  (oset obj step-callbacks
-        (cons fun (oref obj step-callbacks))))
 
-(cl-defmethod ms-run-after-sequence
-  ((obj ms-deck) fun)
-  "Run FUN when the current sequence ends.
-FUN is a function of a single argument, DIRECTION, which is
-always `forwards' or `backwards'."
-  (oset obj sequence-callbacks
-        (cons fun (oref obj sequence-callbacks))))
+(defun ms-push-window-config (&optional pop-when step)
+  "Save the window configuration and narrowing for restoration.
+POP-WHEN will add a callback to restore the restriction.
+
+Optional POP-WHEN decides when to restore the config.  See
+`ms-push-step' for details.
+
+Optional STEP argument will decide if the callback counts as a step or will
+return nil so that it is only run for effects."
+  (let ((window-config (current-window-configuration)))
+    (ms-push-step
+     (lambda (_) (prog1 step
+              (set-window-configuration window-config)))
+     pop-when)))
+
+;; TODO pop the root sequence on stop.
+(defun ms-push-step (fun &optional pop-when)
+  "Run FUN as next step.
+FUN is a function of a single argument, `forward' or `backward'.
+
+The return value is interpreted as progress, so return non-nil if
+you want FUN to count as a step or nil if FUN is only run for
+effects.
+
+Optional POP-WHEN argument means run FUN after current sequence
+ends.  Three kinds of values are understood:
+
+- `step' or nil: next step.
+
+- integer: Depth of parents.  0 is the current sequence.
+
+- `sequence': always equivalent to 0.  Just run when the current
+  sequence ends.  TODO ⚠️ This could be unstable if actions become
+  sub-sequences, which is currently intended.
+
+- `root': run before cleanup.  Equivalent to passing an integer
+  equal to one less than the sequence depth.
+
+If you need multiple steps, consider adding steps inside of FUN
+for recursive dynamic steps rather than adding a lot of steps at
+once, which requires the functions to be removed or return nil."
+  (unless (ms-live-p)
+    (error "No active deck"))
+  (cond ((eq pop-when 'step)
+         (push fun (oref ms--deck step-callbacks)))
+        ((or (eq pop-when 'sequence)
+             (eq pop-when 0))
+         (push fun (cdar (oref ms--deck sequence-callbacks))))
+        ((integerp pop-when)
+         (if (>= pop-when (length (oref ms--deck sequence-callbacks)))
+             (error "Requested depth exceeds sequence depth")
+           (push fun (cdr (nth pop-when
+                               (oref ms--deck sequence-callbacks))))))))
+
 ;; * Slide
 (defclass ms-slide (ms-parent ms-stateful-sequence)
   ((slide-action :initform nil :initarg :slide-action
@@ -1610,38 +1619,48 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
-;; TODO extract buffer-slide setup logic a bit to make writing these easier.
 ;; TODO make it just a link action?
 (cl-defmethod ms-step-forward ((obj ms-action-image))
   (when-let ((link (ms-section-next obj 'link)))
-      (let ((deck ms--deck)
-            (window-config (current-window-configuration)))
-        ;; changes buffer, hopefully to image-mode
-        (let ((org-link-frame-setup '((file . find-file)))
-              (display-buffer-overriding-action '(display-buffer-full-frame)))
-          (org-link-open link))
-        ;; TODO success detection
-        (when (eq (buffer-local-value 'major-mode (current-buffer))
-                  'image-mode)
-          (image-transform-fit-to-window))
-        (let* ((image-buffer (current-buffer))
-               (callback (lambda (_)
-                           (with-current-buffer image-buffer
-                             (ms-buffer-slide-mode -1))
-                           (when (buffer-live-p image-buffer)
-                             ;; TODO optional kill ☠️🔪🩸
-                             (bury-buffer image-buffer))
-                           (set-window-configuration window-config)
-                           ;; When callback returns nil, next forward
-                           ;; step can proceed
-                           nil)))
-          (ms-run-as-next-step deck callback)
-          (setq-local ms--deck deck)
-          (ms-buffer-slide-mode 1)))))
+    (ms-push-window-config 'step nil)
 
-;; TODO this won't show the images going backward
+    ;; TODO success detection
+    (let ((org-link-frame-setup '((file . find-file)))
+          (display-buffer-overriding-action '(display-buffer-full-frame)))
+      (org-link-open link))
+
+    (when (eq (buffer-local-value 'major-mode (current-buffer))
+              'image-mode)
+      (image-transform-fit-to-window)
+      (let ((image-buffer (current-buffer)))
+        (ms-push-step
+         (lambda (_)
+           (when (buffer-live-p image-buffer)
+             ;; TODO Optional kill ☠️🩸
+             (bury-buffer image-buffer))))))
+    ;; If we found a next image, progress was made
+    t))
+
 (cl-defmethod ms-step-backward ((obj ms-action-image))
-  (ms-section-previous obj 'link))
+  (when-let ((link (ms-section-previous obj 'link)))
+    (ms-push-window-config 'step nil)
+
+    ;; TODO success detection
+    (let ((org-link-frame-setup '((file . find-file)))
+          (display-buffer-overriding-action '(display-buffer-full-frame)))
+      (org-link-open link))
+
+    (when (eq (buffer-local-value 'major-mode (current-buffer))
+              'image-mode)
+      (image-transform-fit-to-window)
+      (let ((image-buffer (current-buffer)))
+        (ms-push-step
+         (lambda (_)
+           (when (buffer-live-p image-buffer)
+             ;; TODO Optional kill ☠️🩸
+             (bury-buffer image-buffer))))))
+    ;; If we found a next image, progress was made
+    t))
 
 ;; ** Default Child Action
 (defclass ms-child-action-slide (ms-action) ()
@@ -2332,12 +2351,11 @@ occur in the display buffer."
         ;; Set the deck in both base and slide buffer
         (setq ms--deck deck)
         (switch-to-buffer slide-buffer) ;; TODO display options?
-        (setq ms--deck deck)
 
         (widen)
         (org-fold-show-all)
         ;; Enter the state model
-        (ms--choose-slide ms--deck
+        (ms--choose-slide deck
                           ms-start-from)
         (ms--remap-faces t))))))
 
@@ -2376,19 +2394,13 @@ occur in the display buffer."
   (setq ms--animation-overlay nil
         ms--animation-timer nil))
 
-(defun ms--assert-slide-buffer ()
+(defun ms--ensure-slide-buffer (&optional display)
+  "Run in commands that must run in the slide buffer."
   (unless (ms-live-p)
     (error "Live deck not found within buffer"))
-  (unless (eq (current-buffer)
-              (oref ms--deck slide-buffer))
-    (error "Not in slide buffer")))
-
-;; TODO check usages
-(defun ms--ensure-slide-buffer ()
-  (unless (ms-live-p)
-    (error "Live deck not found within buffer"))
-  ;; TODO display?
-  (switch-to-buffer (oref ms--deck slide-buffer)))
+  (if display
+      (display-buffer (oref ms--deck slide-buffer))
+    (set-buffer (oref ms--deck slide-buffer))))
 
 (defun ms--keyword-value (key)
   "Get values like #+KEY from document keywords."
