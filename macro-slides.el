@@ -482,6 +482,7 @@ source buffer."
     ;; TODO `display-buffer'?
     ;; TODO restore window configuration?
     ;; TODO make the deck a child sequence of a presentation ;-)
+    ;; TODO add kill buffer hook to stop slideshow if the base is killed
     ;; TODO ensure cleanup is thorough even if there's a lot of failures
     (switch-to-buffer base-buffer)
 
@@ -742,6 +743,7 @@ children. Decks and slides have children.")
    child (oref obj filter)))
 
 ;; ** Deck
+;; TODO extract non-org-specific behavior to sequence-root class.
 (defclass ms-deck (ms-progress-tracking
                    ms-parent)
   ((slide :initform nil
@@ -766,10 +768,8 @@ FORM is just a list as steps will always be run before any
 sequence ends or makes progress..")
   "The Deck is responsible for selecting the parent node and
 maintaining state between mode activations or when switching
-between slides and contents.  It also acts as a central control
-point that can be stored in a single buffer-local variable in
-other buffers.  Class can be overridden to affect root behaviors.
-See `ms-default-deck-class'")
+between slides and contents.  Class can be overridden to affect
+root behaviors.  See `ms-default-deck-class'")
 
 (cl-defmethod ms-init ((obj ms-deck))
   "For the deck class, init needs to call init on slides until one succeeds.
@@ -813,6 +813,7 @@ their init."
         (restriction-max (point-max))
         progress reached-end)
     ;; Burn up a step callback until one returns non-nil
+    ;; TODO do I need this `slot-boundp' check?
     (when-let ((steps (and (slot-boundp obj 'step-callbacks)
                            (oref obj step-callbacks))))
       (while (and (not progress)
@@ -1016,8 +1017,8 @@ their init."
            (user-error "No more previous slides!")))))
 
 ;; TODO handle no-slides condition by skipping to the end
-(cl-defmethod ms--choose-slide ((obj ms-deck) how
-                                &optional point)
+;; TODO either check for base or ensure it
+(cl-defmethod ms--choose-slide ((obj ms-deck) how &optional point)
   "Set the current slide, according to HOW.
 Optional POINT allows resolving a slide by walking the tree to
 find the slide that displays that POINT."
@@ -1033,6 +1034,7 @@ find the slide that displays that POINT."
                  (ms--make-slide
                   (ms--root-heading-at-point base-point) obj))))))
 
+;; TODO probably don't need methods for the functions below
 (cl-defmethod ms-deck-live-p ((obj ms-deck))
   "Check if all the buffers are alive or can be recovered."
   ;; TODO in some circumstances, an indirect buffer might exist, but we should
@@ -1347,7 +1349,8 @@ all display.  TODO It should cooperate via hydration in the
                 (ms--section-end heading)))
          ;; the following condition can only be true when narrowed to
          ;; zero-length unless the buffer is actually empty, a degenerate
-         ;; condition as there are no headings from which to create slides.
+         ;; condition as there are no headings from which to create slides and
+         ;; therefore this action never exists.
          (full-control (= (- (point-max) (point-min)) 0)))
 
     (cond (full-control
@@ -1411,7 +1414,7 @@ made, so you can combine this with `or' when deriving new actions."
 
 ;; TODO wut?  It's calling `first-child'?
 (cl-defmethod ms-forward-child ((obj ms-action))
-  "Go forward one child heading and return the org 'headline element.
+  "Go forward one child heading and return the org headline element.
 The returned element is the child you want to either display or call further
 methods on."
   ;; The slide tracks progress using a marker. This marker is advanced to the
@@ -1429,7 +1432,7 @@ methods on."
     next-child))
 
 (cl-defmethod ms-backward-child ((obj ms-action))
-  "Back up one child heading and return the org 'headline element.
+  "Back up one child heading and return the org headline element.
 The returned element is the child you want to either display or call further
 methods on."
   ;; The slide tracks progress using a marker. This marker is moved to the
@@ -1670,16 +1673,14 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 (defclass ms-child-action-slide (ms-action) ()
   "Default child action.  Children are independent slides.")
 
-(cl-defmethod ms-step-forward
-  ((obj ms-child-action-slide))
+(cl-defmethod ms-step-forward ((obj ms-child-action-slide))
   ;; For child slides, we make a slide out of the next child heading and advance
   ;; our progress forward to the end of that child
   (when-let ((child (ms-forward-child obj)))
     ;; TODO this method of getting the parent
     (ms--make-slide child (oref ms--deck slide))))
 
-(cl-defmethod ms-step-backward
-  ((obj ms-child-action-slide))
+(cl-defmethod ms-step-backward ((obj ms-child-action-slide))
   ;; For child slides, we make a slide out of the previous child heading and
   ;; advance our progress backward to the beginning of that child
   (when-let ((child (ms-backward-child obj)))
@@ -1687,9 +1688,9 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 ;; ** Inline Child Action
 ;; While the basics of making a child out of the next heading are the same, an
-;; action that controls children on its own does not return them.  It needs to
-;; update the buffer restriction as necessary, call lifecycle functions, and
-;; pass through calls to step forward.
+;; action that controls children on its own does not return them to the deck.
+;; It needs to update the buffer restriction as necessary, call lifecycle
+;; functions, and pass through calls to step forward.
 
 ;; TODO round-robin child action
 ;; TODO every-child action
@@ -1731,8 +1732,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     ;; slides
     (not (null progress))))
 
-(cl-defmethod ms-step-backward
-  ((obj ms-child-action-inline))
+(cl-defmethod ms-step-backward ((obj ms-child-action-inline))
   ;; TODO If a child can't go backwards, it should be discarded, so the backward
   ;; implementation actually should be easy.  However, at the moment, the
   ;; implementation is a bit of a lucky shotgun, and I'm going to make a second
@@ -1768,8 +1768,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
         ;; slides
         (not (null progress))))))
 
-(cl-defmethod ms-end :after
-  ((obj ms-child-action-inline))
+(cl-defmethod ms-end :after ((obj ms-child-action-inline))
   ;; TODO yeah, these are some state hacks.  Let's try to de-couple this better.
   (oset obj backward-hack t)
   (ms-marker obj (org-element-begin (ms-heading obj)))
@@ -1897,7 +1896,7 @@ TYPE and FUNCTION are described in `org-element-map'."
 (defun ms--section-map
     (heading type fun &optional info first-match no-recursion)
   "Map the SECTION of HEADING.
-This includes all text up to the rist child."
+This includes all text up to the first child."
   (when-let ((section (ms--section heading)))
     (ms--map section type fun info
              first-match no-recursion)))
@@ -2232,7 +2231,7 @@ assumes the buffer is restricted and that there is a first tree."
   (when ms--header-overlay
     (delete-overlay ms--header-overlay)))
 
-;; ** ANIMATION
+;; * Animation
 
 (defvar ms--animation-timer nil)
 (defvar-local ms--animation-overlay nil)
