@@ -2232,7 +2232,7 @@ assumes the buffer is restricted and that there is a first tree."
 
 ;; ** ANIMATION
 
-(defvar-local ms--animation-timer nil)
+(defvar ms--animation-timer nil)
 (defvar-local ms--animation-overlay nil)
 
 (defcustom ms-animation-duration 1.0
