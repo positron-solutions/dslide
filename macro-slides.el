@@ -280,7 +280,7 @@ affect display in another buffer will not trigger this hook."
   :type 'hook)
 
 (defcustom ms-default-slide-action
-  #'ms-action-section
+  #'ms-action-narrow
   "Action class with lifecycle around the section actions.
 When stepping forward or backward, it is called before any
 section action.  It's normal purpose is to update the buffer
@@ -766,6 +766,13 @@ work as well.")
     "Steps to run before next steps.
 FORM is just a list as steps will always be run before any
 sequence ends or makes progress..")
+   (sequence-callbacks
+    :initform '(nil)
+    "Steps that run only when sequences end.
+Form is an alist of (SEQUENCE . STEPS) where STEPS is a list
+of step callbacks.  When sub-sequences are started, (SEQUENCE) is
+pushed onto this list."))
+
   "The Deck is responsible for selecting the parent node and
 maintaining state between mode activations or when switching
 between slides and contents.  Class can be overridden to affect
@@ -882,10 +889,6 @@ their init."
                   (mapc (lambda (w) (set-window-point w pos)) windows))
                 (set-buffer (oref obj slide-buffer))))
 
-            ;; zero-width region tells slide it's in control of display.  For
-            ;; slides the control their own children, they both create and
-            ;; manage the children, so we never see them at the root.
-            (narrow-to-region (point) (point))
             ;; We just run the init and then let the next loop call the first
             ;; forward, handling the result of progress appropriately.
             (ms-init next-slide))))))
@@ -975,13 +978,6 @@ their init."
            (switching-to-parent
             ;; TODO slide re-entry when parent can still make progress?
             (ms-final current-slide)
-
-            ;; TODO This burns one backward step because the child we are
-            ;; leaving is the valid backwards step.  Possibly there is another
-            ;; correct way.
-            ;; (ms-step-backward previous-slide)
-
-            (narrow-to-region (point) (point)))
            (t
             (when switching-to-sibling
               (ms-final current-slide))
@@ -995,11 +991,6 @@ their init."
                 (when-let ((windows (get-buffer-window-list (current-buffer))))
                   (mapc (lambda (w) (set-window-point w pos)) windows))
                 (set-buffer (oref obj slide-buffer))))
-
-            ;; zero-width region tells slide it's in control of display.  For
-            ;; slides the control their own children, they both create and
-            ;; manage the children, so we never see them at the root.
-            (narrow-to-region (point) (point))
             ;; We just send the slide to its end (reverse init) and allow the
             ;; next loop to call step-backward, obtaining progress and properly
             ;; handling the result.
@@ -1044,6 +1035,8 @@ find the slide that displays that POINT."
        (eq (oref obj base-buffer) (buffer-base-buffer
                                    (oref obj slide-buffer)))))
 
+(defun ms-push-kill-buffer ()
+  "Push a step to kill the current buffer.")
 
 (defun ms-push-window-config (&optional pop-when step)
   "Save the window configuration and narrowing for restoration.
@@ -1058,6 +1051,26 @@ return nil so that it is only run for effects."
     (ms-push-step
      (lambda (_) (prog1 step
               (set-window-configuration window-config)))
+     pop-when)))
+
+(defun ms-push-restriction (&optional pop-when step)
+  "Save the current buffer restriction for restoration.
+POP-WHEN will add a callback to restore the restriction.
+
+Optional POP-WHEN decides when to restore the config.  See
+`ms-push-step' for details.
+
+Optional STEP argument will decide if the callback counts as a step or will
+return nil so that it is only run for effects."
+  (let* ((begin (point-min))
+         (end (point-max))
+         (size (buffer-size))
+         (restricted (/= (- end begin) size)))
+    (ms-push-step
+     (lambda (_) (prog1 step
+              (if restricted
+                  (narrow-to-region begin end)
+                (widen))))
      pop-when)))
 
 ;; TODO pop the root sequence on stop.
@@ -1176,8 +1189,9 @@ heading and stores actions and their states.")
           (setq progress result))))
     progress))
 
-(defun ms--make-slide (heading parent)
-  "Hydrate a slide object from a HEADING element."
+(defun ms--make-slide (heading parent &rest args)
+  "Hydrate a slide object from a HEADING element.
+Many optional ARGS.  See code."
   ;; TODO Allow parent actions to configure child actions so that, for example,
   ;; flat slides can modify children to not try to show slides independently.
   ;; Add an argument this function since children that manage their own slides
@@ -1189,11 +1203,15 @@ heading and stores actions and their states.")
   (unless parent
     (error "No parent provided"))
 
-
   ;; Share the beginning marker across all actions.  It's not unique and
   ;; shouldn't move.
   (let* ((begin-position (org-element-begin heading))
-         (begin (make-marker)))
+         (begin (make-marker))
+         (slide-action-class (plist-get args :slide-action))
+         (slide-action-args (plist-get args :slide-action-args))
+         ;; Child action class can be `none' for explicit nil
+         (child-action-class (plist-get args :child-action))
+         (child-action-args (plist-get args :child-action-args)))
 
     (set-marker begin begin-position (current-buffer))
 
@@ -1205,42 +1223,53 @@ heading and stores actions and their states.")
                         "SLIDE_CHILD_ACTION"
                         "SLIDE_FILTER"
                         "SLIDE_CLASS")))
-           (args nil)
 
            (slide-action-class
-            (ms--class
-             (or (org-element-property :SLIDE_ACTION heading)
-                 (cdr (assoc-string "SLIDE_ACTION"
-                                    keywords))
-                 ms-default-slide-action)))
+            (or slide-action-class
+                (ms--class
+                 (or (org-element-property :SLIDE_ACTION heading)
+                     (cdr (assoc-string "SLIDE_ACTION"
+                                        keywords))
+                     ms-default-slide-action))))
+
            (slide-action (when slide-action-class
                            (apply slide-action-class
-                                  :begin begin args)))
+                                  :begin begin
+                                  slide-action-args)))
 
+           ;; TODO read interposed plist style arguments
+           ;; TODO action arguments might make sense, such as telling nested
+           ;; elements not to animate.  It's really hard for them to infer this
+           ;; even by looking at the restriction.
            (section-action-classes
             (ms--classes
              (or (org-element-property :SLIDE_SECTION_ACTIONS heading)
                  (cdr (assoc-string "SLIDE_SECTION_ACTIONS" keywords))
                  ms-default-section-actions)))
            (section-actions (mapcar
-                             (lambda (c) (when c (apply c :begin begin args)))
+                             (lambda (c) (when c (funcall c :begin begin)))
                              section-action-classes))
 
            (child-action-class
-            (ms--class
-             (or (org-element-property :SLIDE_CHILD_ACTION heading)
-                 (cdr (assoc-string "SLIDE_CHILD_ACTION"
-                                    keywords))
-                 ms-default-child-action)))
-           (child-action (when child-action-class
-                           (apply child-action-class :begin begin args)))
+            (or child-action-class
+                (ms--class
+                 (or
+                  (org-element-property :SLIDE_CHILD_ACTION heading)
+                  (cdr (assoc-string "SLIDE_CHILD_ACTION"
+                                     keywords))
+                  ms-default-child-action))))
+
+           (child-action (when (and  child-action-class
+                                     (not (eq child-action-class 'none)))
+                           (apply child-action-class
+                                  :begin begin
+                                  child-action-args)))
 
            (filter
             (or (ms--filter
                  (or (org-element-property :SLIDE_FILTER heading)
                      (cdr (assoc-string "SLIDE_FILTER" keywords))))
                 ms-default-filter))
-
            (class
             (or (ms--class
                  (or (org-element-property :SLIDE_CLASS heading)
@@ -1248,14 +1277,13 @@ heading and stores actions and their states.")
                                         keywords))))
                 ms-default-class)))
 
-      (let ((slide (apply class
-                          :slide-action slide-action
-                          :section-actions section-actions
-                          :child-action child-action
-                          :filter filter
-                          :parent parent
-                          :begin begin
-                          args)))
+      (let ((slide (funcall class
+                            :slide-action slide-action
+                            :section-actions section-actions
+                            :child-action child-action
+                            :filter filter
+                            :parent parent
+                            :begin begin)))
         slide))))
 
 (cl-defmethod ms-next-sibling ((obj ms-slide) filter)
@@ -1332,47 +1360,6 @@ NO-RECURSION will avoid descending into children."
    (ms-heading obj)
    type fun info first-match no-recursion))
 
-(cl-defmethod ms-narrow ((obj ms-action) &optional with-children)
-  "Narrow to this slide's heading and its contents.
-With optional WITH-CHILDREN non-nil, narrow to include the child
-headings as well.
-
-This function cooperates with child actions, inferring that if
-the buffer is narrowed to zero size, the child is responsible for
-all display.  TODO It should cooperate via hydration in the
-`make-slide' function."
-  (let* ((progress)
-         (heading (ms-heading obj))
-         (begin (oref obj begin))
-         (end (if with-children
-                  (org-element-end heading)
-                (ms--section-end heading)))
-         ;; the following condition can only be true when narrowed to
-         ;; zero-length unless the buffer is actually empty, a degenerate
-         ;; condition as there are no headings from which to create slides and
-         ;; therefore this action never exists.
-         (full-control (= (- (point-max) (point-min)) 0)))
-
-    (cond (full-control
-           (narrow-to-region begin end)
-           (ms--make-header)
-           (goto-char begin)
-           (when ms-slide-in-effect
-             (ms-animation-setup begin end))
-           (setq progress t))
-          (t
-           ;; When not in full control, just expand the restriction to include
-           ;; contents
-           (unless (and (<= (point-min) begin)
-                        (>= (point-max) end))
-             (narrow-to-region (min (point-min) begin)
-                               (max (point-max) end))
-             (when ms-slide-in-effect
-               (ms-animation-setup begin end))
-             (setq progress t))))
-    ;; This progress is important because it's how we show a slide and count as
-    ;; a first step
-    progress))
 
 (cl-defmethod ms-init ((obj ms-action))
   (ms-marker obj (org-element-begin (ms-heading obj))))
@@ -1384,94 +1371,99 @@ all display.  TODO It should cooperate via hydration in the
   (when-let ((marker (oref obj marker)))
     (set-marker marker nil)))
 
-(cl-defmethod ms-narrow-forward ((obj ms-action) &optional with-children)
-  "Make the buffer restriction include the slide's bounds.
-Optional WITH-CHILDREN will include child headings.  The return
-value is a valid step return value, indicating if progress was
-made, so you can combine this with `or' when deriving new actions."
-  ;; This method implements once-per-direction behavior.  When switching from
-  ;; forward to backward, it is possible to trigger this action again.  However,
-  ;; it will only return t when it actually updates the region.
-  (let* ((heading (ms-heading obj))
-         (position (ms-marker obj)))
-    (when (< position (org-element-end heading))
-      (ms-marker obj (org-element-end heading))
-      (ms-narrow obj with-children))))
-
-(cl-defmethod ms-narrow-backward ((obj ms-action) &optional with-children)
-  "Make the buffer restriction include the slide's bounds.
-Optional WITH-CHILDREN will include child headings.  The return
-value is a valid step return value, indicating if progress was
-made, so you can combine this with `or' when deriving new actions."
-  ;; This method implements once-per-direction behavior.  When switching from
-  ;; forward to backward, it is possible to trigger this action again.  However,
-  ;; it will only return t when it actually updates the region.
-  (let* ((heading (ms-heading obj))
-         (position (ms-marker obj)))
-    (when (> position (org-element-begin heading))
-      (ms-marker obj (org-element-begin heading))
-      (ms-narrow obj with-children))))
-
-;; TODO wut?  It's calling `first-child'?
 (cl-defmethod ms-forward-child ((obj ms-action))
-  "Go forward one child heading and return the org headline element.
-The returned element is the child you want to either display or call further
-methods on."
-  ;; The slide tracks progress using a marker. This marker is advanced to the
-  ;; end of a child it returns.
-  (let* ((heading (ms-heading obj))
-         (position (ms-marker obj))
-         (pred (lambda (c) (> (org-element-begin c)
-                         position)))
-         (next-child (ms--first-child heading pred)))
-    (ms-marker obj (if next-child
-                       (org-element-begin next-child)
-                     ;; The marker is moved to the end if there was no next
-                     ;; child.
-                     (org-element-end heading)))
-    next-child))
+  "Return the next direct child heading and advance the marker.
+Marker is moved to the end of the heading if no matching child is
+found."
+  (if-let* ((marker (ms-marker obj))
+            (heading (ms-heading obj))
+            (target-level (1+ (org-element-property :level heading)))
+            (next (ms--contents-map
+                   heading 'headline
+                   (lambda (child)
+                     (and (= target-level (org-element-property :level child))
+                          (> (org-element-begin child) marker)
+                          child))
+                   nil t)))
+      (prog1 next
+        (ms-marker obj (org-element-begin next)))
+    (ms-marker obj (org-element-end (ms-heading obj)))
+    nil))
 
 (cl-defmethod ms-backward-child ((obj ms-action))
-  "Back up one child heading and return the org headline element.
-The returned element is the child you want to either display or call further
-methods on."
-  ;; The slide tracks progress using a marker. This marker is moved to the
-  ;; beginning of the child it returns.
-  (let* ((heading (ms-heading obj))
-         (position (ms-marker obj))
-         (pred (lambda (c) (< (org-element-begin c)
-                         position)))
-         (previous-child (ms--last-child heading pred)))
-    (ms-marker obj (if previous-child
-                       (org-element-begin previous-child)
-                     ;; The marker is moved to the beginning when there was no
-                     ;; previous child.
-                     (org-element-begin heading)))
-    previous-child))
+  "Return previous direct child heading and advance the marker backward.
+Marker is moved to the beginning of the heading if no matching
+child is found."
+  (if-let* ((marker (ms-marker obj))
+            (heading (ms-heading obj))
+            (target-level (1+ (org-element-property :level heading)))
+            ;; We have to get all the children and find the last match
+            (next (car
+                   (last
+                    (ms--contents-map
+                     heading 'headline
+                     (lambda (child)
+                       (and (= target-level (org-element-property :level child))
+                            (< (org-element-begin child) marker)
+                            child)))))))
+      (prog1 next
+        (ms-marker obj (org-element-begin next)))
+      (ms-marker obj (org-element-begin (ms-heading obj)))
+      nil))
 
-;; ** Default Section Action
-(defclass ms-action-section (ms-action) ()
-  "Default action.  Just displays the section.")
+;; ** Default Slide Action
+(defclass ms-action-narrow (ms-action)
+  ((include-restriction :initform nil :initarg :include-restriction
+                        "Include the existing restriction.")
+   (with-children :initform nil :initarg :with-children
+                  "Narrow should include children.
+The default, nil, narrows to the section only.")
+   (last-progress :initform nil
+                  "A helpful hack to prevent unintended repeat
+narrowing in the lifecycle.  This is a latch variable."))
+  "Default slide action.
+Most actions need the current slide to be narrowed to.  This
+action is capable of performing such narrowing and informing the
+deck of progress was made.")
 
-(cl-defmethod ms-step-forward ((obj ms-action-section))
-  (ms-narrow-forward obj))
+(cl-defmethod ms-narrow ((obj ms-action-narrow))
+  "Narrow to this slide's heading."
+  (let* ((progress)
+         (heading (ms-heading obj))
+         (begin (oref obj begin))
+         (end (if (oref obj with-children)
+                  (org-element-end heading)
+                (ms--section-end heading))))
 
-(cl-defmethod ms-step-backward ((obj ms-action-section))
-  (ms-narrow-backward obj))
+    (if (oref obj include-restriction)
+        (unless (and (<= (point-min) begin)
+                     (>= (point-max) end))
+          (narrow-to-region (min (point-min) begin)
+                            (max (point-max) end))
+          (when ms-slide-in-effect
+            (ms-animation-setup begin end))
+          (setq progress t))
+      (unless (and (<= (point-min) begin)
+                   (>= (point-max) end))
+        (narrow-to-region begin end)
+        (ms--make-header)
+        (goto-char (point-min))         ; necessary to reset the scroll
+        (when ms-slide-in-effect
+          (ms-animation-setup begin end))
+        (setq progress t)))
+    ;; This progress is important because it's how we show a slide and count as
+    ;; a first step
+    progress))
 
-;; ** Contents Action
-;; TODO We really just need argument-based configuration
-;; TODO Default action cooperation.  Sections and children unavoidably coupled.
-(defclass ms-action-contents (ms-action) ()
-  "Display the entire contents.
-This action should normally be paired with no child action.  Slides will not be
-instantiated from children, so their configuration is meaningless.")
+(cl-defmethod ms-step-forward ((obj ms-action-narrow))
+  (prog1 (unless (eq 'forward (oref obj last-progress))
+           (ms-narrow obj))
+    (oset obj last-progress 'forward)))
 
-(cl-defmethod ms-step-forward ((obj ms-action-contents))
-  (ms-narrow-forward obj 'with-children))
-
-(cl-defmethod ms-step-backward ((obj ms-action-contents))
-  (ms-narrow-backward obj 'with-children))
+(cl-defmethod ms-step-backward ((obj ms-action-narrow))
+  (prog1 (unless (eq 'backward (oref obj last-progress))
+           (ms-narrow obj))
+    (oset obj last-progress 'backward)))
 
 ;; ** Reveal items section action
 (defclass ms-action-item-reveal (ms-action)
@@ -1696,88 +1688,62 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; TODO every-child action
 ;; TODO inherited child actions
 ;; TODO generalize
+
+;; TODO override the child's own child action
 (defclass ms-child-action-inline (ms-action)
-  ((children :initform nil "Children that have been instantiated.")
-   (backward-hack :initform nil "Extra backward step from end."))
+  ((children :initform nil "Children that have been instantiated."))
   "Display children inline with the parent.")
 
 (cl-defmethod ms-step-forward ((obj ms-child-action-inline))
-
-  (let (progress
-        exhausted
-        (children (when (slot-boundp obj 'children)
-                    (oref obj children))))
-    ;; Loop exists in case the next child is no-op.  Same as in the deck.
+  (let (progress exhausted)
     (while (not (or progress exhausted))
       ;; First try the most recently added child
-      (setq progress (and children
-                          (ms-step-forward (car children))))
-
-      ;; TODO The likely way we want to handle this is to override the child's
-      ;; child-action so that it handles its own children.
-      (when (eieio-object-p progress)
-        (warn "Deep inline not yet supported yet!"))
+      (setq progress (when-let* ((child (car (oref obj children))))
+                       (ms-step-forward child)))
 
       ;; If the child didn't make progress, try to load up the next child
       (unless progress
-        (if-let ((child-heading (ms-forward-child obj))
-                 (child (ms--make-slide child-heading (oref ms--deck slide))))
-            (progn
-              (push child children)
-              (oset obj children children)
-              (ms-init child))
-          (ms-marker obj (org-element-end (ms-heading obj)))
+        (if-let* ((child-heading (ms-forward-child obj))
+                  (child (ms--make-slide
+                          child-heading
+                          (oref ms--deck slide)
+                          :slide-action #'ms-action-narrow
+                          :slide-action-args '(:include-restriction t :with-children t)
+                          :child-action 'none))
+                  (success (ms-init child)))
+            (push child (oref obj children))
           (setq exhausted t))))
     ;; Don't return any child objects to the deck or it will treat them like
     ;; slides
     (not (null progress))))
 
 (cl-defmethod ms-step-backward ((obj ms-child-action-inline))
-  ;; TODO If a child can't go backwards, it should be discarded, so the backward
-  ;; implementation actually should be easy.  However, at the moment, the
-  ;; implementation is a bit of a lucky shotgun, and I'm going to make a second
-  ;; pass after building some more child actions.
+  (let (progress)
+    (while (and (oref obj children) (not progress))
+      ;; First try the most recently added child
+      (setq progress (when-let* ((child (car (oref obj children))))
+                       (ms-step-backward child)))
 
-  ;; Called for side-effect, moving the marker backwards.  What a hack.
-  (or (ms-backward-child obj)
-      (ms-marker obj (org-element-begin (ms-heading obj))))
-
-  (when-let* ((children (when (slot-boundp obj 'children)
-                          (oref obj children)))
-              (last-child (car children)))
-
-    ;; TODO this is dumb, but I need to figure out how to get the display action
-    ;; for children and the section to play nice with inline children.
-    (if (oref obj backward-hack) (progn (oset obj backward-hack nil) t)
-      (let ((progress (ms-step-backward last-child)))
-
-        (unless progress
-          (ms-final last-child)
-          (oset obj children (cdr children))
-          (narrow-to-region (point-min) (org-element-begin
-                                         (ms-heading last-child)))
-
-          (setq progress t))
-
-        ;; TODO same as in forward, this needs to be handled by overriding the
-        ;; child's child-action.  See `make-slide'
-        (if (eieio-object-p progress)
-            (warn "Deep inline not supported yet!"))
-
-        ;; Don't return any child objects to the deck or it will treat them like
-        ;; slides
-        (not (null progress))))))
+      ;; If the child didn't make progress, narrow it away
+      (unless progress
+        (let ((finished (pop (oref obj children)))
+              (heading (ms-backward-child obj))) ; for marker effects 💡
+          (when heading
+            ;; TODO narrow's final method can handle this 😼
+            (narrow-to-region (point-min)
+                              (org-element-begin heading)))
+          (ms-final finished)
+          (setq progress t))))
+    ;; Don't return any child objects to the deck or it will treat them like
+    ;; slides
+    (not (null progress))))
 
 (cl-defmethod ms-end :after ((obj ms-child-action-inline))
-  ;; TODO yeah, these are some state hacks.  Let's try to de-couple this better.
-  (oset obj backward-hack t)
+  ;;  Basically the default stateful sequence technique
   (ms-marker obj (org-element-begin (ms-heading obj)))
-  (ms-narrow obj t)
-  (while (ms-step-forward obj)
-    t))
+  (while (ms-step-forward obj) t))
 
-(cl-defmethod ms-final :after
-  ((obj ms-child-action-inline))
+(cl-defmethod ms-final :after ((obj ms-child-action-inline))
   (mapc #'ms-final (oref obj children)))
 
 ;; * Filters
@@ -1953,27 +1919,6 @@ matched."
       (or
        (org-element-contents-begin heading)
        (org-element-end heading)))))
-
-(defun ms--first-child (heading &optional predicate)
-  "Get the first direct child of HEADING matched by PREDICATE."
-  (save-restriction
-    (widen)
-    (seq-find #'identity
-              (ms--children heading predicate))))
-
-(defun ms--last-child (heading &optional predicate)
-  "Get the last direct child of HEADING matched by PREDICATE."
-  (save-restriction
-    (widen)
-    (seq-find #'identity
-              (reverse (ms--children heading predicate)))))
-
-(defun ms--children (heading &optional predicate)
-  "Get the direct children of HEADING."
-  (ms--contents-map
-   heading 'headline
-   (ms--child-predicate heading predicate)
-   nil nil t))
 
 ;; TODO these two functions behaved badly and rely on non-element methods of
 ;; unknown behavior
