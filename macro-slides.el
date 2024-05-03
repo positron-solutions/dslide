@@ -1025,11 +1025,13 @@ find the slide that displays that POINT."
          (oset obj slide (ms--make-slide
                           (ms--document-first-heading) obj)))
         ((eq how 'point)
-         ;; TODO implement looking inside the slides using `goto' and recover
-         ;; the child with POINT
-         (oset obj slide
-               (ms--make-slide
-                (ms--root-heading-at-point) obj)))))
+         (let ((base-point (with-current-buffer (oref obj base-buffer)
+                             (point))))
+           ;; TODO implement looking inside the slides using `goto' and recover
+           ;; the child with POINT
+           (oset obj slide
+                 (ms--make-slide
+                  (ms--root-heading-at-point base-point) obj))))))
 
 (cl-defmethod ms-deck-live-p ((obj ms-deck))
   "Check if all the buffers are alive or can be recovered."
@@ -1339,7 +1341,6 @@ all display.  TODO It should cooperate via hydration in the
 `make-slide' function."
   (let* ((progress)
          (heading (ms-heading obj))
-         (length  (buffer-size))
          (begin (oref obj begin))
          (end (if with-children
                   (org-element-end heading)
@@ -1471,7 +1472,8 @@ instantiated from children, so their configuration is meaningless.")
 
 ;; ** Reveal items section action
 (defclass ms-action-item-reveal (ms-action)
-  (overlays :initform nil)
+  ((overlays :initform nil))            ; TODO see if this fixes the slot
+                                        ; unbound issues
   "Hide all items and then reveal them one by one.")
 
 ;; TODO may try to read uninitialized slot...
@@ -1562,7 +1564,8 @@ Optional UNNAMED will return unnamed blocks as well."
   (without-restriction
     (save-excursion
       (goto-char (org-element-begin block-element))
-      (org-babel-execute-src-block))))
+      ;; t for don't cache.  We likely want effects
+      (org-babel-execute-src-block t))))
 
 (cl-defmethod ms--get-block
   ((obj ms-action) &optional method-name)
@@ -1853,12 +1856,10 @@ children.
 
 Optional KEEP-LINES will replace region with as many newlines as
 the region contains, preserving vertical size."
-  (save-excursion
-    (goto-char (org-element-begin heading))
-    (ms-hide-region
-     (ms--section-begin heading)
-     (ms--section-end heading)
-     keep-lines)))
+  (ms-hide-region
+   (ms--section-begin heading)
+   (ms--section-end heading)
+   keep-lines))
 
 ;; * Element Mapping
 
@@ -2081,7 +2082,8 @@ Does not modify the point."
                   element 'headline)))
     (if (eq 'headline (org-element-type element))
         element
-      (ms--any-heading))))
+      (or parent
+          (ms--any-heading)))))
 
 (defun ms--any-heading ()
   "Return any heading that can be found.
@@ -2315,9 +2317,7 @@ and throw an error if it's not live.
 This function sets up the deck and links the buffers together via
 the deck object.  Many operations such as calling hooks must
 occur in the display buffer."
-  (cond
-   ((ms-live-p))            ; TODO maybe display something?
-   (t
+  (unless (ms-live-p)
     ;; Prevent starting within indirect buffers
     (when (buffer-base-buffer (current-buffer))
       (error "Buffer is indirect but deck is already live"))
@@ -2343,13 +2343,11 @@ occur in the display buffer."
              (slide-buffer (clone-indirect-buffer
                             slide-buffer-name
                             nil))
-
-             ;; TODO no initial marker
-             (deck (make-instance class
-                                  :base-buffer base-buffer
-                                  :slide-buffer slide-buffer
-                                  :window-config window-config)))
-        ;; Set the deck in both base and slide buffer
+             (deck (apply class
+                          :base-buffer base-buffer
+                          :slide-buffer slide-buffer
+                          :window-config window-config
+                          nil)))
         (setq ms--deck deck)
         (switch-to-buffer slide-buffer) ;; TODO display options?
 
@@ -2358,7 +2356,7 @@ occur in the display buffer."
         ;; Enter the state model
         (ms--choose-slide deck
                           ms-start-from)
-        (ms--remap-faces t))))))
+        (ms--remap-faces t)))))
 
 (defun ms--showing-contents-p ()
   "Return t if current buffer is displaying contents."
