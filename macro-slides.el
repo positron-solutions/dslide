@@ -321,10 +321,10 @@ keyword."
 (defcustom ms-default-section-actions
   '()
   "Actions that run within the section display action lifecycle.
-It's value is a list of `ms-action' subclasses.  Each
-subclass will be instantiated into an action object.  See the
-`ms-action' class and its methods to learn about
-writing custom actions.
+It's value is a list of `ms-action' sub-classes or (CLASS . ARGS)
+forms where ARGS is a plist.  Each subclass will be instantiated
+into an action object.  See the `ms-action' class and its methods
+to learn about writing custom actions.
 
 Many section actions are no-op whenever the content doesn't
 contain any elements they act on.  You can add classes to this
@@ -1269,11 +1269,6 @@ heading and stores actions and their states.")
 (defun ms--make-slide (heading parent &rest args)
   "Hydrate a slide object from a HEADING element.
 Many optional ARGS.  See code."
-  ;; TODO Allow parent actions to configure child actions so that, for example,
-  ;; flat slides can modify children to not try to show slides independently.
-  ;; Add an argument this function since children that manage their own slides
-  ;; call this function directly.
-
   ;; function doesn't error but results in nil begin marker if we don't fail
   (unless heading
     (error "No heading provided"))
@@ -1282,10 +1277,13 @@ Many optional ARGS.  See code."
 
   ;; Share the beginning marker across all actions.  It's not unique and
   ;; shouldn't move.
+  ;; TODO Consolidate explicit nil indication around whatever is standard
   (let* ((begin-position (org-element-begin heading))
          (begin (make-marker))
          (slide-action-class (plist-get args :slide-action))
          (slide-action-args (plist-get args :slide-action-args))
+         ;; TODO Haven't needed to specify section actions from the parent yet
+         ;; actions.
          ;; Child action class can be `none' for explicit nil
          (child-action-class (plist-get args :child-action))
          (child-action-args (plist-get args :child-action-args)))
@@ -1301,46 +1299,67 @@ Many optional ARGS.  See code."
                         "SLIDE_FILTER"
                         "SLIDE_CLASS")))
 
+           ;; TODO just munged this a bit for explicit nil handling.  Might
+           ;; still have precedence wrong.  If there is any string set in any
+           ;; property, the default value shouldn't be used.
            (slide-action-class
             (or slide-action-class
-                (ms--class
-                 (or (org-element-property :SLIDE_ACTION heading)
-                     (cdr (assoc-string "SLIDE_ACTION"
-                                        keywords))
-                     ms-default-slide-action))))
+                (if-let ((declared
+                          (or (org-element-property :SLIDE_ACTION heading)
+                              (cdr (assoc-string "SLIDE_ACTION"
+                                                 keywords)))))
+                    (ms--parse-class-with-args declared)
+                  ms-default-slide-action)))
 
+           ;; TODO precedences are out of wack.  Heading property should win
+           ;; versus child heading, document, or default
            (slide-action (when slide-action-class
-                           (apply slide-action-class
-                                  :begin begin
-                                  slide-action-args)))
+                           (if (consp slide-action-class)
+                               (apply (car slide-action-class)
+                                      :begin begin
+                                      (append slide-action-args
+                                              (cdr slide-action-class)))
+                             (apply slide-action-class
+                                    :begin begin
+                                    slide-action-args))))
 
-           ;; TODO read interposed plist style arguments
            ;; TODO action arguments might make sense, such as telling nested
-           ;; elements not to animate.  It's really hard for them to infer this
-           ;; even by looking at the restriction.
+           ;; elements not to animate.  It's really hard for them to infer being
+           ;; in an inline child versus an independent slide, even by looking at
+           ;; the restriction.
            (section-action-classes
-            (ms--classes
-             (or (org-element-property :SLIDE_SECTION_ACTIONS heading)
-                 (cdr (assoc-string "SLIDE_SECTION_ACTIONS" keywords))
-                 ms-default-section-actions)))
-           (section-actions (mapcar
-                             (lambda (c) (when c (funcall c :begin begin)))
-                             section-action-classes))
+            (or (ms--parse-classes-with-args
+                 (or (org-element-property :SLIDE_SECTION_ACTIONS heading)
+                     (cdr (assoc-string "SLIDE_SECTION_ACTIONS" keywords))))
+                ms-default-section-actions))
+           (section-actions
+            (mapcar
+             (lambda (c) (when c
+                      (if (consp c)
+                          (apply (car c) :begin begin (cdr c))
+                        (funcall c :begin begin))))
+             section-action-classes))
 
+           ;; TODO Likely some precedence funk here.  Copied from above.
            (child-action-class
             (or child-action-class
-                (ms--class
-                 (or
-                  (org-element-property :SLIDE_CHILD_ACTION heading)
-                  (cdr (assoc-string "SLIDE_CHILD_ACTION"
-                                     keywords))
-                  ms-default-child-action))))
+                (if-let ((declared
+                          (or (org-element-property :SLIDE_CHILD_ACTION heading)
+                              (cdr (assoc-string "SLIDE_CHILD_ACTION"
+                                                 keywords)))))
+                    (ms--parse-class-with-args declared)
+                  ms-default-child-action)))
 
-           (child-action (when (and  child-action-class
-                                     (not (eq child-action-class 'none)))
-                           (apply child-action-class
-                                  :begin begin
-                                  child-action-args)))
+           (child-action (when (and child-action-class
+                                    (not (eq child-action-class 'none)))
+                           (if (consp child-action-class)
+                               (apply (car child-action-class)
+                                      :begin begin
+                                      (append child-action-args
+                                              (cdr child-action-class)))
+                             (apply child-action-class
+                                    :begin begin
+                                    child-action-args))))
 
            (filter
             (or (ms--filter
@@ -1348,19 +1367,21 @@ Many optional ARGS.  See code."
                      (cdr (assoc-string "SLIDE_FILTER" keywords))))
                 ms-default-filter))
            (class
-            (or (ms--class
+            (or (ms--parse-class-with-args
                  (or (org-element-property :SLIDE_CLASS heading)
                      (cdr (assoc-string "SLIDE_CLASS"
                                         keywords))))
                 ms-default-class)))
 
-      (let ((slide (funcall class
-                            :slide-action slide-action
-                            :section-actions section-actions
-                            :child-action child-action
-                            :filter filter
-                            :parent parent
-                            :begin begin)))
+      (let ((slide (apply (if (consp class) (car class) class)
+                          :slide-action slide-action
+                          :section-actions section-actions
+                          :child-action child-action
+                          :filter filter
+                          :parent parent
+                          :begin begin
+                          (when (consp class)
+                            (cdr class)))))
         slide))))
 
 (cl-defmethod ms-next-sibling ((obj ms-slide) filter)
@@ -2465,20 +2486,70 @@ occur in the display buffer."
          ms-filter)
        (format "Filter name not a function: %s" filter-name)))))
 
-(defun ms--class (class-name)
-  "CLASS-NAME is a string or symbol that should be a class name."
-  (when-let ((symbol (or (when (symbolp class-name)
-                           class-name)
-                         (intern-soft class-name))))
-    (if (get symbol 'cl--class)
-        symbol
-      (display-warning
-       '(ms
-         ms-class
-         ms-class)
-       (format "Class name not a class: %s" class-name)))))
+(defun ms--parse-class-with-args (property-data)
+  (unless (string= "nil" property-data)
+    (let ((classes-with-args
+           (ms--parse-classes-with-args property-data)))
+      (prog1 (car classes-with-args)
+        (unless (= 1 (length classes-with-args))
+          (display-warning '(macro-slides)
+                           (format "Only one classes allowed: %s"
+                                   (cdr classes-with-args))))))))
 
-;; TODO let's just move face remapping to MOC
+(defun ms--keyword-symbol-p (string)
+  (eq 0 (string-match-p ":\\(?:\\sw\\|\\s_\\)+$" string)))
+
+(defun ms--parse-classes-with-args (property-data)
+  ;; To support org's multiple-value properties, we want to parse a string that
+  ;; looks like "class-name :arg val class-name :arg val :arg val", basically a
+  ;; space-separated list of either class names or key-value pairs that are
+  ;; arguments for those classes during instantiation.  The result is a form of
+  ;; ((CLASS . ARGS)) where ARGS is a plist.
+  (unless (string= "nil" property-data)
+    (let ((tokens (split-string property-data))
+          classes-with-args
+          class-with-args)
+      (condition-case err
+          (while-let ((token (pop tokens))
+                      (class (ms--class token t)))
+            ;; peak for a key to decide if we continue parsing as args go back
+            ;; to parsing as class names
+            (push class class-with-args)
+            (while-let ((token (car tokens))
+                        (tokenp (ms--keyword-symbol-p token)))
+              ;; TODO this could create new symbols?  Anyway, using `make-symbol'
+              ;; is extremely ill-advised here ☢️ and `intern-soft' should work
+              ;; since the class should already exist, but I didn't check on this.
+              (push (intern (pop tokens)) class-with-args)
+              (let ((val (pop tokens)))
+                (push (car (read-from-string val)) class-with-args)))
+            (push (reverse class-with-args) classes-with-args)
+            (setq class-with-args nil))
+        (wrong-type-argument
+         (display-warning
+          '(macro-slides) (cdr err))))
+      (reverse classes-with-args))))
+
+;; This should not interpret nil's specially because that should he handled
+;; upstream by the parse functions
+(defun ms--class (class-name &optional signal)
+  "CLASS-NAME is a string or symbol that should be a class name.
+Optional ERROR if you want to process `wrong-type-argument'."
+  (let* ((symbol (or (when (symbolp class-name)
+                       class-name)
+                     (intern-soft class-name)))
+         (class (when (get symbol 'cl--class) symbol)))
+    (if (and class symbol)
+        symbol
+      (if signal
+          (signal 'wrong-type-argument
+                  (format "Class name not a class: %s" class-name))
+        (display-warning
+         '(macro-slides)
+         (format "Class name not a class: %s" class-name))
+        nil))))
+
+;; TODO let's just move face remapping to master of ceremonies
 (defun ms--remap-faces (status)
   "Change status of heading face.  If STATUS is nil, apply the default values."
   (cond
