@@ -1,0 +1,183 @@
+#+title: Macro Slides
+#+author:  Positron
+#+email:  contact@positron.solutions
+
+* Inline Children
+:PROPERTIES:
+:SLIDE_CHILD_ACTION: ms-child-action-inline
+:END:
+- You won't believe these animations
+- This is the world's greatest presentation software
+  + But mainly because it integrates with all you programming tools
+** Pen 🖊️
+Information, you have to breathe it in
+** Pineapple 🍍
+Isn't this animation so cool?
+** Apple 🍎
+This is a reason to be alive
+** Pen 🖊️
+[[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
+* Reveal Items
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: ms-action-item-reveal
+:END:
+Positron is deeply committed to bringing you the finest in:
+- Pen 🖊️
+- Pineapple 🍍
+- Apple 🍎
+- Pen 🖊️
+* Breadcrumbs
+This information goes deep
+** Deep
+And it will go deeper still yet
+*** Deeper
+The rabbit hole has only the bounds of your imagination
+**** Deepest?
+Wow, these breadcrumbs are very high-carb
+***** Okay Deep Enough!
+How many levels of headings could there be?
+
+* Flat Slide
+:PROPERTIES:
+:SLIDE_ACTION: ms-action-narrow :with-children t
+:SLIDE_CHILD_ACTION: nil
+:END:
+This slide shows its child headings inline.
+- The slide action shows the entire contents, not just the section
+- There is no child action
+** Blue Team
+- Has to do all the work
+- Must create an air-tight submarine
+** Red Team
+- Uses some metasploit and calls it a day
+- Failure is an option
+* Hidden Babel Slide
+This slide has a child, but it will not be displayed.  It will only run the babel block within, which finds and updates the text below:
+
+Can has display?  No display!  Only Execute!  No display!  Only Execute!  No display!  Only Execute!  No display!  Only Execute!  No display!  Only Execute!
+** No Display!  Only Execute!
+:PROPERTIES:
+:SLIDE_ACTION: nil
+:SLIDE_SECTION_ACTIONS: ms-action-babel
+:END:
+#+begin_src elisp :results none
+  ;; No need to deal with restriction or restore point.
+  (org-up-heading-safe)
+  (if (re-search-forward "\?" nil t)
+      (progn
+        (goto-char (match-end 0))
+        (insert (concat "  No display!  Only Execute!")))
+    (message "Ouchie, the document changed!"))
+#+end_src
+* Image Slides
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: ms-action-image
+:END:
+This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
+
+TODO display images inline when this action is initializing, which is after narrow.
+
+#+ATTR_HTML: :width 45%
+ [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
+#+ATTR_HTML: :width 45%
+ [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+* Babel Slide Integration
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: ms-action-babel
+:END:
+
+Both backwards and forward are supported on this slide.
+
+#+attr_method: init
+#+begin_src elisp :results none
+  (setq-local overlays nil)
+  (goto-char (point-min))
+  (while (re-search-forward "overlay" nil t)
+    (let ((overlay (make-overlay (match-beginning 0)
+                                 (match-end 0))))
+      (push overlay overlays)))
+#+end_src
+
+#+attr_method: step-backward
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
+#+end_src
+
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
+#+end_src
+
+#+attr_method: step-backward
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
+#+end_src
+
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
+#+end_src
+
+#+attr_method: step-backward
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
+#+end_src
+
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
+#+end_src
+
+#+attr_method: end
+#+begin_src elisp :results none
+  (setq-local overlays nil)
+  (goto-char (point-min))
+  (while (re-search-forward "overlay" nil t)
+    (let ((overlay (make-overlay (match-beginning 0)
+                                 (match-end 0))))
+      (overlay-put overlay 'display "🥞🥞🥞")
+      (push overlay overlays)))
+#+end_src
+
+#+attr_method: final
+#+begin_src elisp :results none
+  (mapc #'delete-overlay overlays)
+  (makunbound 'overlays)
+#+end_src
+
+* Package Integration
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: ms-action-babel
+:END:
+- Let arbitrary buffers be shown while still completing steps within the slide-show
+- Run babel against other buffers 😈
+- TODO add some idempotent steps that work either forwards or backwards (these steps would)
+
+#+attr_method: init
+#+begin_src elisp :results silent
+  (require 'master-of-ceremonies)
+#+end_src
+
+  #+begin_src elisp :results silent
+  (mc-focus "🖊️")
+  #+end_src
+
+#+begin_src elisp :results silent
+  (mc-focus "🖊️🍍")
+  #+end_src
+
+#+begin_src elisp :results silent
+  (mc-focus "🖊️🍍🍎")
+  #+end_src
+
+#+begin_src elisp :results silent
+  (mc-focus "🖊️🍍🍎🖊️")
+  #+end_src
+
+#+attr_method: final
+#+begin_src elisp
+  (when-let ((buffer (get-buffer "*MC Focus*")))
+    (kill-buffer buffer))
+#+end_src
+
+* Thanks for Watching
+- Publishing after some cleanup refactoring
+- Should show up on MELPA and Non-GNU MELPA
+- Using this in my own videos
