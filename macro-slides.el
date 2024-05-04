@@ -168,7 +168,7 @@ The current time will be used as a fallback."
            :forward "Forward ➡"
            :backward "⬅ Backward"
            :contents "Contents ☰"
-           :stop "Finished! ■"
+           :stop "Finished! ■"          ; TODO stop is not finish
            :after-last-slide "No more slides")
   "Feedback messages for slide controls.
 Turn off by setting to nil.  Plist keys:
@@ -533,6 +533,8 @@ the mode and go to slides."
            #'ms-display-slides))
       (ms-mode 1))))
 
+;; TODO forward and backward commands are usually only bound in the mode and
+;;shouldn't need to check for the deck being active
 ;;;###autoload
 (defun ms-forward ()
   "Advance slideshow forward."
@@ -559,7 +561,8 @@ the mode and go to slides."
 
 (defclass ms-progress-tracking ()
   ((marker :initform nil :initarg :marker))
-  "A utility class for other classes that need a marker.")
+  "A utility class for other classes that track progress.
+Progress is tracked by reading and updating a marker.")
 
 (cl-defgeneric ms-marker (obj))
 
@@ -1019,8 +1022,6 @@ their init."
           (reached-beginning
            (user-error "No more previous slides!")))))
 
-;; TODO handle no-slides condition by skipping to the end
-;; TODO either check for base or ensure it
 (cl-defmethod ms--choose-slide ((obj ms-deck) how &optional point)
   "Set the current slide, according to HOW.
 Optional POINT allows resolving a slide by walking the tree to
@@ -1372,7 +1373,6 @@ NO-RECURSION will avoid descending into children."
    (ms-heading obj)
    type fun info first-match no-recursion))
 
-
 (cl-defmethod ms-init ((obj ms-action))
   (ms-marker obj (org-element-begin (ms-heading obj))))
 
@@ -1383,6 +1383,7 @@ NO-RECURSION will avoid descending into children."
   (when-let ((marker (oref obj marker)))
     (set-marker marker nil)))
 
+;; TODO make a child base class.  Section actions don't really need this.
 (cl-defmethod ms-forward-child ((obj ms-action))
   "Return the next direct child heading and advance the marker.
 Marker is moved to the end of the heading if no matching child is
@@ -1402,6 +1403,7 @@ found."
     (ms-marker obj (org-element-end (ms-heading obj)))
     nil))
 
+
 (cl-defmethod ms-backward-child ((obj ms-action))
   "Return previous direct child heading and advance the marker backward.
 Marker is moved to the beginning of the heading if no matching
@@ -1420,8 +1422,8 @@ child is found."
                             child)))))))
       (prog1 next
         (ms-marker obj (org-element-begin next)))
-      (ms-marker obj (org-element-begin (ms-heading obj)))
-      nil))
+    (ms-marker obj (org-element-begin (ms-heading obj)))
+    nil))
 
 ;; ** Default Slide Action
 (defclass ms-action-narrow (ms-action)
@@ -1681,13 +1683,14 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   ;; For child slides, we make a slide out of the next child heading and advance
   ;; our progress forward to the end of that child
   (when-let ((child (ms-forward-child obj)))
-    ;; TODO this method of getting the parent
+    ;; TODO convert this to a push-sequence call
     (ms--make-slide child (oref ms--deck slide))))
 
 (cl-defmethod ms-step-backward ((obj ms-child-action-slide))
   ;; For child slides, we make a slide out of the previous child heading and
   ;; advance our progress backward to the beginning of that child
   (when-let ((child (ms-backward-child obj)))
+    ;; TODO convert this to a push-sequence call
     (ms--make-slide child (oref ms--deck slide))))
 
 ;; ** Inline Child Action
@@ -1698,7 +1701,6 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 ;; TODO round-robin child action
 ;; TODO every-child action
-;; TODO inherited child actions
 ;; TODO generalize
 
 ;; TODO override the child's own child action
