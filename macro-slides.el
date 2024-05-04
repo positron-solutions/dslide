@@ -769,9 +769,10 @@ sequence ends or makes progress..")
    (sequence-callbacks
     :initform '(nil)
     "Steps that run only when sequences end.
-Form is an alist of (SEQUENCE . STEPS) where STEPS is a list
-of step callbacks.  When sub-sequences are started, (SEQUENCE) is
-pushed onto this list."))
+Form is a list of STEPS where STEPS is a list of callbacks.  The
+length of this list is equal to the depth of the current
+sequence.  See `ms-push-step' for information about how to push a
+step deeper into the sequences."))
 
   "The Deck is responsible for selecting the parent node and
 maintaining state between mode activations or when switching
@@ -841,12 +842,13 @@ their init."
         ;; callback and see if it can make progress.
         (unless result
           ;; Burn up a step callback until one returns non-nil
-          (when-let ((steps (and (slot-boundp obj 'sequence-callbacks)
-                                 (oref obj sequence-callbacks))))
-            (while (and (not progress)
-                        steps)
+          (when-let* ((sequence-callbacks (oref obj sequence-callbacks))
+                      (steps (car sequence-callbacks)))
+            (while (and (not progress) steps)
               (setq progress (funcall (pop steps) 'forward)))
-            (oset obj sequence-callbacks steps)))
+            ;; If all the steps for this sequence were consumed, pop a layer.
+            (unless steps
+              (oset obj sequence-callbacks (cdr sequence-callbacks)))))
 
         (unless (or progress result)
           ;; Next check if there is a parent slide, which is true unless the
@@ -866,11 +868,15 @@ their init."
         (when next-slide
           (ms--debug next-slide))
 
-        ;; When switching to a parent slide, we will finalize the old slide.
-        ;; When switching to a child, we will not finalize the parent.
         (when next-slide
+          (unless switching-to-parent
+            ;; Push a new sequence-callbacks level
+            (push nil (oref obj sequence-callbacks)))
 
           (oset obj slide next-slide)
+
+          ;; When switching to a parent slide, we will finalize the old slide.
+          ;; When switching to a child, we will not finalize the parent.
           (cond
            (switching-to-parent
             ;; TODO slide re-entry when parent can still make progress
@@ -878,6 +884,7 @@ their init."
            (t
             (when switching-to-sibling
               (ms-final current-slide))
+
             ;; TODO extract behavior and add to other navigation actions
             (when ms-base-follows-slide
               (let ((pos (marker-position (oref next-slide begin))))
@@ -943,12 +950,13 @@ their init."
         ;; callback and see if it can make progress.
         (unless result
           ;; Burn up a step callback until one returns non-nil
-          (when-let ((steps (and (slot-boundp obj 'sequence-callbacks)
-                                 (oref obj sequence-callbacks))))
-            (while (and (not progress)
-                        steps)
+          (when-let* ((sequence-callbacks (oref obj sequence-callbacks))
+                      (steps (car sequence-callbacks)))
+            (while (and (not progress) steps)
               (setq progress (funcall (pop steps) 'backward)))
-            (oset obj sequence-callbacks steps)))
+            ;; If all the steps for this sequence were consumed, pop a layer.
+            (unless steps
+              (oset obj sequence-callbacks (cdr sequence-callbacks)))))
 
         (unless (or progress result)
           ;; Next check if there is a parent slide, which is true unless the
@@ -969,15 +977,19 @@ their init."
         (when previous-slide
           (ms--debug previous-slide))
 
-        ;; When switching to a parent slide, we will finalize the old slide.
-        ;; When switching to a child, we will not finalize the parent.
         (when previous-slide
-          ;; TODO exhaust next slide callbacks
+          (unless switching-to-parent
+            ;; Push a new sequence-callbacks level
+            (push nil (oref obj sequence-callbacks)))
+
           (oset obj slide previous-slide)
+
+          ;; When switching to a parent slide, we will finalize the old slide.
+          ;; When switching to a child, we will not finalize the parent.
           (cond
            (switching-to-parent
             ;; TODO slide re-entry when parent can still make progress?
-            (ms-final current-slide)
+            (ms-final current-slide))
            (t
             (when switching-to-sibling
               (ms-final current-slide))
@@ -1105,12 +1117,12 @@ once, which requires the functions to be removed or return nil."
          (push fun (oref ms--deck step-callbacks)))
         ((or (eq pop-when 'sequence)
              (eq pop-when 0))
-         (push fun (cdar (oref ms--deck sequence-callbacks))))
+         (push fun (car (oref ms--deck sequence-callbacks))))
         ((integerp pop-when)
          (if (>= pop-when (length (oref ms--deck sequence-callbacks)))
              (error "Requested depth exceeds sequence depth")
-           (push fun (cdr (nth pop-when
-                               (oref ms--deck sequence-callbacks))))))))
+           (push fun (nth pop-when
+                          (oref ms--deck sequence-callbacks)))))))
 
 ;; * Slide
 (defclass ms-slide (ms-parent ms-stateful-sequence)
