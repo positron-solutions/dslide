@@ -66,15 +66,19 @@ Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared cust
 Many settings can be configured at the global level through customize variables, the document level through keywords, and the slide level through the property drawer.
 
 There's a lot of hooks and variables.  All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
-** Recommended MOC Settings
+** Recommended MC Settings
 The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
-*** TODO Hooks
+#+begin_src elisp
+  ;;  Something like this should work
+  (add-hook 'ms-mode-hook (lambda () (mc-hide-mode ms-mode)))
+  (add-hook 'ms-narrow-hook #'mc-hide-refresh)
+#+end_src
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
 - =SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
-- =SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
-- =CHILD_ACTION=: Used to customize if and how child headings become slides
+- =SLIDE_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+- =SLIDE_CHILD_ACTION=: Used to customize if and how child headings become slides
 
 Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 
@@ -89,19 +93,18 @@ Regular Org Mode markup is used to add actions to headings.  See more examples i
   ,#+attr_html: :width 50%
   [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
 #+end_src
+
 * Customizing
 ** Sub-classing
 The deck and slide class as well as actions can all be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.
 ** Babel Scripting
 You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~ms-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~ms-action-babel~ class
-** Buffer Slides
-Use ~ms-buffer-slide-mode~ to integrate any buffer into your presentation.  Script your buffer-slide steps with regular babel blocks.
 ** ~ms-start-function~
 Typically the mode is entered via commands that are to be bound outside of the minor mode keymap.  If these commands want to start the mode a specific way, but they need to start the mode first, they just bind ~ms-start-function~ to override the last step of starting the mode.
 * Package Pairings
 This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~ms-forward~ ~ms-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
 ** Master of Ceremonies
-The [[https://github.com/positron-solutions/master-of-ceremonies][moc]] package contains utilities for display & presentation frame setup that are not specific to using Macro Slides.
+The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package contains utilities for display & presentation frame setup that are not specific to using Macro Slides.
 - *hide markup*
 - display a region full-screen
 - silence messages during presentation
@@ -172,18 +175,12 @@ Actions live, for the most part, as long as the slide.  Their ~ms-init~ method i
 A consequence of this is that there are usually multiple actions alive at once.  Something has to hold onto them.  Right now, it's the slide.   There is only one slide usually in play, and it holds a reference to its parent so that it can "return".  🚧 In the future, the actions may hold onto child actions and only one action might be alive at a time.  This would be desirable.  It just takes some mild rework of the implementation.
 * Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
+** TODO Contents
+I seem to have forgotten again to implement starting at the point or navigating via contents.  Well, let's add it tomorrow.
+** Backward With Inline Children
+Yes, I just broke this while adding something else.  Give me a minute lol.
 ** Non-Graphic Display
 For terminals, the line-height based slide-in effect is not supported.
-** Descendant and Fallback Actions
-Parents or the deck deciding default actions.  A parent wishing to show children inline may alter arguments to descendant actions, keeping compatibility between various combinations of actions.
-** Composable Actions With Arguments
-We want to configure actions with lisp expressions:
-#+begin_src elisp :eval never
-  (ms-action-narrow :children t)
-#+end_src
-#+begin_src elisp :eval never
-  (ms-action-narrow (ms-action-items :animate nil))
-#+end_src
 ** Sub-Sequence Call & Restore
 Sequences are often enclosed within other sequences, but there is currently no support for pushing or popping states when entering or exiting sequences.  It's just not clear yet what cooperation might be necessary at sub-sequence boundaries.  Slide display looking at the restriction state is one such boundary.
 ** Non-Org Sequences
