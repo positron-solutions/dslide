@@ -57,6 +57,31 @@
 ;; Note:
 ;;    - Customize variables, M-x customize-group RET macro-slides RET
 ;;
+;; The code outline is as follows:
+;;
+;; 1. Lifecycle of the mode, switching between base buffer, contents, and
+;; slides, user interface commands.
+;;
+;; 2. Class interface definitions for stateful sequence, deck (root sequence),
+;; slide, and actions (sequences that run within slides).
+;;
+;; 3. Element mapping implementations that are private but exposed publicly on
+;; slide actions and elsewhere because they are super useful.
+;;
+;; 4. Miscellaneous implementation details of parsing arguments, debug printing,
+;; header, animation etc.
+;;
+;; For users, you might want to create your own actions, so check `ms-action'
+;; and its sub-classes.
+;;
+;; The `ms-deck' class contains some functions related to adding callbacks or
+;; entering custom sequences.
+;;
+;; For hackers wishing to extend the code, in addition, you will want to check
+;; `ms--make-slide' if you want your slides to hydrate actions differently.
+;; Also pay very close attention to `ms-stateful-sequence' and how sequences and
+;; steps can be pushed, like a function call stack.
+;;
 ;; This package is a fork and mostly complete re-write of org-tree-slide by
 ;; Takaaki ISHIKAWA.  Thanks to everyone who worked on org-tree-slide over the
 ;; years.  The implementation ideas and features of org-tree-slide were a great
@@ -813,6 +838,27 @@ their init."
   (when-let ((slide (oref obj slide)))
     (ms-final slide)))
 
+;; Deck forward & backward methods implement a lot of the capability.  In the
+;; function-stack analogy, the deck's forward & backward are similar to a
+;; runtime, handling call and return behavior, advancing to the next slide /
+;; function in our presentation / procedure etc.  Support for calling into a
+;; sub-sequence or doing something upon return are baked in.  It make require
+;; several trips through the behavior to consume callbacks that are run for
+;; effect or are no-op, things that don't count as steps or are slides that
+;; decide at runtime to be skipped.
+;;
+;; There are many little user-facing behaviors, such as following the slide in
+;; the base buffer with the point.  These are best done from the sequence root.
+;; It bloats the function, but has little effect on the complexity of the logic.
+;;
+;; So that sounds like a lot, but it's really simple.  Loop through whatever
+;; next steps and callbacks were pushed onto the stack.  When one of them makes
+;; progress, we're done.
+
+;; TODO When slides are converted so that they push new sequences on their own,
+;; we no longer need to handle the case where a child slide is returned.  I
+;; think this is where the implementation is going because it's very elegant.
+
 (cl-defmethod ms-step-forward ((obj ms-deck))
   ;; TODO Check for forward callbacks
   (unless (oref obj slide)
@@ -1201,6 +1247,24 @@ heading and stores actions and their states.")
         (when-let ((result (ms-step-backward action)))
           (setq progress result))))
     progress))
+
+;; `ms--make-slide' is very critical to the user-facing configuration and
+;; hacker-facing capabilities and API.  Slides are hydrated from org mode
+;; headings.  We can pretty much divide the likely user needs into either what
+;; to do with the section and what to do with the child headings.  Because the
+;; section needs to be narrowed to, and this narrowing must be performed both
+;; forwards and backwards, we also have a slide action that is run around the
+;; section and child actions.
+;;
+;; It was anticipated for a time that actions might be nested in the
+;; configuration.  However, we still have a likely need for configuring just the
+;; section action or just the child action, and this API is not expected to look
+;; that different to the user whether nesting of actions is supported or not.
+;;
+;; Both child actions and user configuration have demonstrated a large benefit
+;; from being able to slightly change the behavior of actions.  This is why the
+;; plist arguments are supported when hydrating from org properties and child
+;; actions can pass in arguments to `ms--make-slide'.
 
 (defun ms--make-slide (heading parent &rest args)
   "Hydrate a slide object from a HEADING element.
