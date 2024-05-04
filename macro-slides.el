@@ -1493,8 +1493,7 @@ deck of progress was made.")
 ;; just add overlays starting from the end of items.
 
 (cl-defmethod ms-final :after ((obj ms-action-item-reveal))
-  (when-let ((overlays (and (slot-boundp obj 'overlays)
-                            (oref obj overlays))))
+  (when-let ((overlays (oref obj overlays)))
     (mapc #'delete-overlay overlays)))
 
 ;; TODO add hide / un-hide methods to the base action
@@ -1502,8 +1501,7 @@ deck of progress was made.")
   ;; The implementation has mapped all of the items into overlays, so instead of
   ;; calling `ms-section-next', we just use the overlay positions to walk
   ;; through the items.
-  (when-let* ((overlays (and (slot-boundp obj 'overlays)
-                             (oref obj overlays)))
+  (when-let* ((overlays (oref obj overlays))
               (first (car overlays))
               (end (overlay-end first)))
     ;; TODO We can let-bind animations false for child slides.
