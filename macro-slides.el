@@ -1711,6 +1711,12 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 (defclass ms-action-image (ms-action)
   () "Show images fullscreen in a buffer.")
 
+(cl-defmethod ms-init :after ((obj ms-action-image))
+  (org-display-inline-images
+   t nil ; TODO needs refresh?  Add some args?
+   (org-element-begin (ms-heading obj))
+   (org-element-end (ms-heading obj))))
+
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
 ;; TODO make it just a link action?
