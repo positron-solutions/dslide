@@ -497,18 +497,15 @@ source buffer."
               (slide-buffer (oref deck slide-buffer))
               (base-buffer (oref deck base-buffer)))
 
-    ;; Animation timers especially should be stopped
-    (ms--clean-up-state)
-
     ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
     ;; may require attention.
     (ms-final ms--deck)
 
-    ;; TODO `display-buffer'?
-    ;; TODO restore window configuration?
+    ;; Animation timers especially should be stopped
+    ;; TODO ensure cleanup is thorough even if there's a lot of failures.
     ;; TODO make the deck a child sequence of a presentation ;-)
-    ;; TODO add kill buffer hook to stop slideshow if the base is killed
-    ;; TODO ensure cleanup is thorough even if there's a lot of failures
+    (ms--clean-up-state)
+
     (switch-to-buffer base-buffer)
 
     (when slide-buffer
@@ -901,7 +898,7 @@ their init."
 
         (unless (or progress result)
           ;; Next check if there is a parent slide, which is true unless the
-          ;; parent is the deck.  Then check if there is a next child.
+          ;; parent is the deck.  Then check if there is a next sibling.
           (let* ((parent (oref current-slide parent)))
             (if (not (eq obj parent))
                 (setq next-slide parent
@@ -1009,7 +1006,7 @@ their init."
 
         (unless (or progress result)
           ;; Next check if there is a parent slide, which is true unless the
-          ;; parent is the deck.  Then check if there is a previous child.
+          ;; parent is the deck.  Then check if there is a previous sibling.
           (let* ((parent (oref current-slide parent)))
             (if (not (eq obj parent))
                 (setq previous-slide parent
@@ -1132,7 +1129,7 @@ return nil so that it is only run for effects."
                 (widen))))
      pop-when)))
 
-;; TODO pop the root sequence on stop.
+;; TODO pop the sequence root on stop.
 (defun ms-push-step (fun &optional pop-when)
   "Run FUN as next step.
 FUN is a function of a single argument, `forward' or `backward'.
@@ -1613,7 +1610,7 @@ deck of progress was made.")
 ;; TODO automatically map the blocks during init and remove results... this is
 ;; kind of implemented but seems to inconsistently work.
 ;; TODO configure results removal behavior with an argument
-;; TODO any display jank concerns due to results?
+;; TODO any display jank concerns due to results?  Possibly inhibit re-display.
 (defclass ms-action-babel (ms-action)
   () "Execute source blocks as steps.
 By default blocks execute one by one with step-forward.  You can mark a block to
@@ -1785,7 +1782,6 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 ;; TODO round-robin child action
 ;; TODO every-child action
-;; TODO generalize
 
 ;; TODO override the child's own child action
 (defclass ms-child-action-inline (ms-action)
