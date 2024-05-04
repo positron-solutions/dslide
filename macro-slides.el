@@ -1065,7 +1065,7 @@ their init."
           (reached-beginning
            (user-error "No more previous slides!")))))
 
-(cl-defmethod ms--choose-slide ((obj ms-deck) how &optional point)
+(cl-defmethod ms--choose-slide ((obj ms-deck) how)
   "Set the current slide, according to HOW.
 Optional POINT allows resolving a slide by walking the tree to
 find the slide that displays that POINT."
@@ -2118,16 +2118,19 @@ TYPE is a list or type symbol."
               (goto-char (match-beginning 0))
               (org-element-at-point))))))))
 
-(defun ms--root-heading-at-point ()
+(defun ms--root-heading-at-point (&optional point)
   "Return the root heading if the point is contained by one.
 Does not modify the point."
-  (let* ((element (org-element-at-point))
-         (parent (ms--element-root
-                  element 'headline)))
-    (if (eq 'headline (org-element-type element))
-        element
-      (or parent
-          (ms--any-heading)))))
+  (save-excursion
+    (when point
+      (goto-char point))
+    (let* ((element (org-element-at-point))
+           (parent (ms--element-root
+                    element 'headline)))
+      (if (eq 'headline (org-element-type element))
+          element
+        (or parent
+            (ms--any-heading))))))
 
 (defun ms--any-heading ()
   "Return any heading that can be found.
