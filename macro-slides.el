@@ -1075,8 +1075,8 @@ Optional POP-WHEN decides when to restore the config.  See
 
 Optional STEP argument will decide if the callback counts as a step or will
 return nil so that it is only run for effects."
-  (let* ((begin (point-min))
-         (end (point-max))
+  (let* ((begin (point-min-marker))
+         (end (point-max-marker))
          (size (buffer-size))
          (restricted (/= (- end begin) size)))
     (ms-push-step
