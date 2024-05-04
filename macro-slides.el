@@ -1327,7 +1327,8 @@ Many optional ARGS.  See code."
                      ms-progress-tracking)
   ((begin :initform nil :initarg :begin "Marker for beginning of heading.
 Used to re-hydrate the org element for use in mapping over the section etc."))
-  "Base class for most slide actions that work on a heading's contents.")
+  "Base class for most slide actions that work on a heading's contents."
+  :abstract t)
 
 (cl-defmethod ms-heading ((obj ms-action))
   "Return the slide's heading element."
