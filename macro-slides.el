@@ -1193,7 +1193,12 @@ lifecycle.  See `ms-default-section-actions'.")
 See `ms-default-child-action'.")
    (begin
     :initform nil :initarg :begin
-    :documentation "Marker for retrieving this heading's org element."))
+    :documentation "Marker for retrieving this heading's org element.")
+   (compose
+    :initform nil :initarg :compose
+    :documentation "Run child actions within the slide action.
+This is a temporary solution to support a basic form of action
+composition, Running actions as sequences within other actions."))
   "Slides store some local state and delegate behavior to several
 functions. The Slide is a stateful node that hydrates around a
 heading and stores actions and their states.")
@@ -1246,13 +1251,17 @@ heading and stores actions and their states.")
 
 (cl-defmethod ms-step-backward ((obj ms-slide))
   (let ((section-actions (reverse (oref obj section-actions)))
+        (child-action (oref obj child-action))
+        (slide-action (oref obj slide-action))
         progress)
     ;; section display action happens before any section-actions
-    (setq progress (or (when-let ((child-action (oref obj child-action)))
-                         (ms-step-backward child-action))
-                       (when-let ((display-action
-                                   (oref obj slide-action)))
-                         (ms-step-backward display-action))))
+
+    (setq progress
+          (if (oref obj compose)
+              (or (when slide-action (ms-step-backward slide-action))
+                  (when child-action (ms-step-backward child-action)))
+            (or (when child-action (ms-step-backward child-action))
+                (when slide-action (ms-step-backward slide-action)))))
     (while (and (not progress)
                 section-actions)
       (let ((action (pop section-actions)))
