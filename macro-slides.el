@@ -1292,6 +1292,7 @@ Many optional ARGS.  See code."
   ;; TODO Consolidate explicit nil indication around whatever is standard
   (let* ((begin-position (org-element-begin heading))
          (begin (make-marker))
+         (inline (plist-get args :inline))
          (slide-action-class (plist-get args :slide-action))
          (slide-action-args (plist-get args :slide-action-args))
          ;; TODO Haven't needed to specify section actions from the parent yet
@@ -1311,6 +1312,8 @@ Many optional ARGS.  See code."
                         "SLIDE_FILTER"
                         "SLIDE_CLASS")))
 
+           (args `(:inline ,inline))
+
            ;; TODO just munged this a bit for explicit nil handling.  Might
            ;; still have precedence wrong.  If there is any string set in any
            ;; property, the default value shouldn't be used.
@@ -1329,11 +1332,13 @@ Many optional ARGS.  See code."
                            (if (consp slide-action-class)
                                (apply (car slide-action-class)
                                       :begin begin
-                                      (append slide-action-args
+                                      (append args
+                                              slide-action-args
                                               (cdr slide-action-class)))
                              (apply slide-action-class
                                     :begin begin
-                                    slide-action-args))))
+                                    (append args
+                                            slide-action-args)))))
 
            ;; TODO action arguments might make sense, such as telling nested
            ;; elements not to animate.  It's really hard for them to infer being
@@ -1348,8 +1353,9 @@ Many optional ARGS.  See code."
             (mapcar
              (lambda (c) (when c
                       (if (consp c)
-                          (apply (car c) :begin begin (cdr c))
-                        (funcall c :begin begin))))
+                          (apply (car c) :begin begin
+                                 (append args (cdr c)))
+                        (apply c :begin begin args))))
              section-action-classes))
 
            ;; TODO Likely some precedence funk here.  Copied from above.
@@ -1367,11 +1373,14 @@ Many optional ARGS.  See code."
                            (if (consp child-action-class)
                                (apply (car child-action-class)
                                       :begin begin
-                                      (append child-action-args
+                                      (append args
+                                              child-action-args
                                               (cdr child-action-class)))
                              (apply child-action-class
                                     :begin begin
-                                    child-action-args))))
+                                    (append
+                                     args
+                                     child-action-args)))))
 
            (filter
             (or (ms--filter
@@ -1425,7 +1434,13 @@ Many optional ARGS.  See code."
   ((begin
     :initform nil :initarg :begin
     :documentation "Marker for beginning of heading.  Used to
-re-hydrate the org element for use in mapping over the section etc."))
+re-hydrate the org element for use in mapping over the section etc.")
+   (inline
+     :initform nil
+     :initarg :inline
+     :docuemntation "Draw as if surrounded by other contents.
+This option allows actions that perform some animation to degrade
+to some technique that works with contents above and below."))
   "Base class for most slide actions that work on a heading's contents."
   :abstract t)
 
@@ -1849,6 +1864,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
                           child-heading
                           (oref ms--deck slide)
                           :slide-action #'ms-action-narrow
+                          :inline t
+                          ;; TODO this won't compose at all
                           :slide-action-args '(:include-restriction t :with-children t)
                           :child-action 'none))
                   (success (ms-init child)))
