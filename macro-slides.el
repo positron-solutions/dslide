@@ -582,7 +582,10 @@ the mode and go to slides."
 ;; * Classes
 
 (defclass ms-progress-tracking ()
-  ((marker :initform nil :initarg :marker))
+  ((marker
+    :initform nil
+    :initarg :marker
+    :documentation "Marker used to track progress"))
   "A utility class for other classes that track progress.
 Progress is tracked by reading and updating a marker.")
 
@@ -647,8 +650,10 @@ Errors when asked for a marker before one has been set."
 
 ;; ** Stateful Sequence
 (defclass ms-stateful-sequence ()
-  ((parent :initval nil :initarg :parent
-           "Parent or root sequence.
+  ((parent
+    :initval nil
+    :initarg :parent
+    :documentation "Parent or root sequence.
 Usually a deck or slide."))
   "An interface definition for linear sequences of steps.
 The sequence can be traversed forwards and backward and also
@@ -749,9 +754,10 @@ This method can usually be implemented on top of
 ;; filtering functionality and needing to find next and previous children.
 ;; Needs actual usage to become mature.
 (defclass ms-parent ()
-  ((filter :initform nil
-           :initarg :filter
-           :documentation "Function to filter child headings."))
+  ((filter
+    :initform nil
+    :initarg :filter
+    :documentation "Function to filter child headings."))
   "The parent class implements methods that need to filter
 children. Decks and slides have children.")
 
@@ -769,31 +775,34 @@ children. Decks and slides have children.")
 
 ;; ** Deck
 ;; TODO extract non-org-specific behavior to sequence-root class.
-(defclass ms-deck (ms-progress-tracking
-                   ms-parent)
-  ((slide :initform nil
-          "The active sequence or slide.
+(defclass ms-deck (ms-progress-tracking ms-parent)
+  ((slide
+    :initform nil
+    :documentation "The active sequence or slide.
 This is probably a `ms-slide' object, but anything
 that implements `ms-stateful-sequence' will probably
 work as well.")
-   (base-buffer :initform nil :initarg :base-buffer
-                "Source of the slide deck.")
-   (slide-buffer :initform nil :initarg :slide-buffer
-                 "Indirect buffer used to display slides in.")
-   (window-config :initform nil :initarg :window-config
-                  "Window configuration for restoring after stop.")
+   (base-buffer
+    :initform nil :initarg :base-buffer
+    :documentation "Source of the slide deck.")
+   (slide-buffer
+    :initform nil :initarg :slide-buffer
+    :documentation "Indirect buffer used to display slides in.")
+   (window-config
+    :initform nil :initarg :window-config
+    :documentation"Window configuration for restoring after stop.")
    ;; TODO this implementation doesn't work if more indirect buffers are used.
    (slide-buffer-state
     :initform nil
-    "Initiated by display actions to `contents' or `slides'.")
+    :documentation "Initiated by display actions to `contents' or `slides'.")
    (step-callbacks
     :initform nil
-    "Steps to run before next steps.
+    :documentation "Steps to run before next steps.
 FORM is just a list as steps will always be run before any
 sequence ends or makes progress..")
    (sequence-callbacks
     :initform '(nil)
-    "Steps that run only when sequences end.
+    :documentation "Steps that run only when sequences end.
 Form is a list of STEPS where STEPS is a list of callbacks.  The
 length of this list is equal to the depth of the current
 sequence.  See `ms-push-step' for information about how to push a
@@ -1170,17 +1179,21 @@ once, which requires the functions to be removed or return nil."
 
 ;; * Slide
 (defclass ms-slide (ms-parent ms-stateful-sequence)
-  ((slide-action :initform nil :initarg :slide-action
-                 :description "Action run after section.
+  ((slide-action
+    :initform nil :initarg :slide-action
+    :documentation "Action run after section.
 See `ms-default-child-action'.")
-   (section-actions :initform nil :initarg :section-actions
-                    :description "Actions run within the section display
+   (section-actions
+    :initform nil :initarg :section-actions
+    :documentation "Actions run within the section display
 lifecycle.  See `ms-default-section-actions'.")
-   (child-action :initform nil :initarg :child-action
-                 :description "Action run after section.
+   (child-action
+    :initform nil :initarg :child-action
+    :documentation "Action run after section.
 See `ms-default-child-action'.")
-   (begin :initform nil :initarg :begin
-          :description "Marker for retrieving this heading's org element."))
+   (begin
+    :initform nil :initarg :begin
+    :documentation "Marker for retrieving this heading's org element."))
   "Slides store some local state and delegate behavior to several
 functions. The Slide is a stateful node that hydrates around a
 heading and stores actions and their states.")
@@ -1409,8 +1422,10 @@ Many optional ARGS.  See code."
 ;; ** Base Action
 (defclass ms-action (ms-stateful-sequence
                      ms-progress-tracking)
-  ((begin :initform nil :initarg :begin "Marker for beginning of heading.
-Used to re-hydrate the org element for use in mapping over the section etc."))
+  ((begin
+    :initform nil :initarg :begin
+    :documentation "Marker for beginning of heading.  Used to
+re-hydrate the org element for use in mapping over the section etc."))
   "Base class for most slide actions that work on a heading's contents."
   :abstract t)
 
@@ -1512,13 +1527,16 @@ child is found."
 
 ;; ** Default Slide Action
 (defclass ms-action-narrow (ms-action)
-  ((include-restriction :initform nil :initarg :include-restriction
-                        "Include the existing restriction.")
-   (with-children :initform nil :initarg :with-children
-                  "Narrow should include children.
+  ((include-restriction
+    :initform nil :initarg :include-restriction
+    :documentation "Include the existing restriction.")
+   (with-children
+    :initform nil :initarg :with-children
+    :documentation "Narrow should include children.
 The default, nil, narrows to the section only.")
-   (last-progress :initform nil
-                  "A helpful hack to prevent unintended repeat
+   (last-progress
+    :initform nil
+    :documentation "A helpful hack to prevent unintended repeat
 narrowing in the lifecycle.  This is a latch variable."))
   "Default slide action.
 Most actions need the current slide to be narrowed to.  This
@@ -1566,11 +1584,10 @@ deck of progress was made.")
 
 ;; ** Reveal items section action
 (defclass ms-action-item-reveal (ms-action)
-  ((overlays :initform nil))            ; TODO see if this fixes the slot
-                                        ; unbound issues
+  ((overlays
+    :initform nil))
   "Hide all items and then reveal them one by one.")
 
-;; TODO may try to read uninitialized slot...
 (cl-defmethod ms-init :after ((obj ms-action-item-reveal))
   (oset obj overlays (ms-section-map obj 'item #'ms-hide-element)))
 
@@ -1716,9 +1733,18 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; ** Image Action
 
 (defclass ms-action-image (ms-action)
-  ((kill-buffer :initform nil :initarg :kill-buffer)
-   (include-linked :initform t :initarg :include-linked)
-   (refresh :initform t :initarg :refresh))
+  ((kill-buffer
+    :initform nil
+    :initarg :kill-buffer
+    :documentation "Kill the buffer.  Default nil just buries it.")
+   (include-linked
+    :initform t
+    :initarg :include-linked
+    :documentation "Loads linked images.  See `org-display-inline-images'.")
+   (refresh
+    :initform nil
+    :initarg :refresh
+    :documentation "Reload images.  See `org-display-inline-images'."))
   "Show images fullscreen in a buffer.")
 
 (cl-defmethod ms-init :after ((obj ms-action-image))
@@ -1804,7 +1830,9 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 ;; TODO override the child's own child action
 (defclass ms-child-action-inline (ms-action)
-  ((children :initform nil "Children that have been instantiated."))
+  ((children
+    :initform nil
+    :documentation "Children that have been instantiated."))
   "Display children inline with the parent.")
 
 (cl-defmethod ms-step-forward ((obj ms-child-action-inline))
