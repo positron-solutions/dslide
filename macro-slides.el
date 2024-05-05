@@ -1213,7 +1213,9 @@ heading and stores actions and their states.")
           (ms-final action))
         (oref obj section-actions))
   (when-let ((child-action (oref obj child-action)))
-    (ms-final child-action)))
+    (ms-final child-action))
+  ;; Clean up marker
+  (set-marker (oref obj begin) nil))
 
 (cl-defmethod ms-step-forward ((obj ms-slide))
   (let ((section-actions (oref obj section-actions))
