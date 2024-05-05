@@ -1618,17 +1618,20 @@ deck of progress was made.")
 By default blocks execute one by one with step-forward.  You can mark a block to
 be special with the keyword:
 
-- #+attr_method: init
+- #+attr_methods: init
 
-- #+attr_method: step-forward
+- #+attr_methods: step-forward
 
-- #+attr_method: step-backward
+- #+attr_methods: step-backward
 
-- #+attr_method: end
+- #+attr_methods: step-both
 
-- #+attr_method: final
+- #+attr_methods: end
 
-These keywords correspond to the normal methods of the stateful
+- #+attr_methods: final
+
+Other than step-both, which executes in either step direction,
+these keywords correspond to the normal methods of the stateful
 sequence class.  For blocks that should not occur more than once,
 only the first block found will actually be executed.")
 
@@ -1642,12 +1645,14 @@ only the first block found will actually be executed.")
          (org-babel-remove-result-one-or-many nil))))))
 
 (defun ms--method-block-pred
-    (method-name &optional unnamed)
+    (method-names &optional unnamed)
   "Return a predicate to match the METHOD-NAME.
 Optional UNNAMED will return unnamed blocks as well."
   (lambda (block)
-    (if-let ((names (org-element-property :attr_method block)))
-        (when (member method-name names)
+    (if-let* ((all-names (car (org-element-property
+                               :attr_methods block)))
+              (names (string-split all-names)))
+        (when (seq-intersection method-names names)
           block)
       (when unnamed
         block))))
@@ -1661,19 +1666,19 @@ Optional UNNAMED will return unnamed blocks as well."
 
 (cl-defmethod ms--get-block
   ((obj ms-action) &optional method-name)
-  "Execute the block with keyword value METHOD-NAME.
+  "Return the block with keyword value METHOD-NAME.
 The keywords look like:
 
-#+attr_method: METHOD-NAME
+#+attr_methods: METHOD-NAME
 
 The possible values for METHOD-NAME correspond to the
 stateful-sequence class methods.  METHOD-NAME is a string."
-  (let ((predicate (ms--method-block-pred method-name)))
+  (let ((predicate (ms--method-block-pred (list method-name))))
     (ms-section-map obj 'src-block predicate nil t)))
 
 (cl-defmethod ms-step-forward ((obj ms-action-babel))
   (when-let* ((predicate (ms--method-block-pred
-                          "step-forward" t))
+                          '("step-forward" "step-both") t))
               (next (ms-section-next obj 'src-block predicate)))
     (or (ms--block-execute next)
         ;; If we found a next block, we made progress regardless of the block's
@@ -1682,7 +1687,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod ms-step-backward ((obj ms-action-babel))
   (when-let* ((predicate (ms--method-block-pred
-                          "step-backward"))
+                          '("step-backward" "step-both")))
               (prev (ms-section-previous obj 'src-block predicate)))
     (or (ms--block-execute prev)
         ;; If we found a previous block, we made progress regardless of the
