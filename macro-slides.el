@@ -1709,11 +1709,15 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; ** Image Action
 
 (defclass ms-action-image (ms-action)
-  () "Show images fullscreen in a buffer.")
+  ((kill-buffer :initform nil :initarg :kill-buffer)
+   (include-linked :initform t :initarg :include-linked)
+   (refresh :initform t :initarg :refresh))
+  "Show images fullscreen in a buffer.")
 
 (cl-defmethod ms-init :after ((obj ms-action-image))
   (org-display-inline-images
-   t nil ; TODO needs refresh?  Add some args?
+   (oref obj include-linked)
+   (oref obj refresh)
    (org-element-begin (ms-heading obj))
    (org-element-end (ms-heading obj))))
 
@@ -1736,8 +1740,9 @@ stateful-sequence class methods.  METHOD-NAME is a string."
         (ms-push-step
          (lambda (_)
            (when (buffer-live-p image-buffer)
-             ;; TODO Optional kill ☠️🩸
-             (bury-buffer image-buffer))))))
+             (if (oref obj kill-buffer)
+                 (kill-buffer image-buffer)
+               (bury-buffer image-buffer)))))))
     ;; If we found a next image, progress was made
     t))
 
@@ -1757,8 +1762,9 @@ stateful-sequence class methods.  METHOD-NAME is a string."
         (ms-push-step
          (lambda (_)
            (when (buffer-live-p image-buffer)
-             ;; TODO Optional kill ☠️🩸
-             (bury-buffer image-buffer))))))
+             (if (oref obj kill-buffer)
+                 (kill-buffer image-buffer)
+               (bury-buffer image-buffer)))))))
     ;; If we found a next image, progress was made
     t))
 
