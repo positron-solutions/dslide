@@ -581,6 +581,211 @@ the mode and go to slides."
 
 ;; * Classes
 
+;; This generic functions below are the most important interfaces for all
+;; hacking of this package.
+;;
+;; The domain model first must describe a linear sequence of steps that the user
+;; traverses both forward and backward.
+;;
+;; There are some states that may need to be set up or torn down at the
+;; boundaries of the sequence.  These are handled by three methods, init, end,
+;; and final.
+;;
+;; End is essentially init for going in reverse.  Usually this is the same as
+;; calling init and then stepping forward until no more progress is made.
+;; However doing it this way would be unable to avoid extra work and could even
+;; create headaches when implementing sequences that shouldn't use reverse to
+;; un-execute the forwards steps or in cases where implementing this is too
+;; complex to pay off to the user.  For these reasons, the implementation of
+;; `ms-end' is left up to the user.
+;;
+;; Goto essentially is just a careful use of step-forward.  If every forward
+;; step properly reports its maximum extent of progress, we can use forward and
+;; init to implement every goto.
+;;
+;; Finally, step-forward and step-backward should navigate the states between
+;; init / end and final.  They just return non-nil until they are done.  The
+;; caller doesn't care about the implementation, and that is why EIEIO is used.
+;;
+;; Sub-sequences can rely on the parent state to exist for their entire
+;; lifetime. The parent sequence will not call its own `ms-final' until after it
+;; has called the sub-sequence's `ms-final'.
+;;
+;; Sub-sequences currently don't have any first-class extensible support for
+;; entering or exiting the sub-sequence.  Such cooperation is present in limited
+;; amounts to limit coupling the parent and child sequences.
+;;
+;; A lazy implementer can forego methods by delegating them to simpler
+;; idempotent methods, such as using an idempotent init for step-backward.  With
+;; a maximum of six methods and a minimum of two, just init and forward, you
+;; have enough behavior to properly fit the user interface.
+
+(cl-defgeneric ms-init (obj)
+  "Called when entering a sequence.
+Set up the state required for this sequence when going forward,
+entering the sequence from the beginning.
+
+Two explicit return values are understood:
+
+- `skip': This sequence has rejected being run.  `ms-final' will
+  not be called.
+
+- `step': Init was successful and should count as a step
+
+Any other return value, including nil, is considered implicit
+success but will not count as a step, meaning `ms-step-forward'
+will immediately be called.
+
+This method should work together with `ms-end' and `ms-final' to ensure
+consistently valid state for `ms-forward' and `ms-backward'.")
+
+(cl-defgeneric ms-end (obj)
+  "Init when going backwards.
+Set up the state required for this sequence when going backward,
+entering the sequence from the end.
+
+Two explicit return values are understood:
+
+- `skip': This sequence has rejected being run.  `ms-final' will
+  not be called.
+
+- `step': Init was successful and should count as a step
+
+Any other return value, including nil, is considered implicit
+success but will not count as a step, meaning `ms-step-forward'
+will immediately be called.
+
+
+The first job of this method is to perform setup, possibly by
+just calling init since they likely have similar side-effects.
+
+Second, this method should reach the state that is equivalent to
+if the user called forward until no more progress could be made.
+
+The default implementation calls `ms-init' and then calls
+`ms-step-forward' until no more progress can be made.  If this is
+inappropriate, it should be overridden.
+
+In cases where you don't need a real backward implementation or
+progressing backwards would have no sensible behavior, you can
+delegate this to init and possibly delegate backward to forward,
+resulting in a sequence that always starts at the beginning and
+always proceeds to the end.  For a single step sequence that has
+identical effect in both directions, this is appropriate.
+
+This method should work together with `ms-end' and `ms-final' to
+ensure consistently valid state for `ms-forward' and
+`ms-backward'")
+
+(cl-defgeneric ms-final (obj)
+  "Called when exiting a sequence.
+Implement this method to clean up any state that would interfere
+with the sequence succeeding when run again.  If your sequence
+implements real backward behavior,
+
+All side-effects and states created by steps in the sequence or
+the `ms-init' and `ms-end' methods must be cleaned up or
+otherwise managed or else `ms-step-backward' and other sequences
+of running a presentation will be brittle and likely fail when
+re-run.")
+
+(cl-defgeneric ms-step-forward (obj)
+  "Make one step forward.
+The return value has meaning to the deck:
+
+- t: progress was made
+
+- a point: progress was made up to a specific buffer location
+
+- nil: no progress could be made.
+
+For sequences that don't make progress in a buffer, returning t
+is fine.  Returning a point of progress is necessary for the
+default implementation of `ms-goto'.
+
+⚠ Every sequence of `ms-step-forward' should return nil at some
+point or else infinite loops will result.")
+
+(cl-defgeneric ms-step-backward (obj)
+  "Make one step backwards and return earliest point.
+The return value has meaning to the deck:
+
+- t: progress was made
+
+- a point: progress was made up to a specific buffer location
+
+- nil: no progress could be made.
+
+For sequences that don't make progress in a buffer, returning t
+is fine.  Returning a point of progress is necessary for the
+default implementation of `ms-goto'.
+
+⚠ Every sequence of `ms-step-backward' should return nil at some
+point or else infinite loops will result.")
+
+(cl-defgeneric ms-goto (obj point)
+  "Step forward until advancing beyond POINT.
+This method can usually be implemented on top of
+`ms-step-forward' by advancing until POINT is exceeded.  The
+default implementation calls init.  You should call init if you
+override this method.")
+
+;; ** Stateful Sequence
+(defclass ms-stateful-sequence ()
+  ((parent
+    :initval nil
+    :initarg :parent
+    :documentation "Parent or root sequence.
+Usually a deck or slide.  In the function stack analogy, this is
+the same as storing a stack pointer for returning to the caller."))
+
+  "An interface definition for linear sequences of steps.
+This is an abstract class.
+
+The sequence can be traversed forwards and backward.  `init' and
+`foward' are conjugates of `end' and 'backward'.
+
+Because the sequence steps may rely on some setup and should
+perform necessary teardown, the stateful sequence provides `init'
+`end' and `final' methods.
+
+It can also be indexed by high-level navigation commands.  The
+implementation of `ms-goto' Sequences can run as sub-sequences,
+where one sequence calls into another.
+
+Classes that wish to implement the stateful sequence interface
+just need to support a few methods and then rely on the generic
+implementations for the rest, unless they want to optimize or
+simplify their implementation."
+  :abstract t)
+
+(cl-defmethod ms-init ((_ ms-stateful-sequence)))
+
+(cl-defmethod ms-end ((obj ms-stateful-sequence))
+  (unless (eq 'skip (ms-init obj))
+    (let ((progress t))
+      (while progress
+        (setq progress (ms-step-forward obj))))))
+
+(cl-defmethod ms-step-forward ((_ ms-stateful-sequence)))
+
+(cl-defmethod ms-step-backward ((_ ms-stateful-sequence)))
+
+(cl-defmethod ms-final ((_ ms-stateful-sequence)))
+
+(cl-defmethod ms-goto ((obj ms-stateful-sequence) point)
+
+
+  (unless (eq 'skip (ms-init obj))
+    (let (exceeded (advanced t))
+      (while (and advanced (not exceeded))
+        (let ((progress (ms-step-forward obj)))
+          (if (and (numberp progress)
+                   (>= progress point))
+              (setq exceeded t)
+            (setq advanced progress)))))))
+
+;; ** Progress
 (defclass ms-progress-tracking ()
   ((marker
     :initform nil
@@ -605,149 +810,6 @@ Errors when asked for a marker before one has been set."
     (if (and marker (marker-buffer marker))
         (marker-position (oset obj marker marker))
       (error "No marker was initialized"))))
-
-;; This is one of the most important interfaces for all hacking.  The domain
-;; model is that of a linear sequence of steps that the user traverses both
-;; forward and backward.
-;;
-;; There are some states that may need to be set up or torn down at the
-;; boundaries of the sequence.  These are handled by three methods, init, end,
-;; and final.
-;;
-;; Sub-sequences currently don't have any special support for setup or teardown
-;; when entering or exiting the sub-sequence.  Such cooperation is present but
-;; implemented ad-hoc.  First-class support will be consistent with the
-;; architecture.
-;;
-;; End is essentially init for going in reverse.  While using init and going
-;; forward to reach the end is theoretically viable, it does extra work and
-;; leads to headaches for implements.
-;;
-;; Goto essentially is just a careful use of step-forward.  If every forward
-;; step properly reports its maximum extent of progress, we can use forward and
-;; init to implement every goto.
-;;
-;; Finally, step-forward and step-backward should navigate the states between
-;; init / end and final.
-;;
-;; A lazy implementer can forego methods by delegating them to simpler
-;; idempotent methods, such as using an idempotent init for step-backward.  With
-;; a maximum of six methods and a minimum of two, just init and forward, you
-;; have enough behavior to properly fit the user interface.
-
-;; Generics.  TODO check on the use of generics.
-(cl-defgeneric ms-init (obj))
-
-(cl-defgeneric ms-end (obj))
-
-(cl-defgeneric ms-final (obj))
-
-(cl-defgeneric ms-step-forward (obj))
-
-(cl-defgeneric ms-step-backward (obj))
-
-(cl-defgeneric ms-goto (obj point))
-
-;; ** Stateful Sequence
-(defclass ms-stateful-sequence ()
-  ((parent
-    :initval nil
-    :initarg :parent
-    :documentation "Parent or root sequence.
-Usually a deck or slide."))
-  "An interface definition for linear sequences of steps.
-The sequence can be traversed forwards and backward and also
-indexed into from higher level navigation commands.  Sequences
-can run as sub-sequences, where one sequence calls into another.
-
-Because the steps may rely on some setup and teardown, the
-stateful sequence provides methods to call these functions at the
-appropriate times.
-
-Classes that wish to implement the stateful sequence interface
-just need to support a few methods and then rely on the generic
-implementations for the rest, unless they want to optimize or
-simplify their implementation.")
-
-(cl-defmethod ms-init ((obj ms-stateful-sequence))
-  "Called when entering a sequence.
-Any state that must be set up for this sequence can run during
-the init method.  Init does not count as a step.  The guarantee
-from callers is that if init is called, `ms-final'
-will also be called.
-
-TODO Return is currently ignored, mainly because most init
-implementations are expected to produce side-effects rather than
-meaningful return values.
-
-Rather than implement this function in an idempotent way, work
-together with `ms-final' to make guarantees about
-initial conditions and tidyingup a sequence that has completely
-run its course.
-
-PARENT exists when the sequence is a sub-sequence.  Sub-sequences
-can rely on the parent state to exist for their entire lifetime.
-The parent sequence will not call its own `ms-final'
-until after it calls the sub-sequence's `ms-final'."
-  nil)
-
-(cl-defmethod ms-end ((obj ms-stateful-sequence))
-  "Init when going backwards.
-This method should be implemented so that the state is equivalent
-to having gone forward to the end of the slide.  The default
-implementation calls init and then advances to the end.  This can
-be inappropriate in a number of cases, and should be overridden.
-Re-using init is appropriate when a proper backward
-implementation is not valued.
-
-Just as init anticipates having forward called at least once, end
-should anticipate backward being called at least once.  This
-allows initial narrowing and slide behavior to be signaled
-properly to children and section actions."
-  (ms-init obj)
-  (let (extent (advanced t))
-    (while advanced
-      (when-let ((progress (ms-step-forward obj)))
-        (setq extent progress)))
-    extent))
-
-(cl-defmethod ms-final ((obj ms-stateful-sequence))
-  "Called when exiting a sequence.
-Implement this method to clean up any state that would interfere
-with the sequence succeeding when run again.  All side-effects
-and states created by steps in the sequence or the `ms-init'
-method must be cleaned up or otherwise managed or else
-`ms-step-backward' and other sequences of running a presentation
-will be brittle and likely fail when re-run."
-  nil)
-
-(cl-defmethod ms-step-forward ((obj ms-stateful-sequence))
-  "Make on step and return the point of farthest advance.
-When no progress can be made, return nil.  For steps that don't
-need to advance the point, if they make progress, they should
-return t or the point.  Every sequenece of `ms-step-forward'
-should return nil at some point."
-  nil)
-
-(cl-defmethod ms-step-backward ((obj ms-stateful-sequence))
-  "Make one step backwards and return earliest point.
-Backwards steps are considered to advance to be beginning of the
-extent they affect.  This enables forward and backward
-implementations to act as conjugates."
-  nil)
-
-(cl-defmethod ms-goto ((obj ms-stateful-sequence) point)
-  "Step forward until advancing beyond POINT.
-This method can usually be implemented on top of
-`ms-step-forward' by advancing until POINT is exceeded.
-`ms-init' is guaranteed to have been called."
-  (let (exceeded (advanced t))
-    (while (and advanced (not exceeded))
-      (let ((progress (ms-step-forward obj)))
-        (if (and (numberp progress)
-                 (>= progress point))
-            (setq exceeded progress)
-          (setq advanced progress))))))
 
 ;; ** Parent
 ;; TODO this class is kind of half-baked.  It was intended to wrap up the
@@ -837,7 +899,7 @@ their init."
       ;; next slide and call the `ms-after-last-slide-hook'
       (error "No slides could initialize"))))
 
-(cl-defmethod ms-end ((obj ms-deck))
+(cl-defmethod ms-end ((_ ms-deck))
   (error "Deck has no valid concept of starting at the end."))
 
 (cl-defmethod ms-final ((obj ms-deck))
@@ -1203,6 +1265,7 @@ See `ms-default-child-action'.")
     :documentation "Run child actions within the slide action.
 This is a temporary solution to support a basic form of action
 composition, Running actions as sequences within other actions."))
+
   "Slides store some local state and delegate behavior to several
 functions. The Slide is a stateful node that hydrates around a
 heading and stores actions and their states.")
@@ -1278,18 +1341,19 @@ heading and stores actions and their states.")
 ;; headings.  We can pretty much divide the likely user needs into either what
 ;; to do with the section and what to do with the child headings.  Because the
 ;; section needs to be narrowed to, and this narrowing must be performed both
-;; forwards and backwards, we also have a slide action that is run around the
-;; section and child actions.
+;; forwards and backwards, we also have a slide action that might (see
+;; `:compose') be run around the section and child actions.
 ;;
-;; It was anticipated for a time that actions might be nested in the
-;; configuration.  However, we still have a likely need for configuring just the
-;; section action or just the child action, and this API is not expected to look
-;; that different to the user whether nesting of actions is supported or not.
+;; There is a chance that it will make sense to support nested s-expressions in
+;; the property configuration.  For now, there is only an observed need for
+;; configuring either the section action or just the child action.  A property
+;; configuration API that supports nesting is not expected to look that
+;; different.  It will involve a bit more parsing.
 ;;
 ;; Both child actions and user configuration have demonstrated a large benefit
-;; from being able to slightly change the behavior of actions.  This is why the
-;; plist arguments are supported when hydrating from org properties and child
-;; actions can pass in arguments to `ms--make-slide'.
+;; from being able to slightly change the behavior of actions.  This is why
+;; `ms--make-slide' supports plist arguments when hydrating from org properties
+;; and why child actions that create slides can pass these in via `&rest'.
 
 (defun ms--make-slide (heading parent &rest args)
   "Hydrate a slide object from a HEADING element.
