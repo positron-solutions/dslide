@@ -1996,8 +1996,6 @@ Return the heading unless it's filtered."
 ;; `org-cycle-tree' before calling if strange behavior is observed.
 
 ;; TODO keep-lines seems kind of slow
-;; TODO move this up into the action class and pass through to these as private
-;; methods.
 (defun ms-hide-region (beg end &optional keep-lines)
   "Return overlay hiding region between BEG and END.
 Optional KEEP-LINES will replace region with as many newlines as
@@ -2038,7 +2036,7 @@ the region contains, preserving vertical size."
   "Return an overlay that hides the contents of ELEMENT.
 Element is an org element.  You should probably not use this on
 headings because their contents includes the sections and the
-children.
+children.  See `ms-hide-section' and `ms-hide-children'.
 
 Optional KEEP-LINES will replace region with as many newlines as
 the region contains, preserving vertical size."
@@ -2047,16 +2045,25 @@ the region contains, preserving vertical size."
                   keep-lines))
 
 (defun ms-hide-section (heading &optional keep-lines)
-  "Return an overlay that hides the section of ELEMENT.
-Element is an org element.  You should probably not use this on
-headings because their section includes the sections and the
-children.
+  "Return an overlay that hides the section of HEADING.
+HEADING is a headline type org element.
 
 Optional KEEP-LINES will replace region with as many newlines as
 the region contains, preserving vertical size."
   (ms-hide-region
    (ms--section-begin heading)
    (ms--section-end heading)
+   keep-lines))
+
+(defun ms-hide-children (heading &optional keep-lines)
+  "Return an overlay that hides the children of HEADING.
+HEADING is a headline type org element.
+
+Optional KEEP-LINES will replace region with as many newlines as
+the region contains, preserving vertical size."
+  (ms-hide-region
+   (ms--section-end heading)
+   (org-element-end heading)
    keep-lines))
 
 ;; * Element Mapping
