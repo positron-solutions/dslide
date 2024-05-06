@@ -1723,6 +1723,7 @@ deck of progress was made.")
 ;; kind of implemented but seems to inconsistently work.
 ;; TODO configure results removal behavior with an argument
 ;; TODO any display jank concerns due to results?  Possibly inhibit re-display.
+;; TODO integrate with skipping with init and end.
 (defclass ms-action-babel (ms-action)
   () "Execute source blocks as steps.
 By default blocks execute one by one with step-forward.  You can mark a block to
@@ -1805,7 +1806,6 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod ms-init :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "init")))
-    (ms--clear-results obj)
     (ms--block-execute block-element))
   ;; TODO pesky return values for init methods
   ;; These should probably need to be some explicit symbol to do anything other
@@ -1814,13 +1814,11 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod ms-end :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "end")))
-    (ms--clear-results obj)
     (ms--block-execute block-element)))
 
 (cl-defmethod ms-final :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "final")))
-    (ms--block-execute block-element)
-    (ms--clear-results obj)))
+    (ms--block-execute block-element)))
 
 ;; ** Image Action
 
