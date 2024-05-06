@@ -1631,6 +1631,7 @@ The default, nil, narrows to the section only.")
     :documentation "A helpful hack to prevent unintended repeat
 narrowing in the lifecycle.  This is a latch variable."))
   "Default slide action.
+
 Most actions need the current slide to be narrowed to.  This
 action is capable of performing such narrowing and informing the
 deck of progress was made.")
@@ -1773,8 +1774,7 @@ Optional UNNAMED will return unnamed blocks as well."
       ;; t for don't cache.  We likely want effects
       (org-babel-execute-src-block t))))
 
-(cl-defmethod ms--get-block
-  ((obj ms-action) &optional method-name)
+(cl-defmethod ms--get-block ((obj ms-action-babel) &optional method-name)
   "Return the block with keyword value METHOD-NAME.
 The keywords look like:
 
@@ -2290,13 +2290,11 @@ Each predicate should take one argument, an org element."
 
 ;; * Slide Header
 
-;; These variables were brought forward from `ms'.  There's not
-;; sufficient reason to upgrade them to customize variables nor remove them as
-;; it's easy to customize them in cases where it's necessary although this is
-;; not expected to become useful.
+;; These variables were brought forward from org-tree-slide.  There's not
+;; sufficient reason to upgrade them to customize variables nor remove.
 
 ;; TODO these can be used across buffers when set before cloning indirect
-;; buffers, but that's a coincidence, not necessarilly a design choice.
+;; buffers, but that's a coincidence, not necessarily a design choice.
 (defvar-local ms-title nil
   "Presentation title.
 If you have \"#+title:\" line in your org buffer, it wil be used
@@ -2319,6 +2317,7 @@ If you have \"#+date:\" line in your org buffer, it will be used
 as the date.")
 
 ;; TODO make public
+;; TODO allow header override function
 (defun ms--make-header (&optional no-breadcrumbs)
   "Draw a header for the first tree in the restriction.
 Set optional NO-BREADCRUMBS to non-nil to skip breadcrumbs.  The implementation
@@ -2434,6 +2433,7 @@ Increase if your so-called machine has trouble drawing."
 ;; TODO END is a redundant argument unless a virtual newline is introduced.
 ;; Test if an overlay can can work via after-string.
 ;; TODO Support non-graphical
+;; TODO Inline animation fallback, uncover text character by character.
 (defun ms-animation-setup (beg end)
   "Slide in the region from BEG to END.
 Everything after BEG will be animated.  The region between BEG
@@ -2498,9 +2498,8 @@ In functions that should only be called when a deck is alive and
 associated with the current buffer, use `ms-live-p'
 and throw an error if it's not live.
 
-This function sets up the deck and links the buffers together via
-the deck object.  Many operations such as calling hooks must
-occur in the display buffer."
+This function sets up the deck.  Many operations such as calling
+hooks must occur in the deck's :slide-buffer."
   (unless (ms-live-p)
     ;; Prevent starting within indirect buffers
     (when (buffer-base-buffer (current-buffer))
@@ -2662,7 +2661,7 @@ occur in the display buffer."
               ;; TODO this could create new symbols?  Anyway, using `make-symbol'
               ;; is extremely ill-advised here ☢️ and `intern-soft' should work
               ;; since the class should already exist, but I didn't check on this.
-              (push (intern (pop tokens)) class-with-args)
+              (push (intern-soft (pop tokens)) class-with-args)
               (let ((val (pop tokens)))
                 (push (car (read-from-string val)) class-with-args)))
             (push (reverse class-with-args) classes-with-args)
