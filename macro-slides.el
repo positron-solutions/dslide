@@ -917,13 +917,15 @@ their init."
                         switching-to-sibling t)
                 (setq reached-end t)))))
 
-        (ms--debug current-slide)
-        (when ms--debug
-          (message "switching-to-parent: %s" switching-to-parent))
-        (when next-slide
-          (ms--debug next-slide))
+        (unless next-slide
+          (ms--debug current-slide (format "forward: %s" progress)))
 
         (when next-slide
+          (ms--debug next-slide
+                     (cond (switching-to-parent "switching to parent")
+                           (switching-to-sibling "switching to sibling")
+                           (t "switching to child")))
+
           (unless switching-to-parent
             ;; Push a new sequence-callbacks level
             (push nil (oref obj sequence-callbacks)))
@@ -1026,13 +1028,15 @@ their init."
                         switching-to-sibling t)
                 (setq reached-beginning t)))))
 
-        (ms--debug current-slide)
-        (when ms--debug
-          (message "switching-to-parent: %s" switching-to-parent))
-        (when previous-slide
-          (ms--debug previous-slide))
+        (unless previous-slide
+          (ms--debug current-slide (format "forward: %s" progress)))
 
         (when previous-slide
+          (ms--debug previous-slide
+                     (cond (switching-to-parent "switching to parent")
+                           (switching-to-sibling "switching to sibling")
+                           (t "switching to child")))
+
           (unless switching-to-parent
             ;; Push a new sequence-callbacks level
             (push nil (oref obj sequence-callbacks)))
@@ -2400,14 +2404,16 @@ and the value of `point-max' should contain a newline somewhere."
 
 ;; * Assorted Implementation Details
 
-;; TODO Watching actions, results, and slides is way too opaque
-(defun ms--debug (slide)
+(defun ms--debug (slide &optional situation)
   (when ms--debug
     (let* ((heading (ms-heading slide))
            (headline-begin (org-element-begin heading))
            (headline-end (or (org-element-contents-begin heading)
-                             (org-element-end heading))))
-      (message "begin: %s heading: %s"
+                             (org-element-end heading)))
+           (situation (or situation
+                          "ms--debug")))
+      (message "%s begin: %s heading: %s"
+               situation
                (marker-position (oref slide begin))
                (save-restriction
                  (widen)
