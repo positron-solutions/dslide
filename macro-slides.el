@@ -501,7 +501,7 @@ each slide show from the contents view."
   (unless ms--deck
     (error "No deck exists"))
   (oset ms--deck slide-buffer-state 'base)
-  (switch-to-buffer (oref ms--deck base-buffer)))
+  (switch-to-buffer (oref ms--deck base-buffer))) ; TODO unknown slot warning
 
 (defun ms-stop ()
   "Stop the presentation entirely.
@@ -509,17 +509,20 @@ Kills the indirect buffer, forgets the deck, and return to the
 source buffer."
   (interactive)
   (when-let* ((deck ms--deck)
-              (slide-buffer (oref deck slide-buffer))
-              (base-buffer (oref deck base-buffer)))
+              (slide-buffer (oref deck slide-buffer)) ; TODO unknown slo
+              (base-buffer (oref deck base-buffer)))  ; TODO unknown slot
 
     ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
     ;; may require attention.
-    (ms-final ms--deck)
+    (with-demoted-errors "Deck finalization failed: %s"
+        (ms-final ms--deck))
 
     ;; Animation timers especially should be stopped
     ;; TODO ensure cleanup is thorough even if there's a lot of failures.
     ;; TODO make the deck a child sequence of a presentation ;-)
     (ms--clean-up-state)
+
+    (setq ms--deck nil)
 
     (switch-to-buffer base-buffer)
 
@@ -528,8 +531,6 @@ source buffer."
 
     (when ms-mode
       (ms-mode -1))
-
-    (setq ms--deck nil)
 
     (run-hooks 'ms-stop-hook)
     (ms--feedback :stop)))
@@ -901,14 +902,23 @@ their init."
   (let (initialized reached-end)
     (while (and (not initialized)
                 (not reached-end))
+      ;; TODO This line is critical to starting up the state machine.  Slides
+      ;; are still inferring their need to narrow.
       (narrow-to-region (point) (point)) ; signal to slide to draw itself
       (let ((result (ms-init (oref obj slide))))
-        ;; Might bug when init returns nil.  Most actions never return nil.
-        (if result
-            (setq initialized (ms-step-forward (oref obj slide)))
-          (if-let ((next (ms-next-child obj (oref obj slide))))
-              (oset obj slide next)
-            (setq reached-end t)))))
+        ;; TODO this loop is horrible. Rewrite it.
+        (if (eq result 'skip)
+            (if-let ((next (ms-next-child obj (oref obj slide))))
+                (oset obj slide next)
+              (setq reached-end t))
+          (if (eq result 'step)
+              (setq initialized t)
+            (let ((forward (ms-step-forward (oref obj slide))))
+              (if forward
+                  (setq initialized t)
+                (if-let ((next (ms-next-child obj (oref obj slide))))
+                    (oset obj slide next)
+                  (setq reached-end t))))))))
     (when reached-end
       ;; TODO probably the resulting state just needs to act like there is no
       ;; next slide and call the `ms-after-last-slide-hook'
@@ -1030,9 +1040,13 @@ their init."
                   (mapc (lambda (w) (set-window-point w pos)) windows))
                 (set-buffer (oref obj slide-buffer))))
 
-            ;; We just run the init and then let the next loop call the first
-            ;; forward, handling the result of progress appropriately.
-            (ms-init next-slide))))))
+            ;; Call init.  Unless an init call requests to be considered a step,
+            ;; the loop will proceed to call `step-forward' on `next-slide'
+            (pcase (ms-init next-slide)
+              ('step (setq progress t))
+              ;; TODO skipping here looks fiddly to implement.  The loop needs
+              ;; to immediately skip to checking for another sibling
+              ('skip (warn "Skip is not supported yet"))))))))
 
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
@@ -1139,10 +1153,12 @@ their init."
                 (when-let ((windows (get-buffer-window-list (current-buffer))))
                   (mapc (lambda (w) (set-window-point w pos)) windows))
                 (set-buffer (oref obj slide-buffer))))
-            ;; We just send the slide to its end (reverse init) and allow the
-            ;; next loop to call step-backward, obtaining progress and properly
-            ;; handling the result.
-            (ms-end previous-slide))))))
+            ;; We just send the slide to its end (reverse init).  Unless one end
+            ;; call requests to be considered a step, the loop will proceed to
+            ;; call `step-backward' on `previous-slide'
+            (pcase (ms-end previous-slide)
+              ('step (setq progress t))
+              ('skip (warn "Skip not implemented yet"))))))))
 
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
@@ -1285,28 +1301,47 @@ composition, Running actions as sequences within other actions."))
 functions. The Slide is a stateful node that hydrates around a
 heading and stores actions and their states.")
 
+;; These methods are starting to get a little bit fiddly with this hacky
+;; compositions style.  After a few more actions illuminate the common patterns,
+;; some refactoring need will be well decided.  It's there, I just don't know
+;; what we need.
+
 (cl-defmethod ms-init ((obj ms-slide))
-  (when-let ((display-action (oref obj slide-action)))
-    (ms-init display-action))
-  (mapc (lambda (action)
-          (ms-init action))
-        (oref obj section-actions))
-  (when-let ((child-action (oref obj child-action)))
-    (ms-init child-action))
-  ;; TODO this t is just a hack.  The implementation of reacting to return
-  ;; values from init has been in flux.
-  t)
+  (let (step)
+    (when-let ((display-action (oref obj slide-action)))
+      (setq step (ms-init display-action)))
+    (mapc (lambda (action)
+            (let ((result (ms-init action)))
+              (when (eq result 'step)
+                (setq step 'step))))
+          (oref obj section-actions))
+    (when-let ((child-action (oref obj child-action)))
+      (ms-init child-action))
+    step))
 
 (cl-defmethod ms-end ((obj ms-slide))
-  (when-let ((child-action (oref obj child-action)))
-    (ms-end child-action))
-  (mapc (lambda (action)
-          (ms-end action))
-        (reverse (oref obj section-actions)))
-  (when-let ((display-action (oref obj slide-action)))
-    (ms-end display-action)))
+  (let (step)
+    (when (oref obj compose)
+      (when-let ((display-action (oref obj slide-action)))
+        (setq step (ms-end display-action))))
+    (when-let ((child-action (oref obj child-action)))
+      (let ((result (ms-end child-action)))
+        (when (eq result 'step)
+          (setq step 'step))))
+    (unless (oref obj compose)
+      (when-let ((display-action (oref obj slide-action)))
+        (when (eq 'step (ms-end display-action))
+          (setq step 'step))))
+    (mapc (lambda (action)
+            (when (eq 'step (ms-end action))
+              (message "An action indeed has returned `step' during the end method.")
+              (setq step 'step)))
+          (reverse (oref obj section-actions)))
+    step))
 
 (cl-defmethod ms-final ((obj ms-slide))
+  ;; The order that these are called shouldn't matter.  No use case for coupling
+  ;; different finals.
   (when-let ((display-action (oref obj slide-action)))
     (ms-final display-action))
   (mapc (lambda (action)
@@ -1336,8 +1371,6 @@ heading and stores actions and their states.")
         (child-action (oref obj child-action))
         (slide-action (oref obj slide-action))
         progress)
-    ;; section display action happens before any section-actions
-
     (setq progress
           (if (oref obj compose)
               (or (when slide-action (ms-step-backward slide-action))
@@ -1670,15 +1703,17 @@ deck of progress was made.")
           (setq progress t))
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
+        ;; TODO overlay-based display
         (narrow-to-region begin end)
         (ms--make-header)
         (goto-char (point-min))         ; necessary to reset the scroll
-        (when ms-slide-in-effect
+        (when (and ms-slide-in-effect
+                   (not (oref obj inline)))
           (ms-animation-setup begin end))
         (setq progress t)))
     ;; This progress is important because it's how we show a slide and count as
     ;; a first step
-    progress))
+    (when progress 'step)))
 
 (cl-defmethod ms-step-forward ((obj ms-action-narrow))
   (prog1 (unless (eq 'forward (oref obj last-progress))
@@ -1786,6 +1821,8 @@ Optional UNNAMED will return unnamed blocks as well."
 (defun ms--block-execute (block-element)
   (without-restriction
     (save-excursion
+      ;; TODO catch signals provide user feedback & options to navigate to the
+      ;; failed block.
       (goto-char (org-element-begin block-element))
       ;; t for don't cache.  We likely want effects
       (org-babel-execute-src-block t))))
@@ -1821,15 +1858,12 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod ms-init :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "init")))
-    (ms--block-execute block-element))
-  ;; TODO pesky return values for init methods
-  ;; These should probably need to be some explicit symbol to do anything other
-  ;; than proceed in a care-free manner.
-  t)
+    (ms--block-execute block-element)))
 
 (cl-defmethod ms-end :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "end")))
-    (ms--block-execute block-element)))
+    (ms--block-execute block-element)
+    'step))
 
 (cl-defmethod ms-final :after ((obj ms-action-babel))
   (when-let ((block-element (ms--get-block obj "final")))
@@ -1987,9 +2021,24 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (not (null progress))))
 
 (cl-defmethod ms-end :after ((obj ms-child-action-inline))
-  ;;  Basically the default stateful sequence technique
-  (ms-marker obj (org-element-begin (ms-heading obj)))
-  (while (ms-step-forward obj) t))
+  (let (step exhausted)
+    (while (not exhausted)
+      ;; If the child didn't make progress, try to load up the next child
+      (if-let* ((child-heading (ms-forward-child obj)))
+          (let* ((child (ms--make-slide
+                         child-heading
+                         (oref ms--deck slide)
+                         :slide-action #'ms-action-narrow
+                         :inline t
+                         ;; TODO this won't compose at all
+                         :slide-action-args '(:include-restriction t :with-children t)
+                         :child-action 'none))
+                 (result (ms-end child)))
+            (push child (oref obj children))
+            (when (eq result 'step)
+              (setq step 'step)))
+        (setq exhausted t)))
+    step))
 
 (cl-defmethod ms-final :after ((obj ms-child-action-inline))
   (mapc #'ms-final (oref obj children)))
