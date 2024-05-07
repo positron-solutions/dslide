@@ -4,7 +4,7 @@
 ;; Copyright (C) 2024 Positron
 ;;
 ;; Author: Positron <contact@positron.solutions>
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "29.2"))
 ;; Maintainer: Positron <contact@positron.solutions>
 ;; URL: https://github.com/positron-solutions/macro-slides
@@ -509,7 +509,7 @@ Kills the indirect buffer, forgets the deck, and return to the
 source buffer."
   (interactive)
   (when-let* ((deck ms--deck)
-              (slide-buffer (oref deck slide-buffer)) ; TODO unknown slo
+              (slide-buffer (oref deck slide-buffer)) ; TODO unknown slot
               (base-buffer (oref deck base-buffer)))  ; TODO unknown slot
 
     ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
@@ -1049,6 +1049,7 @@ their init."
   "Set the current slide, according to HOW.
 Optional POINT allows resolving a slide by walking the tree to
 find the slide that displays that POINT."
+  ;; TODO apply filter when choosing starting slide
   (cond ((eq how 'first)
          (oset obj slide (ms--make-slide
                           (ms--document-first-heading) obj)))

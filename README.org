@@ -43,7 +43,9 @@ Fully programmable sequences behind a two-button interface:
 - Integration with Elisp programs, arbitrary Emacs buffers, and scripting with Org Babel
 - Custom class support for extending the framework
 ** Status
-👷🛠️ Version 0.1.0 to begin receiving API feedback and feature requests etc.  Please check the issues and weigh in on other users proposals and PR's.
+👷🛠️ Version 0.2.0 to begin receiving API feedback and feature requests etc.  Please check the issues and weigh in on other users proposals and PR's.
+
+The internal API is beginning to stabilize.  I think the user API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
 * Features
 ** Contents Navigation
 Call ~ms-contents~ to show a contents overview.  Calling ~ms-forward~ and ~ms-backward~ in the contents can quickly move through headings.  Call ~ms-start~ again to resume the presentation from that point.
@@ -69,8 +71,8 @@ There's a lot of hooks and variables.  All of the variables are configured to re
 ** Recommended MC Settings
 The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
 #+begin_src elisp
-  ;;  Something like this should work
-  (add-hook 'ms-mode-hook (lambda () (mc-hide-mode ms-mode)))
+  ;; Something like this should work
+  (add-hook 'ms-mode-hook (lambda () (mc-hide-mode (if ms-mode 1 -1))))
   (add-hook 'ms-narrow-hook #'mc-hide-refresh)
 #+end_src
 ** Heading Properties
@@ -82,7 +84,7 @@ Headings are treated as slides.  Slides have actions.  Actions are configured in
 
 Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 
-🚧 Likely in the future, actions will be composable and accept arguments, using Lisp s-expressions.  This API should be forward compatible by wrapping section actions in the slide action and running the child after the slide action.
+🚧 Likely in the future, actions will be composable and accept arguments, using Lisp s-expressions.  This API should be forward compatible.
 *** Example
 Regular Org Mode markup is used to add actions to headings.  See more examples in the [[../test]] directory.
 #+begin_src org
@@ -135,7 +137,7 @@ At the boundaries of a sequence of forward and reverse actions, it may be necess
 
 The role of ~ms-end~ is to perform initialization at the end.  It is optional as the default implementation is to call ~ms-int~ and then ~ms-step-forward~ until no more progress can be made.  However, this may be costly or undesirable due to side-effects.
 *** Indexing Via Point
-In order to support contents based navigation, we need to be able to play a slide forward up to the current point.  This may require instantiating some parent slides and playing them forward to a child.  To avoid the need for parents to know about children, the ~goto~ method was introduced.
+In order to support contents based navigation, we need to be able to play a slide forward up to the current point.  This may require instantiating some parent slides and playing them forward to a child.  To avoid the need for parents to know about children, the ~ms-goto~ method was introduced.
 *** Stateful Sequence Interface
 The conclusion of the command pattern, setup & teardown, and indexing via point is the ~ms-stateful-sequence~ class.  Anything that implements its interface can be controlled by ~ms-forward~ and ~ms-backward~.  The full interface:
 
@@ -143,7 +145,6 @@ The conclusion of the command pattern, setup & teardown, and indexing via point 
 - ~ms-final~
 - ~ms-step-forward~ & ~ms-step-backward~
 - ~ms-goto~
-
 **** Re-Using Implementations
 + The default implementation of ~ms-end~ is achieved by just walking forward from ~ms-init~, calling ~ms-step-forward~ until it returns =nil=.
 
@@ -161,8 +162,8 @@ A slide action can be seen as an impure function.  Actions to display the sectio
 *** Child, Section, and Slide
 It is extremely natural that a slide action will fill one of three roles:
 - Narrow to the contents its actions work on
-- Perform some steps on the region that has been narrowed to
-- Switch to child slides or orchestrate children in a shared buffer restriction
+- Perform some steps on the heading's section
+- Perform steps on the heading's children, including instantiating slides and calling their methods, which may narrow to them
 **** Multiple Slide Property Keys
 These natural roles are why there are more than one heading property for configuring actions.  Each action is easier to implement if they only fill one role.  It is easier for the user to configure a slide if they only have to declare one action.  By breaking up the slide's typical actions, we can configure with enough granularity to usually only touch one heading property.
 *** Trees & Stacks
@@ -176,9 +177,9 @@ A consequence of this is that there are usually multiple actions alive at once. 
 * Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
 ** TODO Contents
-I seem to have forgotten again to implement starting at the point or navigating via contents.  Well, let's add it tomorrow.
-** Backward With Inline Children
-Yes, I just broke this while adding something else.  Give me a minute lol.
+I seem to have forgotten again to implement starting at the point or navigating via contents.  Well, let's add it +tomorrow.+ Thursday?
+** Mode Lifecycle
+Starting and stopping the mode need some work.  The minor mode is global, so it's sensitive in every buffer, but it doesn't always call things in the right buffer.  I think double-start also still has a bug.  Easy to clean up.
 ** Non-Graphic Display
 For terminals, the line-height based slide-in effect is not supported.
 ** Sub-Sequence Call & Restore
@@ -188,7 +189,7 @@ There's no concrete reason why presentations need to start with Org mode buffers
 ** Heading Filtering
 This was not implemented yet, but evidently some had been filtering their headlines to only show TODO's in ~org-tree-slide~.  Perhaps it is convenient to filter some tags and prevent them from being instantiated, especially if they will fail.
 ** Counting Slides
-Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees might be easier.  A ~children~ method for sequeneces works as long as sequences actually implement it.
+Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A ~children~ method for sequeneces works as long as sequences actually implement it.
 ** Improper Levels
 Children with no parents or missing a level are currently not supported and likely cause bad behavior.
 * Thanks & Acknowledgments
