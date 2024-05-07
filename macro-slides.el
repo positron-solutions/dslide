@@ -46,7 +46,7 @@
 ;; There are examples of using the features within the test directory.
 ;;
 ;; Requirement:
-;;    org-mode 9.6.x or higher version
+;;    org-mode 9.6.29 or higher version
 ;;    The latest version of the org-mode is recommended.
 ;;                      (see https://orgmode.org/)
 ;;
@@ -483,7 +483,7 @@ each slide show from the contents view."
 
   (when ms-contents-header
     (if-let ((first (ms--document-first-heading)))
-        (narrow-to-region (org-element-begin first)
+        (narrow-to-region (org-element-property :begin first)
                           (point-max))
       ;; No first heading.  Just header.  Empty contents.
       (narrow-to-region (point-max)
@@ -1265,7 +1265,7 @@ Many optional ARGS.  See code."
   ;; Share the beginning marker across all actions.  It's not unique and
   ;; shouldn't move.
   ;; TODO Consolidate explicit nil indication around whatever is standard
-  (let* ((begin-position (org-element-begin heading))
+  (let* ((begin-position (org-element-property :begin heading))
          (begin (make-marker))
          (inline (plist-get args :inline))
          (slide-action-class (plist-get args :slide-action))
@@ -1436,8 +1436,8 @@ is found."
                                    (ms-marker obj)
                                    pred info no-recursion)))
       (prog1 next
-        (ms-marker obj (org-element-begin next)))
-    (ms-marker obj (org-element-end (ms-heading obj)))
+        (ms-marker obj (org-element-property :begin next)))
+    (ms-marker obj (org-element-property :end (ms-heading obj)))
     nil))
 
 (cl-defmethod ms-section-previous
@@ -1450,8 +1450,8 @@ element is found."
                                            (ms-marker obj)
                                            pred info no-recursion)))
       (prog1 previous
-        (ms-marker obj (org-element-begin previous)))
-    (ms-marker obj (org-element-begin (ms-heading obj)))
+        (ms-marker obj (org-element-property :begin previous)))
+    (ms-marker obj (org-element-property :begin (ms-heading obj)))
     nil))
 
 (cl-defmethod ms-section-map
@@ -1464,10 +1464,10 @@ NO-RECURSION will avoid descending into children."
    type fun info first-match no-recursion))
 
 (cl-defmethod ms-init ((obj ms-action))
-  (ms-marker obj (org-element-begin (ms-heading obj))))
+  (ms-marker obj (org-element-property :begin (ms-heading obj))))
 
 (cl-defmethod ms-end ((obj ms-action))
-  (ms-marker obj (org-element-end (ms-heading obj))))
+  (ms-marker obj (org-element-property :end (ms-heading obj))))
 
 (cl-defmethod ms-final ((obj ms-action))
   (when-let ((marker (oref obj marker)))
@@ -1494,7 +1494,7 @@ deck of progress was made.")
          (heading (ms-heading obj))
          (begin (oref obj begin))
          (end (if (oref obj with-children)
-                  (org-element-end heading)
+                  (org-element-property :end heading)
                 (ms--section-end heading))))
 
     (if (oref obj include-restriction)
@@ -1613,7 +1613,7 @@ steps.")
      obj 'src-block
      (lambda (e)
        (save-excursion
-         (goto-char (org-element-begin e))
+         (goto-char (org-element-property :begin e))
          (org-babel-remove-result-one-or-many nil))))))
 
 (defun ms--method-block-pred
@@ -1634,7 +1634,7 @@ Optional UNNAMED will return unnamed blocks as well."
     (save-excursion
       ;; TODO catch signals provide user feedback & options to navigate to the
       ;; failed block.
-      (goto-char (org-element-begin block-element))
+      (goto-char (org-element-property :begin block-element))
       ;; t for don't cache.  We likely want effects
       (org-babel-execute-src-block t))))
 
@@ -1700,8 +1700,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   (org-display-inline-images
    (oref obj include-linked)
    (oref obj refresh)
-   (org-element-begin (ms-heading obj))
-   (org-element-end (ms-heading obj))))
+   (org-element-property :begin (ms-heading obj))
+   (org-element-property :end (ms-heading obj))))
 
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
@@ -1766,12 +1766,12 @@ found."
                    heading 'headline
                    (lambda (child)
                      (and (= target-level (org-element-property :level child))
-                          (> (org-element-begin child) marker)
+                          (> (org-element-property :begin child) marker)
                           child))
                    nil t)))
       (prog1 next
-        (ms-marker obj (org-element-begin next)))
-    (ms-marker obj (org-element-end (ms-heading obj)))
+        (ms-marker obj (org-element-property :begin next)))
+    (ms-marker obj (org-element-property :end (ms-heading obj)))
     nil))
 
 (cl-defmethod ms-backward-child ((obj ms-action))
@@ -1788,11 +1788,11 @@ child is found."
                      heading 'headline
                      (lambda (child)
                        (and (= target-level (org-element-property :level child))
-                            (< (org-element-begin child) marker)
+                            (< (org-element-property :begin child) marker)
                             child)))))))
       (prog1 next
-        (ms-marker obj (org-element-begin next)))
-    (ms-marker obj (org-element-begin (ms-heading obj)))
+        (ms-marker obj (org-element-property :begin next)))
+    (ms-marker obj (org-element-property :begin (ms-heading obj)))
     nil))
 
 ;; ** Default Child Action
@@ -1817,7 +1817,7 @@ child is found."
         (let ((child (ms--make-slide child (oref ms--deck slide))))
           (ms-init child)
           (oset obj child child))
-        (setq progress (org-element-begin child))))
+        (setq progress (org-element-property :begin child))))
     progress))
 
 (cl-defmethod ms-step-backward ((obj ms-child-action-slide))
@@ -1835,7 +1835,7 @@ child is found."
         (let ((child (ms--make-slide child (oref ms--deck slide))))
           (ms-end child)
           (oset obj child child))
-        (setq progress (org-element-begin child))))
+        (setq progress (org-element-property :begin child))))
     progress))
 
 (cl-defmethod ms-end :after ((obj ms-child-action-slide))
@@ -1905,7 +1905,7 @@ child is found."
           ;; TODO do this with overlays in a nested child ☢️
           (when heading
             (narrow-to-region (point-min)
-                              (org-element-begin heading)))
+                              (org-element-property :begin heading)))
           (ms-final finished)
           (setq progress t))))
     ;; Don't return any child objects to the deck or it will treat them like
@@ -1970,8 +1970,8 @@ the region contains, preserving vertical size."
 Element is an org element. Optional KEEP-LINES will replace
 region with as many newlines as the region contains, preserving
 vertical size."
-  (ms-hide-region (org-element-begin element)
-                  (org-element-end element)
+  (ms-hide-region (org-element-property :begin element)
+                  (org-element-property :end element)
                   keep-lines))
 
 (defun ms-hide-item (item &optional keep-lines)
@@ -1993,8 +1993,8 @@ children.  See `ms-hide-section' and `ms-hide-children'.
 
 Optional KEEP-LINES will replace region with as many newlines as
 the region contains, preserving vertical size."
-  (ms-hide-region (org-element-contents-begin element)
-                  (org-element-end element)
+  (ms-hide-region (org-element-property :contents-begin element)
+                  (org-element-property :end element)
                   keep-lines))
 
 (defun ms-hide-section (heading &optional keep-lines)
@@ -2016,7 +2016,7 @@ Optional KEEP-LINES will replace region with as many newlines as
 the region contains, preserving vertical size."
   (ms-hide-region
    (ms--section-end heading)
-   (org-element-end heading)
+   (org-element-property :end heading)
    keep-lines))
 
 ;; * Element Mapping
@@ -2032,8 +2032,8 @@ TYPE and FUNCTION are described in `org-element-map'."
   (let ((type (if (listp type) type (list type))))
     (save-excursion
       (save-restriction
-        (narrow-to-region (org-element-begin element)
-                          (org-element-end element))
+        (narrow-to-region (org-element-property :begin element)
+                          (org-element-property :end element))
         (let ((data (org-element-parse-buffer)))
           (org-element-map data type fun info
                            first-match no-recursion))))))
@@ -2045,8 +2045,8 @@ TYPE and FUNCTION are described in `org-element-map'."
   (let ((type (if (listp type) type (list type))))
     (save-excursion
       (save-restriction
-        (when-let ((begin (org-element-contents-begin element))
-                   (end (org-element-contents-end element)))
+        (when-let ((begin (org-element-property :contents-begin element))
+                   (end (org-element-property :contents-end element)))
           (narrow-to-region begin end)
           (let ((data (org-element-parse-buffer)))
             (org-element-map data type fun info
@@ -2067,7 +2067,7 @@ Optional PRED should accept ELEMENT and return non-nil if
 matched."
   (let* ((combined-pred (ms-and
                          pred
-                         (lambda (e) (> (org-element-begin e) after)))))
+                         (lambda (e) (> (org-element-property :begin e) after)))))
     (ms--section-map
      heading type combined-pred info t no-recursion)))
 
@@ -2078,7 +2078,7 @@ Optional PRED should accept ELEMENT and return non-nil if
 matched."
   (let* ((combined-pred (ms-and
                          pred
-                         (lambda (e) (< (org-element-begin e) before)))))
+                         (lambda (e) (< (org-element-property :begin e) before)))))
     ;; We can't map in reverse, so just retrieve all matched elements and
     ;; return the last one.
     (car (last (ms--section-map
@@ -2093,25 +2093,25 @@ matched."
   "Always returns a point, even for empty headings."
   (if-let ((section (ms--map
                      heading 'section #'identity nil t t)))
-      (org-element-begin section)
-    (or (org-element-contents-begin heading)
-        (org-element-end heading))))
+      (org-element-property :begin section)
+    (or (org-element-property :contents-begin heading)
+        (org-element-property :end heading))))
 
 (defun ms--section-end (heading)
   "Always returns a point, even for empty headings."
-  (let ((not-self (lambda (e) (unless (equal (org-element-begin e)
-                                        (org-element-begin heading))
+  (let ((not-self (lambda (e) (unless (equal (org-element-property :begin e)
+                                        (org-element-property :begin heading))
                            e))))
     (if-let ((section-or-heading (ms--map
                                   heading '(headline section)
                                   not-self nil t t)))
         (if (eq (org-element-type section-or-heading)
                 'headline)
-            (org-element-begin section-or-heading)
-          (org-element-end section-or-heading))
+            (org-element-property :begin section-or-heading)
+          (org-element-property :end section-or-heading))
       (or
-       (org-element-contents-begin heading)
-       (org-element-end heading)))))
+       (org-element-property :contents-begin heading)
+       (org-element-property :end heading)))))
 
 ;; TODO these two functions behaved badly and rely on non-element methods of
 ;; unknown behavior
@@ -2120,7 +2120,7 @@ matched."
 PREDICATE should accept an ELEMENT argument and return non-nil."
   (without-restriction
     (save-excursion
-      (goto-char (org-element-begin heading))
+      (goto-char (org-element-property :begin heading))
       (let* ((predicate (or predicate #'identity))
              found)
         (while (and (> (point) (point-min))
@@ -2137,7 +2137,7 @@ PREDICATE should accept an ELEMENT argument and return non-nil."
 PREDICATE should accept an ELEMENT argument and return non-nil."
   (without-restriction
     (save-excursion
-      (goto-char (org-element-begin heading))
+      (goto-char (org-element-property :begin heading))
       (let* ((predicate (or predicate #'identity))
              found)
         (while (and (< (point) (point-max))
@@ -2186,12 +2186,12 @@ PREDICATE should return matching children."
 (defun ms--element-root (element &optional type)
   "Get the root parent of ELEMENT of TYPE.
 TYPE is a list or type symbol."
-  (let ((parent (org-element-parent element)))
+  (let ((parent (org-element-property :parent element)))
     (while parent
       (if (or (not type)
               (ms-type-p parent type))
           (setq element parent
-                parent (org-element-parent parent))
+                parent (org-element-property :parent parent))
         (setq parent nil)))
     element))
 
@@ -2416,9 +2416,9 @@ and the value of `point-max' should contain a newline somewhere."
 (defun ms--debug (slide &optional situation)
   (when ms--debug
     (let* ((heading (ms-heading slide))
-           (headline-begin (org-element-begin heading))
-           (headline-end (or (org-element-contents-begin heading)
-                             (org-element-end heading)))
+           (headline-begin (org-element-property :begin heading))
+           (headline-end (or (org-element-property :contents-begin heading)
+                             (org-element-property :end heading)))
            (situation (or situation
                           "ms--debug")))
       (message "%s begin: %s heading: %s"
