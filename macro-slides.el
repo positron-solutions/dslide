@@ -1793,8 +1793,9 @@ be special with the keyword:
 
 Other than step-both, which executes in either step direction,
 these keywords correspond to the normal methods of the stateful
-sequence class.  For blocks that should not occur more than once,
-only the first block found will actually be executed.")
+sequence class.  Blocks with method init, end, and final are all
+executed during the corresponding method and do not count as
+steps.")
 
 (cl-defmethod ms--clear-results ((obj ms-action-babel))
   (without-restriction
@@ -1827,7 +1828,7 @@ Optional UNNAMED will return unnamed blocks as well."
       ;; t for don't cache.  We likely want effects
       (org-babel-execute-src-block t))))
 
-(cl-defmethod ms--get-block ((obj ms-action-babel) &optional method-name)
+(cl-defmethod ms--get-blocks ((obj ms-action-babel) &optional method-name)
   "Return the block with keyword value METHOD-NAME.
 The keywords look like:
 
@@ -1836,7 +1837,7 @@ The keywords look like:
 The possible values for METHOD-NAME correspond to the
 stateful-sequence class methods.  METHOD-NAME is a string."
   (let ((predicate (ms--method-block-pred (list method-name))))
-    (ms-section-map obj 'src-block predicate nil t)))
+    (ms-section-map obj 'src-block predicate)))
 
 (cl-defmethod ms-step-forward ((obj ms-action-babel))
   (when-let* ((predicate (ms--method-block-pred
@@ -1857,17 +1858,16 @@ stateful-sequence class methods.  METHOD-NAME is a string."
         t)))
 
 (cl-defmethod ms-init :after ((obj ms-action-babel))
-  (when-let ((block-element (ms--get-block obj "init")))
-    (ms--block-execute block-element)))
+  (when-let ((block-elements (ms--get-blocks obj "init")))
+    (mapc #'ms--block-execute block-elements)))
 
 (cl-defmethod ms-end :after ((obj ms-action-babel))
-  (when-let ((block-element (ms--get-block obj "end")))
-    (ms--block-execute block-element)
-    'step))
+  (when-let ((block-elements (ms--get-blocks obj "end")))
+    (mapc #'ms--block-execute block-elements)))
 
 (cl-defmethod ms-final :after ((obj ms-action-babel))
-  (when-let ((block-element (ms--get-block obj "final")))
-    (ms--block-execute block-element)))
+  (when-let ((block-elements (ms--get-blocks obj "final")))
+    (mapc #'ms--block-execute block-elements)))
 
 ;; ** Image Action
 
