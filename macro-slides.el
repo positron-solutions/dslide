@@ -268,6 +268,17 @@ properties remain unless shadowed."
   :type 'boolean
   :group 'macro-slides)
 
+(defcustom ms-animation-duration 1.0
+  "How long slide in takes."
+  :type 'number
+  :group 'macro-slides)
+
+(defcustom ms-animation-frame-duration (/ 1.0 60.0)
+  "Length between updates.
+Increase if your so-called machine has trouble drawing."
+  :type 'number
+  :group 'macro-slides)
+
 (defcustom ms-start-hook nil
   "Runs after the slide buffer is created but before first slide.
 Buffer is widened and fully visible."
@@ -385,6 +396,10 @@ an SLIDE_FILTER keyword."
 
 (defvar ms--debug nil
   "Set to t for logging slides and actions.")
+
+
+(defvar ms--animation-timer nil)
+(defvar-local ms--animation-overlay nil)
 
 ;; Tell the compiler that these variables exist
 (defvar ms-mode)
@@ -2420,25 +2435,12 @@ assumes the buffer is restricted and that there is a first tree."
 
 ;; * Animation
 
-(defvar ms--animation-timer nil)
-(defvar-local ms--animation-overlay nil)
-
-(defcustom ms-animation-duration 1.0
-  "How long slide in takes."
-  :type 'number
-  :group 'macro-slides)
-
-(defcustom ms-animation-frame-duration (/ 1.0 60.0)
-  "Length between updates.
-Increase if your so-called machine has trouble drawing."
-  :type 'number
-  :group 'macro-slides)
-
 ;; TODO move respect for animation variables into this function
 ;; TODO END is a redundant argument unless a virtual newline is introduced.
 ;; Test if an overlay can can work via after-string.
 ;; TODO Support non-graphical
 ;; TODO Inline animation fallback, uncover text character by character.
+;; TODO User-provided animation override function
 (defun ms-animation-setup (beg end)
   "Slide in the region from BEG to END.
 Everything after BEG will be animated.  The region between BEG
