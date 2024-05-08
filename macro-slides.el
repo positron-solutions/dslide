@@ -4,7 +4,7 @@
 ;; Copyright (C) 2024 Positron
 ;;
 ;; Author: Positron <contact@positron.solutions>
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Package-Requires: ((emacs "29.2"))
 ;; Maintainer: Positron <contact@positron.solutions>
 ;; URL: https://github.com/positron-solutions/macro-slides

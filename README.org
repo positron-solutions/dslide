@@ -33,17 +33,22 @@ With just defaults, run ~ms-start~ on your existing documents.  You can load the
 Fully programmable sequences behind a two-button interface:
 - ~ms-forward~
 - ~ms-backward~
-** Present Org Documents
+** Present Org Documents 🦄
 - Document header generated from keywords
 - Breadcrumbs
-- Every heading and child heading is a slide
-** Fully Programmable
+- By default, every heading and child heading is a slide
 - Configurable slide behavior using pre-built actions
+- Consume typical org data like inline images with full-frame display
+** Fully Programmable ✨
+- Directly script your presentation with Org babel blocks
 - Convenient API for quickly writing reliable custom actions
-- Integration with Elisp programs, arbitrary Emacs buffers, and scripting with Org Babel
+- Integration with Elisp programs and arbitrary Emacs buffers
 - Custom class support for extending the framework
-** Status
-👷🛠️ Version 0.2.0 to begin receiving API feedback and feature requests etc.  Please check the issues and weigh in on other users proposals and PR's.
+** Status 🛠️
+Version 0.2.1 👷
+- Deciding the configuration API and naming
+- Gathering user feedback & experience
+- Accepting PR's and issue reports
 
 The internal API is beginning to stabilize.  I think the user API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
 * Features
@@ -68,6 +73,14 @@ Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared cust
 Many settings can be configured at the global level through customize variables, the document level through keywords, and the slide level through the property drawer.
 
 There's a lot of hooks and variables.  All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
+** Binding
+You likely want to start the mode via ~ms-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~ms-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
+#+begin_src elisp
+  (keymap-set org-mode-map [f5] #'ms-start)
+#+end_src
+Once the global minor mode, ~ms-mode~ is active, additional bindings in ~ms-mode-map~ are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
+*** Secondary Commands 🚧
+Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~ms-start~ binding within presentations to enter / exit these branches.
 ** Recommended MC Settings
 The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
 #+begin_src elisp
@@ -95,14 +108,43 @@ Regular Org Mode markup is used to add actions to headings.  See more examples i
   ,#+attr_html: :width 50%
   [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
 #+end_src
+*** Action Arguments
+Many actions understand arguments, allowing tuning of similar behaviors from the same class.  Implementing new arguments is relatively easy, just adding a slot and then reacting to the value of that slot.
 
+Configuring the slot is done by adding plist-style properties after the class name:
+#+begin_src org
+  :PROPERTIES:
+  :SLIDE_SECTION_ACTIONS: ms-action-item-reveal :inline t
+  :END:
+#+end_src
+You can also use "property+" syntax to add to a property, and these accept plist arguments too:
+#+begin_src org
+  :PROPERTIES:
+  :SLIDE_SECTION_ACTIONS: ms-action-babel
+  :SLIDE_SECTION_ACTIONS+: ms-action-images :refresh t
+  :END:
+#+end_src
 * Customizing
 ** Sub-classing
-The deck and slide class as well as actions can all be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.
+The deck and slide class as well as actions can all be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.  See the [[info:eieio#Top][eieio#Top]] manual for explanation of OOP in Elisp.
+
+- *Action*:  Creating new action subclasses are an efficient way to perform similar operations on typical kinds of org data.
+- *Slide:*  Slides can be configured extensively by changing their actions.  However, for more vertical cooperation between slides or cooperation among actions, extended slides could be useful.
+- *Deck*:  If the core methods of the deck are insufficient, extension is another option besides
+** Default Classes
+The default classes and actions can be configured at the document or customize level.  Set the =MS_DECK_CLASS= and =MS_SLIDE_CLASS= as well as other properties that work at the heading level.  The order of precedence (*Not fully implemented* 🚧):
+- Property definition of the current heading
+- Property definition in the document
+- Customize variable
 ** Babel Scripting
-You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~ms-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~ms-action-babel~ class
-** ~ms-start-function~
-Typically the mode is entered via commands that are to be bound outside of the minor mode keymap.  If these commands want to start the mode a specific way, but they need to start the mode first, they just bind ~ms-start-function~ to override the last step of starting the mode.
+You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~ms-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~ms-action-babel~ class and examples in [[./test/demo.org]].
+
+The =#+attr_methods:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
+
+- =init= and =end= are run when the slide is instantiated, going forward and backward respectively
+-
+- =final= is only called when no progress can be made
+
 * Package Pairings
 This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~ms-forward~ ~ms-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
 ** Master of Ceremonies
@@ -158,14 +200,16 @@ Like the command pattern is a helpful model for designing forward and backwards 
 
 In the model call stack, the caller & callee only cooperate at the call site or by side-effects, aka globals.  If callee is pure, the call site is the only way that they communicate.
 
-A slide action can be seen as an impure function.  Actions to display the section might look at the buffer restriction state to determine if they need to add themselves to the buffer restriction or completely take over display.
+Slides are mostly pretty pure.  The provided actions generally do not look outside of the contents of the heading they are attached to.  If they touch the child headings, it is generally to hydrate them into slides and then forward stateful sequence calls into them.
+**** Actions are like Sub-Routines
+A sub-routine is generally coupled to its containing routine.  It may do work in addition to other sub-routines or even cooperate with them via ad-hoc coupling.  While the function call stack is nice and clean, because actions run concurrently and might be working on the same parts of the buffer, they are the dirty guts within the near isolation of the slide.
 *** Child, Section, and Slide
 It is extremely natural that a slide action will fill one of three roles:
 - Narrow to the contents its actions work on
 - Perform some steps on the heading's section
 - Perform steps on the heading's children, including instantiating slides and calling their methods, which may narrow to them
 **** Multiple Slide Property Keys
-These natural roles are why there are more than one heading property for configuring actions.  Each action is easier to implement if they only fill one role.  It is easier for the user to configure a slide if they only have to declare one action.  By breaking up the slide's typical actions, we can configure with enough granularity to usually only touch one heading property.
+The three natural roles for actions are why there are more than one heading property for configuring actions.  Each action is easier to implement if they only fill one role.  It is easier for the user to configure a slide if they only have to declare one action.  By breaking up the slide's typical actions, we can configure with enough granularity to usually only touch one heading property.  The only drawback is that hydration has to do a little bit of extra work.
 *** Trees & Stacks
 If something depends on something else existing or having been set up, its lifetime must be fully encompassed by that other thing.  Especially since we are going forward & backward, cleanups must happen on both ends of a sequence.
 
@@ -174,23 +218,32 @@ It is natural that a parent heading out-lives its child.  User can take advantag
 Actions live, for the most part, as long as the slide.  Their ~ms-init~ method is called at the very beginning.  An action that reveals items must hide them before the user first sees them.
 
 A consequence of this is that there are usually multiple actions alive at once.  Something has to hold onto them.  Right now, it's the slide.   There is only one slide usually in play, and it holds a reference to its parent so that it can "return".  🚧 In the future, the actions may hold onto child actions and only one action might be alive at a time.  This would be desirable.  It just takes some mild rework of the implementation.
-* Work In Progress 🚧
+* Contributing
+- Since you likely just need something to magically happen, the recommended option is to place a hamburger in the [[https://github.com/sponsors/positron-solutions][hamburger jar]] and file an issue.
+- If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
+** Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
-** TODO Contents
-I seem to have forgotten again to implement starting at the point or navigating via contents.  Well, let's add it +tomorrow.+ Thursday?
-** Mode Lifecycle
+*** Display Options
+Some hooks or explicit display buffer calls may be beneficial.
+*** Secondary Commands
+See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~ms-start~
+*** ~ms-goto~, starting from point
+Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
+*** Affiliated Buffers
+There is no tracking whether a buffer is part of the presentation or not.  How would a buffer become one?  Should it be implicit?  Without any sort of tracking, the consequence is that having a presentation open leaves the minor mode bindings hot.  These commands do weird things when run from these situations, especially if running babel scripts, so some kind of first-class buffer affiliation seems necessary.
+*** Mode Lifecycle
 Starting and stopping the mode need some work.  The minor mode is global, so it's sensitive in every buffer, but it doesn't always call things in the right buffer.  I think double-start also still has a bug.  Easy to clean up.
-** Non-Graphic Display
+*** Non-Graphic Display
 For terminals, the line-height based slide-in effect is not supported.
-** Sub-Sequence Call & Restore
-Sequences are often enclosed within other sequences, but there is currently no support for pushing or popping states when entering or exiting sequences.  It's just not clear yet what cooperation might be necessary at sub-sequence boundaries.  Slide display looking at the restriction state is one such boundary.
-** Non-Org Sequences
+*** Sub-Sequence Call & Restore
+Sequences are often enclosed within other sequences, but there is currently no support for pushing or popping states when entering or exiting sequences.  It's just not clear yet what cooperation might be necessary at sub-sequence boundaries.
+*** Non-Org Sequences
 There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
-** Heading Filtering
+*** Heading Filtering
 This was not implemented yet, but evidently some had been filtering their headlines to only show TODO's in ~org-tree-slide~.  Perhaps it is convenient to filter some tags and prevent them from being instantiated, especially if they will fail.
-** Counting Slides
-Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A ~children~ method for sequeneces works as long as sequences actually implement it.
-** Improper Levels
+*** Counting Slides
+Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A ~children~ method for sequences works as long as sequences actually implement it.
+*** Improper Levels
 Children with no parents or missing a level are currently not supported and likely cause bad behavior.
 * Thanks & Acknowledgments
 This package is a direct descendant of Takaaki ISHIKAWA's [[https://github.com/takaxp/org-tree-slide][org-tree-slide]] package.  Many of the ideas and some of the implementations were either inherited or inspired by ideas from that package.  This package would not exist without the inspiration.  Thanks to everyone who contributed on org-tree-slide.
