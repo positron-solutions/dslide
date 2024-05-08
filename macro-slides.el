@@ -2560,16 +2560,11 @@ map.  It starts the mode if the mode is inactive."
            #'ms-display-slides))
       (ms-mode 1))))
 
-;; TODO forward and backward commands are usually only bound in the mode and
-;;shouldn't need to check for the deck being active
 ;;;###autoload
 (defun ms-forward ()
   "Advance slideshow forward."
   (interactive)
-  (unless ms-mode
-    (user-error "Macro Slide Mode inactive"))
-  (unless (ms-live-p)
-    (error "No deck is active"))
+  (ms--ensure-slide-buffer)
   (if (ms--showing-contents-p)
       (org-next-visible-heading 1)
     (ms--ensure-slide-buffer)
@@ -2579,10 +2574,7 @@ map.  It starts the mode if the mode is inactive."
 (defun ms-backward ()
   "Advance slideshow backward."
   (interactive)
-  (unless ms-mode
-    (user-error "Macro Slide Mode inactive"))
-  (unless (ms-live-p)
-    (error "No deck is active"))
+  (ms--ensure-slide-buffer)
   (if (ms--showing-contents-p)
       (org-previous-visible-heading 1)
     (ms--ensure-slide-buffer)
