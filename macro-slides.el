@@ -1897,76 +1897,70 @@ Return the heading unless it's filtered."
 ;; restriction and also not folded.  Try `org-fold-show-subtree' and
 ;; `org-cycle-tree' before calling if strange behavior is observed.
 
-;; TODO keep-lines seems kind of slow
-(defun ms-hide-region (beg end &optional keep-lines)
+(defun ms-hide-region (beg end &optional keep-fill)
   "Return overlay hiding region between BEG and END.
-Optional KEEP-LINES will replace region with as many newlines as
-the region contains, preserving vertical size."
-  (let ((ov (make-overlay beg end))
-        (lines (if keep-lines
-                   (let ((found 0))
-                     (save-excursion
-                       (goto-char beg)
-                       (while (re-search-forward "\n" end t)
-                         (setq found (1+ found))))
-                     found)
-                 0)))
-    (overlay-put ov 'display (make-string lines ?\n))
+Optional KEEP-FILL will obscure but not change the contents of text, keeping
+its height and width for filling in other content."
+  (let ((ov (make-overlay beg end)))
+    (if keep-fill
+        (let ((background (face-attribute 'default :background)))
+          (overlay-put ov 'face `(:foreground ,background :background ,background)))
+      (overlay-put ov 'display ""))
     ov))
 
-(defun ms-hide-element (element &optional keep-lines)
+(defun ms-hide-element (element &optional keep-fill)
   "Return an overlay that will hide ELEMENT.
-Element is an org element. Optional KEEP-LINES will replace
-region with as many newlines as the region contains, preserving
-vertical size."
+Element is an org element.Optional KEEP-FILL will obscure but not
+change the contents of text, keeping its height and width for
+filling in other content."
   (ms-hide-region (org-element-property :begin element)
                   (org-element-property :end element)
-                  keep-lines))
+                  keep-fill))
 
-(defun ms-hide-item (item &optional keep-lines)
+(defun ms-hide-item (item &optional keep-fill)
   "Return an overlay that hides ITEM.
 See `org-item-struct' for structure of ITEM.  Note, this hides
 the entire item, which may contain sub-items, but revealing
 children of a hidden parent doesn't really make sense.
 
-Optional KEEP-LINES will replace region with as many newlines as
-the region contains, preserving vertical size."
+Optional KEEP-FILL will obscure but not change the contents of text, keeping
+its height and width for filling in other content."
   (ms-hide-region
-   (car item) (car (last item)) keep-lines))
+   (car item) (car (last item)) keep-fill))
 
-(defun ms-hide-contents (element &optional keep-lines)
+(defun ms-hide-contents (element &optional keep-fill)
   "Return an overlay that hides the contents of ELEMENT.
 Element is an org element.  You should probably not use this on
 headings because their contents includes the sections and the
 children.  See `ms-hide-section' and `ms-hide-children'.
 
-Optional KEEP-LINES will replace region with as many newlines as
-the region contains, preserving vertical size."
+Optional KEEP-FILL will obscure but not change the contents of text, keeping
+its height and width for filling in other content."
   (ms-hide-region (org-element-property :contents-begin element)
                   (org-element-property :end element)
-                  keep-lines))
+                  keep-fill))
 
-(defun ms-hide-section (heading &optional keep-lines)
+(defun ms-hide-section (heading &optional keep-fill)
   "Return an overlay that hides the section of HEADING.
 HEADING is a headline type org element.
 
-Optional KEEP-LINES will replace region with as many newlines as
-the region contains, preserving vertical size."
+Optional KEEP-FILL will obscure but not change the contents of text, keeping
+its height and width for filling in other content."
   (ms-hide-region
    (ms--section-begin heading)
    (ms--section-end heading)
-   keep-lines))
+   keep-fill))
 
-(defun ms-hide-children (heading &optional keep-lines)
+(defun ms-hide-children (heading &optional keep-fill)
   "Return an overlay that hides the children of HEADING.
 HEADING is a headline type org element.
 
-Optional KEEP-LINES will replace region with as many newlines as
-the region contains, preserving vertical size."
+Optional KEEP-FILL will obscure but not change the contents of text, keeping
+its height and width for filling in other content."
   (ms-hide-region
    (ms--section-end heading)
    (org-element-property :end heading)
-   keep-lines))
+   keep-fill))
 
 ;; * Element Mapping
 
