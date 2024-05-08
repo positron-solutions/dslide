@@ -835,6 +835,10 @@ find the slide that displays that POINT."
   (cond ((eq how 'first)
          (oset obj slide (ms--make-slide
                           (ms--document-first-heading) obj)))
+        ((eq how 'contents)
+         (oset obj slide (ms--make-slide
+                          (ms--root-heading-at-point (point))
+                          obj)))
         ((eq how 'point)
          (let ((base-point (with-current-buffer (oref obj base-buffer)
                              (point))))
@@ -2416,8 +2420,8 @@ Optional ERROR if you want to process `wrong-type-argument'."
   :doc "The keymap for `ms' mode."
   "<left>" #'ms-backward
   "<right>" #'ms-forward
-  "<up>" #'ms-contents
-  "<down>" #'ms-start)      ; TODO start is really toggle
+  "<up>" #'ms-start
+  "<down>" #'ms-stop)
 
 ;;;###autoload
 (define-minor-mode ms-mode
@@ -2524,38 +2528,35 @@ source buffer."
 ;; * User Commands
 
 ;;;###autoload
-(defun ms-contents ()
-  "Toggle between slides and contents.
-This command will activate the mode if it is inactive and show
-the contents.  When the contents is shown, it will toggle back to
-the slides.
-
-This generic command should always toggle to some higher level
-view where the user can move around a presentation sequence more
-quickly."
+(defun ms-stop ()
+  "Stop the presentation.
+It is recommended to not bind this to a controller button unless
+you have five buttons or will use the display button to stop and
+can reliably select displays via other means."
   (interactive)
-  (if (ms-live-p)
-      (if (ms--showing-slides-p)
-          (ms-display-contents)
-        (ms-display-slides))
-    (let ((ms-start-function
-           #'ms-contents))
-      (ms-mode 1))))
+  (ms--stop))
 
 ;;;###autoload
 (defun ms-start ()
   "Start presentation or secondary action.
-The default secondary task is the contents view.  TODO Add
-support for arbitrary secondary tasks like playing a video or
-custom actions.
+It is recommended to bind this in the `org-mode-map'.  It starts
+the mode if the mode is inactive.
 
-This is the most recommended command to have bound in the global
-map.  It starts the mode if the mode is inactive."
+It is also recommended to bind this to the play button on a
+presentation controller.  Its behavior will be overloaded with a
+secondary action, such as playing a video on the slide, if one is
+available.  The default secondary task is the contents view.
+
+TODO Add support for arbitrary secondary tasks like playing a
+video or custom actions."
   (interactive)
   (if (ms-live-p)
-      (if (ms--showing-slides-p)
-          (ms-display-base)
-        (ms-display-slides))
+      (progn (ms--ensure-slide-buffer)
+             (if (ms--showing-slides-p)
+                 ;; TODO check for secondary task here
+                 (ms-display-contents)
+               (ms--choose-slide ms--deck 'contents)
+               (ms-display-slides)))
     (let ((ms-start-function
            #'ms-display-slides))
       (ms-mode 1))))
