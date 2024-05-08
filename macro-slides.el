@@ -375,175 +375,6 @@ coordinate with it.")
 (defvar-local ms--header-overlay nil
   "Flag to check the status of overlay for a slide header.")
 
-;; * Lifecycle
-
-(defvar-keymap ms-mode-map
-  :doc "The keymap for `ms' mode."
-  "<left>" #'ms-backward
-  "<right>" #'ms-forward
-  "<up>" #'ms-contents
-  "<down>" #'ms-start)      ; TODO start is really toggle
-
-;;;###autoload
-(define-minor-mode ms-mode
-  "A presentation tool for Org Mode."
-  :init-value nil
-  :keymap ms-mode-map
-  :group 'macro-slides
-  :global t
-  (unless (eq 'org-mode (buffer-local-value
-                         'major-mode (current-buffer)))
-    (user-error "Not an org buffer")
-    (ms-mode -1))
-  (cond (ms-mode
-         ;; Create the indirect buffer and link it via the deck object.
-         (ms--ensure-deck)
-         (funcall (or ms-start-function
-                      #'ms-display-slides))
-         (run-hooks 'ms-start-hook))
-        (t
-         (ms-stop))))
-
-(defun ms-live-p ()
-  "Check if a deck is associated so that commands can complete."
-  (and ms-mode
-       ms--deck
-       (ms-deck-live-p ms--deck)))
-
-;; TODO rename these functions to `switch-to'?
-(defun ms-display-slides ()
-  (ms--ensure-slide-buffer t)
-  (ms--clean-up-state)
-  (oset ms--deck slide-buffer-state 'slides)
-  (widen)
-  (org-fold-show-all)
-  (ms-init ms--deck))
-
-(defun ms-display-contents ()
-  "Switch to showing contents in the slide buffer.
-This is a valid `ms-start-function' and will start
-each slide show from the contents view."
-  (ms--ensure-slide-buffer t)
-  (ms--clean-up-state)
-  (oset ms--deck slide-buffer-state 'contents)
-
-  (widen)
-  (org-overview)
-
-  (when ms-contents-header
-    (if-let ((first (ms--document-first-heading)))
-        (narrow-to-region (org-element-property :begin first)
-                          (point-max))
-      ;; No first heading.  Just header.  Empty contents.
-      (narrow-to-region (point-max)
-                        (point-max)))
-    (ms--make-header t))
-
-  ;; TODO walk all headings with the filter and add overlays on the hidden stuff
-  ;; TODO filter slides that don't have a display action?
-
-  (ms--feedback :contents)
-  (run-hooks 'ms-contents-hook))
-
-(defun ms-display-base ()
-  "Switch to the base buffer for the slide show."
-  (unless ms--deck
-    (error "No deck exists"))
-  (oset ms--deck slide-buffer-state 'base)
-  (switch-to-buffer (oref ms--deck base-buffer))) ; TODO unknown slot warning
-
-(defun ms-stop ()
-  "Stop the presentation entirely.
-Kills the indirect buffer, forgets the deck, and return to the
-source buffer."
-  (interactive)
-  (when-let* ((deck ms--deck)
-              (slide-buffer (oref deck slide-buffer)) ; TODO unknown slot
-              (base-buffer (oref deck base-buffer)))  ; TODO unknown slot
-
-    ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
-    ;; may require attention.
-    (with-demoted-errors "Deck finalization failed: %s"
-        (ms-final ms--deck))
-
-    ;; Animation timers especially should be stopped
-    ;; TODO ensure cleanup is thorough even if there's a lot of failures.
-    ;; TODO make the deck a child sequence of a presentation ;-)
-    (ms--clean-up-state)
-
-    (setq ms--deck nil)
-
-    (switch-to-buffer base-buffer)
-
-    (when slide-buffer
-      (kill-buffer slide-buffer))
-
-    (when ms-mode
-      (ms-mode -1))
-
-    (run-hooks 'ms-stop-hook)
-    (ms--feedback :stop)))
-
-;; * User Commands
-
-;;;###autoload
-(defun ms-contents ()
-  "Toggle between slides and contents.
-This command will activate the mode if it is inactive and show
-the contents.  When the contents is shown, it will toggle back to
-the slides.
-
-This generic command should always toggle to some higher level
-view where the user can move around a presentation sequence more
-quickly."
-  (interactive)
-  (if (ms-live-p)
-      (if (ms--showing-slides-p)
-          (ms-display-contents)
-        (ms-display-slides))
-    (let ((ms-start-function
-           #'ms-contents))
-      (ms-mode 1))))
-
-;;;###autoload
-(defun ms-start ()
-  "Go back to the slides or base buffer.
-This command goes from the overview to the slides, from the
-slides to the base buffer, or if no mode is active, will start
-the mode and go to slides."
-  (interactive)
-  (if (ms-live-p)
-      (if (ms--showing-slides-p)
-          (ms-display-base)
-        (ms-display-slides))
-    (let ((ms-start-function
-           #'ms-display-slides))
-      (ms-mode 1))))
-
-;; TODO forward and backward commands are usually only bound in the mode and
-;;shouldn't need to check for the deck being active
-;;;###autoload
-(defun ms-forward ()
-  "Advance slideshow forward."
-  (interactive)
-  (unless (ms-live-p)
-    (user-error "No deck is active"))
-  (if (ms--showing-contents-p)
-      (org-next-visible-heading 1)
-    (ms--ensure-slide-buffer)
-    (ms-step-forward ms--deck)))
-
-;;;###autoload
-(defun ms-backward ()
-  "Advance slideshow backward."
-  (interactive)
-  (unless (ms-live-p)
-    (user-error "No deck is active"))
-  (if (ms--showing-contents-p)
-      (org-previous-visible-heading 1)
-    (ms--ensure-slide-buffer)
-    (ms-step-backward ms--deck)))
-
 ;; * Classes
 
 ;; This generic functions below are the most important interfaces for all
@@ -2576,5 +2407,181 @@ Optional ERROR if you want to process `wrong-type-argument'."
          '(macro-slides)
          (format "Class name not a class: %s" class-name))
         nil))))
+
+;; * Lifecycle
+
+(defvar-keymap ms-mode-map
+  :doc "The keymap for `ms' mode."
+  "<left>" #'ms-backward
+  "<right>" #'ms-forward
+  "<up>" #'ms-contents
+  "<down>" #'ms-start)      ; TODO start is really toggle
+
+;;;###autoload
+(define-minor-mode ms-mode
+  "A presentation tool for Org Mode."
+  :init-value nil
+  :keymap ms-mode-map
+  :group 'macro-slides
+  :global t
+  (unless (eq 'org-mode (buffer-local-value
+                         'major-mode (current-buffer)))
+    (user-error "Not an org buffer")
+    (ms-mode -1))
+  (cond (ms-mode
+         ;; Create the indirect buffer and link it via the deck object.
+         (ms--ensure-deck)
+         (funcall (or ms-start-function
+                      #'ms-display-slides))
+         (run-hooks 'ms-start-hook))
+        (t
+         (ms-stop))))
+
+(defun ms-live-p ()
+  "Check if a deck is associated so that commands can complete."
+  (and ms-mode
+       ms--deck
+       (ms-deck-live-p ms--deck)))
+
+;; TODO rename these functions to `switch-to'?
+(defun ms-display-slides ()
+  (ms--ensure-slide-buffer t)
+  (ms--clean-up-state)
+  (oset ms--deck slide-buffer-state 'slides)
+  (widen)
+  (org-fold-show-all)
+  (ms-init ms--deck))
+
+(defun ms-display-contents ()
+  "Switch to showing contents in the slide buffer.
+This is a valid `ms-start-function' and will start
+each slide show from the contents view."
+  (ms--ensure-slide-buffer t)
+  (ms--clean-up-state)
+  (oset ms--deck slide-buffer-state 'contents)
+
+  (widen)
+  (org-overview)
+
+  (when ms-contents-header
+    (if-let ((first (ms--document-first-heading)))
+        (narrow-to-region (org-element-property :begin first)
+                          (point-max))
+      ;; No first heading.  Just header.  Empty contents.
+      (narrow-to-region (point-max)
+                        (point-max)))
+    (ms--make-header t))
+
+  ;; TODO walk all headings with the filter and add overlays on the hidden stuff
+  ;; TODO filter slides that don't have a display action?
+
+  (ms--feedback :contents)
+  (run-hooks 'ms-contents-hook))
+
+(defun ms-display-base ()
+  "Switch to the base buffer for the slide show."
+  (unless ms--deck
+    (error "No deck exists"))
+  (oset ms--deck slide-buffer-state 'base)
+  (switch-to-buffer (oref ms--deck base-buffer))) ; TODO unknown slot warning
+
+(defun ms-stop ()
+  "Stop the presentation entirely.
+Kills the indirect buffer, forgets the deck, and return to the
+source buffer."
+  (interactive)
+  (when-let* ((deck ms--deck)
+              (slide-buffer (oref deck slide-buffer)) ; TODO unknown slot
+              (base-buffer (oref deck base-buffer)))  ; TODO unknown slot
+
+    ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
+    ;; may require attention.
+    (with-demoted-errors "Deck finalization failed: %s"
+        (ms-final ms--deck))
+
+    ;; Animation timers especially should be stopped
+    ;; TODO ensure cleanup is thorough even if there's a lot of failures.
+    ;; TODO make the deck a child sequence of a presentation ;-)
+    (ms--clean-up-state)
+
+    (setq ms--deck nil)
+
+    (switch-to-buffer base-buffer)
+
+    (when slide-buffer
+      (kill-buffer slide-buffer))
+
+    (when ms-mode
+      (ms-mode -1))
+
+    (run-hooks 'ms-stop-hook)
+    (ms--feedback :stop)))
+
+;; * User Commands
+
+;;;###autoload
+(defun ms-contents ()
+  "Toggle between slides and contents.
+This command will activate the mode if it is inactive and show
+the contents.  When the contents is shown, it will toggle back to
+the slides.
+
+This generic command should always toggle to some higher level
+view where the user can move around a presentation sequence more
+quickly."
+  (interactive)
+  (if (ms-live-p)
+      (if (ms--showing-slides-p)
+          (ms-display-contents)
+        (ms-display-slides))
+    (let ((ms-start-function
+           #'ms-contents))
+      (ms-mode 1))))
+
+;;;###autoload
+(defun ms-start ()
+  "Start presentation or secondary action.
+The default secondary task is the contents view.  TODO Add
+support for arbitrary secondary tasks like playing a video or
+custom actions.
+
+This is the most recommended command to have bound in the global
+map.  It starts the mode if the mode is inactive."
+  (interactive)
+  (if (ms-live-p)
+      (if (ms--showing-slides-p)
+          (ms-display-base)
+        (ms-display-slides))
+    (let ((ms-start-function
+           #'ms-display-slides))
+      (ms-mode 1))))
+
+;; TODO forward and backward commands are usually only bound in the mode and
+;;shouldn't need to check for the deck being active
+;;;###autoload
+(defun ms-forward ()
+  "Advance slideshow forward."
+  (interactive)
+  (unless ms-mode
+    (user-error "Macro Slide Mode inactive"))
+  (unless (ms-live-p)
+    (error "No deck is active"))
+  (if (ms--showing-contents-p)
+      (org-next-visible-heading 1)
+    (ms--ensure-slide-buffer)
+    (ms-step-forward ms--deck)))
+
+;;;###autoload
+(defun ms-backward ()
+  "Advance slideshow backward."
+  (interactive)
+  (unless ms-mode
+    (user-error "Macro Slide Mode inactive"))
+  (unless (ms-live-p)
+    (error "No deck is active"))
+  (if (ms--showing-contents-p)
+      (org-previous-visible-heading 1)
+    (ms--ensure-slide-buffer)
+    (ms-step-backward ms--deck)))
 
 (provide 'macro-slides)
