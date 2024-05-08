@@ -506,9 +506,11 @@ point or else infinite loops will result.")
 (cl-defgeneric ms-goto (obj point)
   "Step forward until advancing beyond POINT.
 This method can usually be implemented on top of
-`ms-step-forward' by advancing until POINT is exceeded.  The
-default implementation calls init.  You should call init if you
-override this method.")
+`ms-step-forward' by advancing until POINT is exceeded.  Return
+nil if POINT was not exceeded.  Return non-nil if the sense of progress exceeds
+POINT.  Usually, child actions will be responsible for determining if the
+POINT belongs to this slide or one of its child slides, and the slide will
+just ask the child action.")
 
 ;; ** Stateful Sequence
 (defclass ms-stateful-sequence ()
@@ -1184,8 +1186,7 @@ Many optional ARGS.  See code."
 ;; backward methods. TODO TODO TODO 🚧
 
 ;; ** Base Action
-(defclass ms-action (ms-stateful-sequence
-                     ms-progress-tracking)
+(defclass ms-action (ms-stateful-sequence ms-progress-tracking)
   ((begin
     :initform nil :initarg :begin
     :documentation "Marker for beginning of heading.  Used to
@@ -2001,7 +2002,7 @@ Does not modify the point."
 
 (defun ms--any-heading ()
   "Return any heading that can be found.
-Does not modifiy the point."
+Does not modify the point."
   (save-excursion
     (if (not (numberp (org-back-to-heading-or-point-min)))
         (org-element-at-point)
@@ -2202,10 +2203,10 @@ and the value of `point-max' should contain a newline somewhere."
                  (widen)
                  (buffer-substring headline-begin (1- headline-end)))))))
 
-(defun ms--clean-up-state ()
+(defun ms--cleanup-state ()
   "Clean up states between contents and slides."
   (ms--delete-header)
-  (ms--delete-overlays)
+  (ms--delete-overlays) 
   (ms--animation-cleanup))
 
 (defun ms--ensure-deck ()
@@ -2294,12 +2295,13 @@ hooks must occur in the deck's :slide-buffer."
   (setq ms--animation-overlay nil
         ms--animation-timer nil))
 
-(defun ms--ensure-slide-buffer (&optional display)
+(defun ms--ensure-slide-buffer (&optional display-action)
   "Run in commands that must run in the slide buffer."
   (unless (ms-live-p)
-    (error "Live deck not found within buffer"))
-  (if display
-      (display-buffer (oref ms--deck slide-buffer))
+    (error "Live deck not found"))
+  (if display-action
+      (display-buffer (oref ms--deck slide-buffer)
+                      display-action)
     (set-buffer (oref ms--deck slide-buffer))))
 
 (defun ms--keyword-value (key)
@@ -2435,7 +2437,7 @@ Optional ERROR if you want to process `wrong-type-argument'."
                       #'ms-display-slides))
          (run-hooks 'ms-start-hook))
         (t
-         (ms-stop))))
+         (ms--stop))))
 
 (defun ms-live-p ()
   "Check if a deck is associated so that commands can complete."
@@ -2446,7 +2448,7 @@ Optional ERROR if you want to process `wrong-type-argument'."
 ;; TODO rename these functions to `switch-to'?
 (defun ms-display-slides ()
   (ms--ensure-slide-buffer t)
-  (ms--clean-up-state)
+  (ms--cleanup-state)
   (oset ms--deck slide-buffer-state 'slides)
   (widen)
   (org-fold-show-all)
@@ -2457,7 +2459,7 @@ Optional ERROR if you want to process `wrong-type-argument'."
 This is a valid `ms-start-function' and will start
 each slide show from the contents view."
   (ms--ensure-slide-buffer t)
-  (ms--clean-up-state)
+  (ms--cleanup-state)
   (oset ms--deck slide-buffer-state 'contents)
 
   (widen)
@@ -2483,29 +2485,31 @@ each slide show from the contents view."
   (unless ms--deck
     (error "No deck exists"))
   (oset ms--deck slide-buffer-state 'base)
-  (switch-to-buffer (oref ms--deck base-buffer))) ; TODO unknown slot warning
+  ;; TODO display strategy
+  (switch-to-buffer (oref ms--deck base-buffer)))
 
-(defun ms-stop ()
+(defun ms--stop ()
   "Stop the presentation entirely.
-Kills the indirect buffer, forgets the deck, and return to the
+Kills the indirect buffer, forgets the deck, and displays the
 source buffer."
   (interactive)
   (when-let* ((deck ms--deck)
-              (slide-buffer (oref deck slide-buffer)) ; TODO unknown slot
-              (base-buffer (oref deck base-buffer)))  ; TODO unknown slot
+              (slide-buffer (oref deck slide-buffer))
+              (base-buffer (oref deck base-buffer)))
 
     ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
     ;; may require attention.
     (with-demoted-errors "Deck finalization failed: %s"
-        (ms-final ms--deck))
+      (ms-final ms--deck))
 
     ;; Animation timers especially should be stopped
     ;; TODO ensure cleanup is thorough even if there's a lot of failures.
     ;; TODO make the deck a child sequence of a presentation ;-)
-    (ms--clean-up-state)
+    (ms--cleanup-state)
 
     (setq ms--deck nil)
 
+    ;; TODO display strategy
     (switch-to-buffer base-buffer)
 
     (when slide-buffer
