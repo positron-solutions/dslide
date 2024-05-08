@@ -213,46 +213,6 @@ properties remain unless shadowed."
   :type 'face
   :group 'macro-slides)
 
-(defface ms-heading-level-1 '((t :inherit 'org-level-1))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-2 '((t :inherit 'org-level-2))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-3 '((t :inherit 'org-level-3))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-4 '((t :inherit 'org-level-4))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-5 '((t :inherit 'org-level-5))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-6 '((t :inherit 'org-level-6))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-7 '((t :inherit 'org-level-7))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-heading-level-8 '((t :inherit 'org-level-8))
-  "Org heading override."
-  :group 'macro-slides)
-
-(defface ms-document-title '((t :inherit 'org-document-title))
-  "Org document title override."
-  :group 'macro-slides)
-
-(defface ms-document-info '((t :inherit 'org-document-info))
-  "Org document info override."
-  :group 'macro-slides)
-
 (defface ms-header-overlay-face '((t :inherit default))
   "Face for `ms--header-overlay'."
   :group 'macro-slides)
@@ -403,17 +363,6 @@ an SLIDE_FILTER keyword."
 
 ;; Tell the compiler that these variables exist
 (defvar ms-mode)
-
-(defvar-local ms-heading-level-1-cookie nil)
-(defvar-local ms-heading-level-2-cookie nil)
-(defvar-local ms-heading-level-3-cookie nil)
-(defvar-local ms-heading-level-4-cookie nil)
-(defvar-local ms-heading-level-5-cookie nil)
-(defvar-local ms-heading-level-6-cookie nil)
-(defvar-local ms-heading-level-7-cookie nil)
-(defvar-local ms-heading-level-8-cookie nil)
-(defvar-local ms-document-title-cookie nil)
-(defvar-local ms-document-info-cookie nil)
 
 (defvar ms--deck nil
   "Active deck object.
@@ -2483,8 +2432,7 @@ hooks must occur in the deck's :slide-buffer."
         (org-fold-show-all)
         ;; Enter the state model
         (ms--choose-slide deck
-                          ms-start-from)
-        (ms--remap-faces t)))))
+                          ms-start-from)))))
 
 (defun ms--showing-contents-p ()
   "Return t if current buffer is displaying contents."
@@ -2634,45 +2582,5 @@ Optional ERROR if you want to process `wrong-type-argument'."
          '(macro-slides)
          (format "Class name not a class: %s" class-name))
         nil))))
-
-;; TODO let's just move face remapping to master of ceremonies
-(defun ms--remap-faces (status)
-  "Change status of heading face.  If STATUS is nil, apply the default values."
-  (cond
-   (status
-    (setq
-     ms-heading-level-1-cookie
-     (face-remap-add-relative 'org-level-1 'ms-heading-level-1)
-     ms-heading-level-2-cookie
-     (face-remap-add-relative 'org-level-2 'ms-heading-level-2)
-     ms-heading-level-3-cookie
-     (face-remap-add-relative 'org-level-3 'ms-heading-level-3)
-     ms-heading-level-4-cookie
-     (face-remap-add-relative 'org-level-4 'ms-heading-level-4)
-     ms-heading-level-5-cookie
-     (face-remap-add-relative 'org-level-5 'ms-heading-level-5)
-     ms-heading-level-6-cookie
-     (face-remap-add-relative 'org-level-6 'ms-heading-level-6)
-     ms-heading-level-7-cookie
-     (face-remap-add-relative 'org-level-7 'ms-heading-level-7)
-     ms-heading-level-8-cookie
-     (face-remap-add-relative 'org-level-8 'ms-heading-level-8)
-     ms-document-title-cookie
-     (face-remap-add-relative 'org-document-title
-                              'ms-document-title)
-     ms-document-info-cookie
-     (face-remap-add-relative 'org-document-info
-                              'ms-document-info)))
-   (t
-    (face-remap-remove-relative ms-heading-level-1-cookie)
-    (face-remap-remove-relative ms-heading-level-2-cookie)
-    (face-remap-remove-relative ms-heading-level-3-cookie)
-    (face-remap-remove-relative ms-heading-level-4-cookie)
-    (face-remap-remove-relative ms-heading-level-5-cookie)
-    (face-remap-remove-relative ms-heading-level-6-cookie)
-    (face-remap-remove-relative ms-heading-level-7-cookie)
-    (face-remap-remove-relative ms-heading-level-8-cookie)
-    (face-remap-remove-relative ms-document-title-cookie)
-    (face-remap-remove-relative ms-document-info-cookie))))
 
 (provide 'macro-slides)
