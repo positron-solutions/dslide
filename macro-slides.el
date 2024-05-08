@@ -302,8 +302,8 @@ contain any elements they act on.  You can add classes to this
 list in order to have default behaviors for some org elements.
 
 You can configure this per-heading by setting the
-SLIDE_SECTION_ACTIONS keyword.  You can configure it for the
-document default by adding an SLIDE_SECTION_ACTIONS keyword."
+MS_SECTION_ACTIONS keyword.  You can configure it for the
+document default by adding an MS_SECTION_ACTIONS keyword."
   :type '(list function)
   :group 'macro-slides)
 
@@ -315,8 +315,8 @@ Value is an action class, usually extending
 the child headings, which come after the section element.
 
 You can configure this per-heading by setting the
-SLIDE_CHILD_ACTION keyword.  You can configure it for the
-document default by adding an SLIDE_CHILD_ACTION keyword."
+MS_CHILD_ACTION keyword.  You can configure it for the
+document default by adding an MS_CHILD_ACTION keyword."
   :type 'function
   :group 'macro-slides)
 
@@ -326,9 +326,9 @@ Value should be a custom class extending `ms'.  You
 can override methods if the built-in implementation is
 insufficient.  Consider upstreaming changes.
 
-You can configure this per heading by setting the SLIDE_CLASS
+You can configure this per heading by setting the MS_CLASS
 property.  You can configure it for the document default by
-adding an SLIDE_CLASS keyword."
+adding an MS_CLASS keyword."
   :type 'symbol
   :group 'macro-slides)
 
@@ -337,7 +337,7 @@ adding an SLIDE_CLASS keyword."
 Value should be a custom class extending `ms-deck'.
 Use this to modify the root-level behaviors, including switching
 to children and finding siblings.  You can configure this for the
-document by adding the SLIDE_ROOT_CLASS keyword."
+document by adding the MS_ROOT_CLASS keyword."
   :type 'symbol
   :group 'macro-slides)
 
@@ -348,9 +348,9 @@ The function used as actions should accept an org element, a
 `headline' type element and return it if it is a valid heading or
 return nil if it should be skipped.
 
-You can configure this per heading by setting the SLIDE_FILTER
+You can configure this per heading by setting the MS_FILTER
 keyword.  You can configure it for the document default by adding
-an SLIDE_FILTER keyword."
+an MS_FILTER keyword."
   :type 'function
   :group 'macro-slides)
 
@@ -1085,11 +1085,11 @@ Many optional ARGS.  See code."
     ;; Hydrate the slide's configuration as classes and arguments and then
     ;; instantiate them all.
     (let* ((keywords (org-collect-keywords
-                      '("SLIDE_ACTION"
-                        "SLIDE_SECTION_ACTIONS"
-                        "SLIDE_CHILD_ACTION"
-                        "SLIDE_FILTER"
-                        "SLIDE_CLASS")))
+                      '("MS_SLIDE_ACTION"
+                        "MS_SECTION_ACTIONS"
+                        "MS_CHILD_ACTION"
+                        "MS_FILTER"
+                        "MS_CLASS")))
 
            (args `(:inline ,inline))
 
@@ -1099,8 +1099,8 @@ Many optional ARGS.  See code."
            (slide-action-class
             (or slide-action-class
                 (if-let ((declared
-                          (or (org-element-property :SLIDE_ACTION heading)
-                              (cdr (assoc-string "SLIDE_ACTION"
+                          (or (org-element-property :MS_SLIDE_ACTION heading)
+                              (cdr (assoc-string "MS_SLIDE_ACTION"
                                                  keywords)))))
                     (ms--parse-class-with-args declared)
                   ms-default-slide-action)))
@@ -1125,8 +1125,8 @@ Many optional ARGS.  See code."
            ;; the restriction.
            (section-action-classes
             (or (ms--parse-classes-with-args
-                 (or (org-element-property :SLIDE_SECTION_ACTIONS heading)
-                     (cdr (assoc-string "SLIDE_SECTION_ACTIONS" keywords))))
+                 (or (org-element-property :MS_SECTION_ACTIONS heading)
+                     (cdr (assoc-string "MS_SECTION_ACTIONS" keywords))))
                 ms-default-section-actions))
            (section-actions
             (mapcar
@@ -1141,8 +1141,8 @@ Many optional ARGS.  See code."
            (child-action-class
             (or child-action-class
                 (if-let ((declared
-                          (or (org-element-property :SLIDE_CHILD_ACTION heading)
-                              (cdr (assoc-string "SLIDE_CHILD_ACTION"
+                          (or (org-element-property :MS_CHILD_ACTION heading)
+                              (cdr (assoc-string "MS_CHILD_ACTION"
                                                  keywords)))))
                     (ms--parse-class-with-args declared)
                   ms-default-child-action)))
@@ -1163,13 +1163,13 @@ Many optional ARGS.  See code."
 
            (filter
             (or (ms--filter
-                 (or (org-element-property :SLIDE_FILTER heading)
-                     (cdr (assoc-string "SLIDE_FILTER" keywords))))
+                 (or (org-element-property :MS_FILTER heading)
+                     (cdr (assoc-string "MS_FILTER" keywords))))
                 ms-default-filter))
            (class
             (or (ms--parse-class-with-args
-                 (or (org-element-property :SLIDE_CLASS heading)
-                     (cdr (assoc-string "SLIDE_CLASS"
+                 (or (org-element-property :MS_CLASS heading)
+                     (cdr (assoc-string "MS_CLASS"
                                         keywords))))
                 ms-default-class)))
 

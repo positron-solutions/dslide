@@ -91,9 +91,9 @@ The out-of-the-box experience can be a bit messy due to property drawers, keywor
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
-- =SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
-- =SLIDE_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
-- =SLIDE_CHILD_ACTION=: Used to customize if and how child headings become slides
+- =MS_SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
+- =MS_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+- =MS_CHILD_ACTION=: Used to customize if and how child headings become slides
 
 Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 

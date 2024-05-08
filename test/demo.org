@@ -14,7 +14,7 @@ Wow, these breadcrumbs are very high-carb
 How many levels of headings could there be?
 * Inline Children
 :PROPERTIES:
-:SLIDE_CHILD_ACTION: ms-child-action-inline
+:MS_CHILD_ACTION: ms-child-action-inline
 :END:
 - You won't believe these animations
 - This is the world's greatest presentation software
@@ -29,7 +29,7 @@ This is a reason to be alive
 [[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
 * Reveal Items
 :PROPERTIES:
-:SLIDE_SECTION_ACTIONS: ms-action-item-reveal
+:MS_SECTION_ACTIONS: ms-action-item-reveal
 :END:
 Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
@@ -38,8 +38,8 @@ Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
 * Flat Slide
 :PROPERTIES:
-:SLIDE_ACTION: ms-action-narrow :with-children t
-:SLIDE_CHILD_ACTION: nil
+:MS_SLIDE_ACTION: ms-action-narrow :with-children t
+:MS_CHILD_ACTION: nil
 :END:
 This slide shows its child headings inline.
 - The slide action shows the entire contents, not just the section
@@ -56,8 +56,8 @@ This slide has a child, but it will not be displayed.  It will only run the babe
 Can has display?
 ** No Display!  Only Execute!
 :PROPERTIES:
-:SLIDE_ACTION: nil
-:SLIDE_SECTION_ACTIONS: ms-action-babel
+:MS_SLIDE_ACTION: nil
+:MS_SECTION_ACTIONS: ms-action-babel
 :END:
 These three org blocks will not be displayed since this slide has no slide action.  They will however execute when navigating forward and backward.  Note these features:
 
@@ -99,7 +99,7 @@ Our cleanup is always run
 #+end_src
 * Babel Slide Integration
 :PROPERTIES:
-:SLIDE_SECTION_ACTIONS: ms-action-babel
+:MS_SECTION_ACTIONS: ms-action-babel
 :END:
 
 Both backwards and forward are supported on this slide.
@@ -142,7 +142,7 @@ Both backwards and forward are supported on this slide.
 
 * Image Slides
 :PROPERTIES:
-:SLIDE_SECTION_ACTIONS: ms-action-image
+:MS_SECTION_ACTIONS: ms-action-image
 :END:
 This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
 
@@ -152,7 +152,7 @@ This is an image slide.  You can view the images inline using ~org-toggle-inline
  [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * Package Integration
 :PROPERTIES:
-:SLIDE_SECTION_ACTIONS: ms-action-babel
+:MS_SECTION_ACTIONS: ms-action-babel
 :END:
 - Let arbitrary buffers be shown while still completing steps within the slide-show
 - Run babel against other buffers 😈
