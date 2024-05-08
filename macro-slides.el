@@ -1716,6 +1716,7 @@ child is found."
     (not (null progress))))
 
 (cl-defmethod ms-end :after ((obj ms-child-action-inline))
+  (ms-marker obj (org-element-property :begin (ms-heading obj)))
   (let (exhausted)
     (while (not exhausted)
       ;; If the child didn't make progress, try to load up the next child
