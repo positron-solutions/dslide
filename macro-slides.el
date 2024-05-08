@@ -354,6 +354,20 @@ an SLIDE_FILTER keyword."
   :type 'function
   :group 'macro-slides)
 
+(defcustom ms-contents-selection-highlight t
+  "Show a highlight on the selected headline.
+This is useful if you have some subtle cursor feature enabled for
+your presentation and wouldn't otherwise know what line you are
+on in the contents view.  The default is also just a way more
+obvious display style."
+  :type 'boolean
+  :group 'macro-slides)
+
+(defface ms-contents-selection-face
+  '((t :inherit org-level-1 :inverse-video t :extend t))
+  "Face for highlighting the current slide root."
+  :group 'macro-slides)
+
 (defvar ms--debug nil
   "Set to t for logging slides and actions.")
 
@@ -374,6 +388,10 @@ coordinate with it.")
 
 (defvar-local ms--header-overlay nil
   "Flag to check the status of overlay for a slide header.")
+
+;; Shouldn't need one per buffer
+(defvar ms--contents-hl-line-overlay nil
+  "Highlights selected heading in contents view.")
 
 ;; * Classes
 
@@ -2210,8 +2228,9 @@ and the value of `point-max' should contain a newline somewhere."
 (defun ms--cleanup-state ()
   "Clean up states between contents and slides."
   (ms--delete-header)
-  (ms--delete-overlays) 
-  (ms--animation-cleanup))
+  (ms--delete-overlays)
+  (ms--animation-cleanup)
+  (remove-hook 'post-command-hook #'ms--contents-hl-line t))
 
 (defun ms--ensure-deck ()
   "Prepare for starting the minor mode.
@@ -2296,8 +2315,11 @@ hooks must occur in the deck's :slide-buffer."
     (cancel-timer ms--animation-timer))
   (when ms--animation-overlay
     (delete-overlay ms--animation-overlay))
+  (when ms--contents-hl-line-overlay
+    (delete-overlay ms--contents-hl-line-overlay))
   (setq ms--animation-overlay nil
-        ms--animation-timer nil))
+        ms--animation-timer nil
+        ms--contents-hl-line-overlay nil))
 
 (defun ms--ensure-slide-buffer (&optional display-action)
   "Run in commands that must run in the slide buffer."
@@ -2414,6 +2436,27 @@ Optional ERROR if you want to process `wrong-type-argument'."
          (format "Class name not a class: %s" class-name))
         nil))))
 
+;; * Contents Highlight Line
+
+;; Basically we need to use the post-command hook to update a line with our
+;; handy-dandy face.  This is basically just a less feature-ful re-implementation
+;; of hl-line.  hl-line is kind of subtle and works across all buffers.  This is
+;; safer and defaults to the face attribute, :inverse-video, which is super high
+;; contrast, good when navigating slide headlines like a menu.
+(defun ms--contents-hl-line ()
+  (unless ms--contents-hl-line-overlay
+    (setq ms--contents-hl-line-overlay
+          (make-overlay (point) (point)))
+    (overlay-put ms--contents-hl-line-overlay
+                 'face 'ms-contents-selection-face)
+    (overlay-put ms--contents-hl-line-overlay
+                 'priority 10))
+  (when-let ((element (org-element-at-point)))
+    (setf (overlay-start ms--contents-hl-line-overlay)
+          (1+ (org-element-property :begin element)))
+    (setf (overlay-end ms--contents-hl-line-overlay)
+          (org-element-property :end element))))
+
 ;; * Lifecycle
 
 (defvar-keymap ms-mode-map
@@ -2477,6 +2520,9 @@ each slide show from the contents view."
       (narrow-to-region (point-max)
                         (point-max)))
     (ms--make-header t))
+
+  (when ms-contents-selection-highlight
+    (add-hook 'post-command-hook #'ms--contents-hl-line nil t))
 
   ;; TODO walk all headings with the filter and add overlays on the hidden stuff
   ;; TODO filter slides that don't have a display action?
