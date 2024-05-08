@@ -103,7 +103,7 @@ Regular Org Mode markup is used to add actions to headings.  See more examples i
 #+begin_src org
   ,* Full Screen Images
   :PROPERTIES:
-  :SLIDE_ACTIONS: ms-action-images
+  :MS_ACTIONS: ms-action-images
   :END:
   ,#+attr_html: :width 50%
   [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
@@ -114,14 +114,14 @@ Many actions understand arguments, allowing tuning of similar behaviors from the
 Configuring the slot is done by adding plist-style properties after the class name:
 #+begin_src org
   :PROPERTIES:
-  :SLIDE_SECTION_ACTIONS: ms-action-item-reveal :inline t
+  :MS_SECTION_ACTIONS: ms-action-item-reveal :inline t
   :END:
 #+end_src
 You can also use "property+" syntax to add to a property, and these accept plist arguments too:
 #+begin_src org
   :PROPERTIES:
-  :SLIDE_SECTION_ACTIONS: ms-action-babel
-  :SLIDE_SECTION_ACTIONS+: ms-action-images :refresh t
+  :MS_SECTION_ACTIONS: ms-action-babel
+  :MS_SECTION_ACTIONS+: ms-action-images :refresh t
   :END:
 #+end_src
 * Customizing
