@@ -73,8 +73,6 @@ If you display the slideshow in one window or frame, you can configure the point
 Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
 
 Many settings can be configured at the global level through customize variables, the document level through keywords, and the slide level through the property drawer.
-
-There's a lot of hooks and variables.  All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
 ** Binding
 You likely want to start the mode via ~ms-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~ms-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
 #+begin_src elisp
@@ -83,11 +81,30 @@ You likely want to start the mode via ~ms-start~.  Once the mode starts, it crea
 Once the global minor mode, ~ms-mode~ is active, additional bindings in ~ms-mode-map~ are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
 *** Secondary Commands 🚧
 Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~ms-start~ binding within presentations to enter / exit these branches.
+** Hooks
+Because slides and actions have a life-cycle and can easily find their own heading, consider making a custom action and setting that action on slides where it's needed.
+
+Beware of using the normal ~ms-mode-hook~ 😱 because it runs *in the base buffer* ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use ~ms-start-hook~. 💡
+
+- ~ms-start-hook~ Is run in the indirect buffer after it is set it.  This is what you want.
+- ~ms-stop-hook~ is run in the base buffer because the indirect buffer is already dead.
+- ~ms-contents-hook~ is run after switching to contents.  It runs in the display buffer.
+- ~ms-narrow-hook~ is run whenever a ~ms-forward~ or ~ms-backward~ changes the narrow state.  Because this is done by watching the restriction, it might do what you want 🤷🏻‍♂️
+- ~ms-after-last-slide-hook~ is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before exiting the presentation or set it to just ~ms-stop~ to exit without feedback.  Another option is to use ~ms-push-step~ to push a callback that will only run when called going forward.
+#+begin_src elisp
+  (defun my-stop-if-forward ()
+    (mc-push-step (lambda (direction)
+                    (when (eq direction 'forward)
+                      ;; Be sure to return t or the hook will run again.
+                      (prog1 t (ms-stop))))))
+
+  (setq ms-after-last-slide-hook #'my-stop-if-forward)
+#+end_src
 ** Recommended MC Settings
 The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
 #+begin_src elisp
   ;; Something like this should work
-  (add-hook 'ms-mode-hook (lambda () (mc-hide-mode (if ms-mode 1 -1))))
+  (add-hook 'ms-start-hook mc-hide-markup-mode)
   (add-hook 'ms-narrow-hook #'mc-hide-refresh)
 #+end_src
 ** Heading Properties

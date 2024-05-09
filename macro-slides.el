@@ -193,15 +193,16 @@ The current time will be used as a fallback."
            :forward "Forward ➡"
            :backward "⬅ Backward"
            :contents "Contents ☰"
-           :stop "Finished! ■"          ; TODO stop is not finish
-           :after-last-slide "No more slides")
+           :stop "Stop ■"
+           :after-last-slide "No more slides!")
   "Feedback messages for slide controls.
 Turn off by setting to nil.  Plist keys:
 - :start `ms-start'
 - :forward `ms-forward'
 - :backward `ms-backward'
 - :contents `ms-contents'
-- :stop `ms-stop'"
+- :stop `ms-stop'
+  :after-last-slide: see `after-last-slide' hook"
   :type 'plist
   :group 'macro-slides)
 
@@ -263,8 +264,13 @@ affect display in another buffer will not trigger this hook."
   :group 'macro-slides
   :type 'hook)
 
-(defcustom ms-after-last-slide-hook '(ms-stop)
-  "Run when forward is called at last slide."
+(defcustom ms-after-last-slide-hook '()
+  "Run when forward is called but there is no next slide.
+This can either provide feedback or quit immediately etc.
+Consider using `ms-push-step' and writing a callback that only
+reacts to the `forward' state.  This callback will then only run
+if the user immediately calls `ms-forward' again.  `ms-stop' is
+another good choice."
   :group 'macro-slides
   :type 'hook)
 
@@ -2246,7 +2252,6 @@ hooks must occur in the deck's :slide-buffer."
     (let* ((base-buffer (current-buffer))
            (slide-buffer-name (format "*deck: %s*" (buffer-name
                                                     base-buffer))))
-      (ms--feedback :start)
 
       ;; stale buffers likely indicate an issue
       (when-let ((stale-buffer (get-buffer slide-buffer-name)))
@@ -2464,6 +2469,7 @@ Optional ERROR if you want to process `wrong-type-argument'."
 (define-minor-mode ms-mode
   "A presentation tool for Org Mode."
   :init-value nil
+  :interactive nil
   :keymap ms-mode-map
   :group 'macro-slides
   :global t
@@ -2474,9 +2480,9 @@ Optional ERROR if you want to process `wrong-type-argument'."
   (cond (ms-mode
          ;; Create the indirect buffer and link it via the deck object.
          (ms--ensure-deck)
-         (funcall (or ms-start-function
-                      #'ms-display-slides))
-         (run-hooks 'ms-start-hook))
+         (funcall (or ms-start-function #'ms-display-slides))
+         (run-hooks 'ms-start-hook)
+         (ms--feedback :start))
         (t
          (ms--stop))))
 
