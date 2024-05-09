@@ -24,6 +24,8 @@ This isn't on a package archive yet.  Subscribe to Positron's [[https://www.yout
  #+end_src
 ** Try It Out
 With just defaults, run ~ms-start~ on your existing documents.  You can load the examples in the =/test= directory to see a showcase of configuration behavior.
+
+The default keymap uses arrow keys.  Left and right are ~ms-forward~ and ~ms-backward~.  Up is ~ms-start~ and will show the contents.  Down is ~ms-stop~ and will stop the slide show.
 * Overview
 - A presentation framework that can incorporate *anything* Emacs does
 - Any buffer can be part of a presentation sequence
@@ -55,7 +57,7 @@ The internal API is beginning to stabilize.  I think the user API will look pret
 ** Contents Navigation
 Call ~ms-contents~ to show a contents overview.  Calling ~ms-forward~ and ~ms-backward~ in the contents can quickly move through headings.  Call ~ms-start~ again to resume the presentation from that point.
 ** Clean Buffer State
-The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy.
+The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy 💩.
 ** Follow Along
 If you display the slideshow in one window or frame, you can configure the point to follow the slide in the base buffer, enabling you to see the full markup and even edit the presentation while developing your customizations.
 * Glossary
@@ -63,12 +65,12 @@ If you display the slideshow in one window or frame, you can configure the point
 - *Slide*: an object that interprets an org heading to hydrate its actions
 - *Action*: an object that responds to ~ms-forward~ and ~ms-backward~ calls and implements lifecycle methods to initialize and clean up state
 - *Step*: a single call to ~ms-foward~ or ~ms-backward~, usually delegated down to ~ms-step-forward~ and ~ms-step-backward~ methods
-
 - *Contents*: use org folding to create a view of folded headings to quickly navigate slides
-- *Display Buffer*: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name
-- *Buffer-Slide*: When integrating a buffer into the presentation, ~ms-buffer-slide-mode~ sets up the keybindings and links the buffers via the deck object, enabling the presentation to control the buffer.
+- *Slide Buffer*: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name.
+  + Inderect buffer and =slide-buffer= are used interchangeably
+  + Base buffer or =base-buffer= is used pretty execlusively
 * Configuring
-Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared custom variables.
+Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
 
 Many settings can be configured at the global level through customize variables, the document level through keywords, and the slide level through the property drawer.
 
@@ -130,7 +132,9 @@ The deck and slide class as well as actions can all be sub-classed.  Use the exi
 
 - *Action*:  Creating new action subclasses are an efficient way to perform similar operations on typical kinds of org data.
 - *Slide:*  Slides can be configured extensively by changing their actions.  However, for more vertical cooperation between slides or cooperation among actions, extended slides could be useful.
-- *Deck*:  If the core methods of the deck are insufficient, extension is another option besides
+- *Deck*:  If the core methods of the deck are insufficient, extension is another option besides advice, hooks, and modifying the source.
+
+If you suspect you might need to sub-class the ~ms-slide~ or ~ms-deck~, please file an issue because your use case is probably interesting.
 ** Default Classes
 The default classes and actions can be configured at the document or customize level.  Set the =MS_DECK_CLASS= and =MS_SLIDE_CLASS= as well as other properties that work at the heading level.  The order of precedence (*Not fully implemented* 🚧):
 - Property definition of the current heading
@@ -141,10 +145,17 @@ You can write custom scripts into your presentation as Org Babel blocks.  These 
 
 The =#+attr_methods:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
-- =init= and =end= are run when the slide is instantiated, going forward and backward respectively
--
-- =final= is only called when no progress can be made
+- =init= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
 
+- =final= is only called when no progress can be made or if the presentation is stopped.
+
+- =step-forward= and =step-backward= are self-explanatory.  Position your =step-backward= blocks *above* any block that they undo
+
+- =step-both= runs either direction.  It will not repeat in place when reversing.  Use sepate =step-forward= and =step-backward= blocks for that 💡
+*** Step Callbacks
+See ~ms-push-step~ for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume ~ms-forward~ and ~ms-backward~ itself, a callback may be easier.
+
+Because babel blocks are not actions, using ~ms-push-step~ may be the only way to optionally add a step callback from a babel block.
 * Package Pairings
 This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~ms-forward~ ~ms-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
 ** Master of Ceremonies
