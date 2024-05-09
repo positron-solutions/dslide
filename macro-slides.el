@@ -658,14 +658,7 @@ work as well.")
     :initform nil
     :documentation "Steps to run before next steps.
 FORM is just a list as steps will always be run before any
-sequence ends or makes progress..")
-   (sequence-callbacks
-    :initform '(nil)
-    :documentation "Steps that run only when sequences end.
-Form is a list of STEPS where STEPS is a list of callbacks.  The
-length of this list is equal to the depth of the current
-sequence.  See `ms-push-step' for information about how to push a
-step deeper into the sequences."))
+sequence ends or makes progress.."))
 
   "The Deck is responsible for selecting the parent node and
 maintaining state between mode activations or when switching
@@ -875,82 +868,32 @@ find the slide that displays that POINT."
        (eq (oref obj base-buffer) (buffer-base-buffer
                                    (oref obj slide-buffer)))))
 
-(defun ms-push-kill-buffer ()
-  "Push a step to kill the current buffer.")
-
-(defun ms-push-window-config (&optional pop-when step)
+(defun ms-push-window-config (&optional step)
   "Save the window configuration and narrowing for restoration.
-POP-WHEN will add a callback to restore the restriction.
-
-Optional POP-WHEN decides when to restore the config.  See
-`ms-push-step' for details.
 
 Optional STEP argument will decide if the callback counts as a step or will
 return nil so that it is only run for effects."
   (let ((window-config (current-window-configuration)))
     (ms-push-step
      (lambda (_) (prog1 step
-              (set-window-configuration window-config)))
-     pop-when)))
+              (set-window-configuration window-config))))))
 
-(defun ms-push-restriction (&optional pop-when step)
-  "Save the current buffer restriction for restoration.
-POP-WHEN will add a callback to restore the restriction.
-
-Optional POP-WHEN decides when to restore the config.  See
-`ms-push-step' for details.
-
-Optional STEP argument will decide if the callback counts as a step or will
-return nil so that it is only run for effects."
-  (let* ((begin (point-min-marker))
-         (end (point-max-marker))
-         (size (buffer-size))
-         (restricted (/= (- end begin) size)))
-    (ms-push-step
-     (lambda (_) (prog1 step
-              (if restricted
-                  (narrow-to-region begin end)
-                (widen))))
-     pop-when)))
-
-;; TODO pop the sequence root on stop.
-(defun ms-push-step (fun &optional pop-when)
+(defun ms-push-step (fun)
   "Run FUN as next step.
-FUN is a function of a single argument, `forward' or `backward'.
+FUN is a function of a single optional argument, `forward' or
+`backward'.  nil indicates that the callback is being cleaned up,
+usually to quit the presentation or change to contents.
 
 The return value is interpreted as progress, so return non-nil if
 you want FUN to count as a step or nil if FUN is only run for
 effects.
-
-Optional POP-WHEN argument means run FUN after current sequence
-ends.  Three kinds of values are understood:
-
-- `step' or nil: next step.
-
-- integer: Depth of parents.  0 is the current sequence.
-
-- `sequence': always equivalent to 0.  Just run when the current
-  sequence ends.  TODO ⚠️ This could be unstable if actions become
-  sub-sequences, which is currently intended.
-
-- `root': run before cleanup.  Equivalent to passing an integer
-  equal to one less than the sequence depth.
 
 If you need multiple steps, consider adding steps inside of FUN
 for recursive dynamic steps rather than adding a lot of steps at
 once, which requires the functions to be removed or return nil."
   (unless (ms-live-p)
     (error "No active deck"))
-  (cond ((eq pop-when 'step)
-         (push fun (oref ms--deck step-callbacks)))
-        ((or (eq pop-when 'sequence)
-             (eq pop-when 0))
-         (push fun (car (oref ms--deck sequence-callbacks))))
-        ((integerp pop-when)
-         (if (>= pop-when (length (oref ms--deck sequence-callbacks)))
-             (error "Requested depth exceeds sequence depth")
-           (push fun (nth pop-when
-                          (oref ms--deck sequence-callbacks)))))))
+  (push fun (oref ms--deck step-callbacks)))
 
 ;; * Slide
 (defclass ms-slide (ms-parent ms-stateful-sequence)
@@ -1510,7 +1453,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; TODO make it just a link action?
 (cl-defmethod ms-step-forward ((obj ms-action-image))
   (when-let ((link (ms-section-next obj 'link)))
-    (ms-push-window-config 'step nil)
+    (ms-push-window-config nil)
 
     ;; TODO success detection
     (let ((org-link-frame-setup '((file . find-file)))
@@ -1532,7 +1475,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod ms-step-backward ((obj ms-action-image))
   (when-let ((link (ms-section-previous obj 'link)))
-    (ms-push-window-config 'step nil)
+    (ms-push-window-config nil)
 
     ;; TODO success detection
     (let ((org-link-frame-setup '((file . find-file)))
@@ -2554,7 +2497,6 @@ source buffer."
 
     ;; Animation timers especially should be stopped
     ;; TODO ensure cleanup is thorough even if there's a lot of failures.
-    ;; TODO make the deck a child sequence of a presentation ;-)
     (ms--cleanup-state)
 
     (setq ms--deck nil)
