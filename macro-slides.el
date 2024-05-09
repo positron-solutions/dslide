@@ -59,17 +59,17 @@
 ;;
 ;; The code outline is as follows:
 ;;
-;; 1. Lifecycle of the mode, switching between base buffer, contents, and
-;; slides, user interface commands.
-;;
-;; 2. Class interface definitions for stateful sequence, deck (root sequence),
+;; 1. Class interface definitions for stateful sequence, deck (root sequence),
 ;; slide, and actions (sequences that run within slides).
 ;;
-;; 3. Element mapping implementations that are private but exposed publicly on
+;; 2. Element mapping implementations that are private but exposed publicly on
 ;; slide actions and elsewhere because they are super useful.
 ;;
-;; 4. Miscellaneous implementation details of parsing arguments, debug printing,
+;; 3. Miscellaneous implementation details of parsing arguments, debug printing,
 ;; header, animation etc.
+;;
+;; 4. Lifecycle of the mode, switching between base buffer, contents, and
+;; slides, user interface commands.
 ;;
 ;; For users, you might want to create your own actions, so check `ms-action'
 ;; and its sub-classes.
@@ -274,8 +274,7 @@ another good choice."
   :group 'macro-slides
   :type 'hook)
 
-(defcustom ms-default-slide-action
-  #'ms-action-narrow
+(defcustom ms-default-slide-action #'ms-action-narrow
   "Action class with lifecycle around the section actions.
 When stepping forward or backward, it is called before any
 section action.  It's normal purpose is to update the buffer
@@ -288,8 +287,7 @@ keyword."
   :type 'function
   :group 'macro-slides)
 
-(defcustom ms-default-section-actions
-  '()
+(defcustom ms-default-section-actions '()
   "Actions that run within the section display action lifecycle.
 It's value is a list of `ms-action' sub-classes or (CLASS . ARGS)
 forms where ARGS is a plist.  Each subclass will be instantiated
@@ -306,8 +304,7 @@ document default by adding an MS_SECTION_ACTIONS keyword."
   :type '(list function)
   :group 'macro-slides)
 
-(defcustom ms-default-child-action
-  #'ms-child-action-slide
+(defcustom ms-default-child-action #'ms-child-action-slide
   "Action run after section lifecycle.
 Value is an action class, usually extending
 `ms-child-action'.  The usual purpose is to manage
@@ -340,8 +337,7 @@ document by adding the MS_ROOT_CLASS keyword."
   :type 'symbol
   :group 'macro-slides)
 
-(defcustom ms-default-filter
-  #'ms-built-in-filter
+(defcustom ms-default-filter #'ms-built-in-filter
   "A function used to call next on children.
 The function used as actions should accept an org element, a
 `headline' type element and return it if it is a valid heading or
@@ -438,19 +434,20 @@ coordinate with it.")
 Set up the state required for this sequence when going forward,
 entering the sequence from the beginning.
 
-Return values are ignored.  `ms-init' always counts as a step because it's a
-result of a nil return from `ms-forward'.
+Return values are ignored.  `ms-init' always counts as a step
+because it's a result of a nil return from `ms-forward'.
 
-This method should work together with `ms-end' and `ms-final' to ensure
-consistently valid state for `ms-forward' and `ms-backward'.")
+This method should work together with `ms-end' and `ms-final' to
+ensure consistently valid state for `ms-forward' and
+`ms-backward'.")
 
 (cl-defgeneric ms-end (obj)
   "Init when going backwards.
 Set up the state required for this sequence when going backward,
 entering the sequence from the end.
 
-Return values are ignored.  `ms-end' always counts as a step because it's a
-result of a nil return from `ms-backward'.
+Return values are ignored.  `ms-end' always counts as a step
+because it's a result of a nil return from `ms-backward'.
 
 The first job of this method is to perform setup, possibly by
 just calling init since they likely have similar side-effects.
@@ -524,10 +521,11 @@ point or else infinite loops will result.")
   "Step forward until advancing beyond POINT.
 This method can usually be implemented on top of
 `ms-step-forward' by advancing until POINT is exceeded.  Return
-nil if POINT was not exceeded.  Return non-nil if the sense of progress exceeds
-POINT.  Usually, child actions will be responsible for determining if the
-POINT belongs to this slide or one of its child slides, and the slide will
-just ask the child action.")
+nil if POINT was not exceeded.  Return non-nil if the sense of
+progress exceeds POINT.  Usually, child actions will be
+responsible for determining if the POINT belongs to this slide or
+one of its child slides, and the slide will just ask the child
+action.")
 
 ;; ** Stateful Sequence
 (defclass ms-stateful-sequence ()
@@ -997,7 +995,7 @@ heading and stores actions and their states.")
 ;; Both child actions and user configuration have demonstrated a large benefit
 ;; from being able to slightly change the behavior of actions.  This is why
 ;; `ms--make-slide' supports plist arguments when hydrating from org properties
-;; and why child actions that create slides can pass these in via `&rest'.
+;; and why child actions that create slides can pass these in via `args'.
 
 (defun ms--make-slide (heading parent &rest args)
   "Hydrate a slide object from a HEADING element.
