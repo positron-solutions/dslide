@@ -250,13 +250,6 @@ Buffer is widened and fully visible."
   :group 'macro-slides
   :type 'hook)
 
-(defcustom ms-slide-hook nil
-  "Runs after a slide has been switched to.
-This includes the first slide of start, when switching back from
-contents.  It is run after any slide actions."
-  :group 'macro-slides
-  :type 'hook)
-
 (defcustom ms-narrow-hook nil
   "Runs whenever the slide buffer restriction is updated.
 Use this hook for behaviors that affect the displayed region.
