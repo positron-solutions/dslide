@@ -700,7 +700,6 @@ their init."
 ;; progress, we're done.
 
 (cl-defmethod ms-step-forward ((obj ms-deck))
-  ;; TODO Check for forward callbacks
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle
     ;; already
@@ -762,7 +761,6 @@ their init."
       (ms--feedback :forward))
 
     (when reached-end
-      ;; TODO exhaust any remaining next slide callbacks
       (run-hooks 'ms-after-last-slide-hook))))
 
 (cl-defmethod ms-step-backward ((obj ms-deck))
@@ -2171,6 +2169,9 @@ and the value of `point-max' should contain a newline somewhere."
   (ms--delete-header)
   (ms--delete-overlays)
   (ms--animation-cleanup)
+  (mapc (lambda (f) (funcall f nil))
+        (oref ms--deck step-callbacks))
+  (oset ms--deck step-callbacks nil)
   (remove-hook 'post-command-hook #'ms--contents-hl-line t))
 
 (defun ms--ensure-deck ()
