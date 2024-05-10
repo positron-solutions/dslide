@@ -388,6 +388,10 @@ coordinate with it.")
 (defvar ms--contents-hl-line-overlay nil
   "Highlights selected heading in contents view.")
 
+(defconst ms--display-actions
+  '(display-buffer-same-window display-buffer-in-previous-window)
+  "Configure `display-buffer-alist' to override.")
+
 ;; * Classes
 
 ;; This generic functions below are the most important interfaces for all
@@ -2216,7 +2220,8 @@ hooks must occur in the deck's :slide-buffer."
                           :window-config window-config
                           nil)))
         (setq ms--deck deck)
-        (switch-to-buffer slide-buffer) ;; TODO display options?
+        (display-buffer slide-buffer ms--display-actions)
+        (set-buffer slide-buffer)
 
         (widen)
         (org-fold-show-all)
@@ -2500,8 +2505,8 @@ source buffer."
 
     (setq ms--deck nil)
 
-    ;; TODO display strategy
-    (switch-to-buffer base-buffer)
+    (display-buffer base-buffer ms--display-actions)
+    (set-buffer base-buffer)
 
     (when slide-buffer
       (kill-buffer slide-buffer))
