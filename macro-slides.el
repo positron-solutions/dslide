@@ -2478,14 +2478,6 @@ each slide show from the contents view."
   (ms--feedback :contents)
   (run-hooks 'ms-contents-hook))
 
-(defun ms-display-base ()
-  "Switch to the base buffer for the slide show."
-  (unless ms--deck
-    (error "No deck exists"))
-  (oset ms--deck slide-buffer-state 'base)
-  ;; TODO display strategy
-  (switch-to-buffer (oref ms--deck base-buffer)))
-
 (defun ms--stop ()
   "Stop the presentation entirely.
 Kills the indirect buffer, forgets the deck, and displays the
