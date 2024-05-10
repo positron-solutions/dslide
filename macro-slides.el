@@ -765,6 +765,7 @@ their init."
       (ms--feedback :forward))
 
     (when reached-end
+      (ms--feedback :after-last-slide)
       (run-hooks 'ms-after-last-slide-hook))))
 
 (cl-defmethod ms-step-backward ((obj ms-deck))
