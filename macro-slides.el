@@ -2267,13 +2267,14 @@ hooks must occur in the deck's :slide-buffer."
         ms--animation-timer nil
         ms--contents-hl-line-overlay nil))
 
-(defun ms--ensure-slide-buffer (&optional display-action)
-  "Run in commands that must run in the slide buffer."
+(defun ms--ensure-slide-buffer (&optional display)
+  "Run in commands that must run in the slide buffer.
+Unless optional DISPLAY is non-nil, the buffer is only set."
   (unless (ms-live-p)
     (error "Live deck not found"))
-  (if display-action
+  (if display
       (display-buffer (oref ms--deck slide-buffer)
-                      display-action)
+                      ms--display-actions)
     (set-buffer (oref ms--deck slide-buffer))))
 
 (defun ms--keyword-value (key)
