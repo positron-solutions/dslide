@@ -709,9 +709,7 @@ their init."
     ;; already
     (error "No slide selected"))
 
-  (let ((restriction-min (point-min))
-        (restriction-max (point-max))
-        progress reached-end)
+  (let (progress reached-end)
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (oref obj step-callbacks)))
       (while (and (not progress)
@@ -758,10 +756,6 @@ their init."
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
     (when progress
-      ;; If the restriction was updated, call the after-narrow hook
-      (when (not (and (= restriction-min (point-min))
-                      (= restriction-max (point-max))))
-        (run-hooks 'ms-narrow-hook))
       (ms--feedback :forward))
 
     (when reached-end
@@ -781,9 +775,7 @@ their init."
   ;; and they should implement an actual `ms-end' method as well as idempotent
   ;; `ms-init' and `ms-final' if any support for going backwards is desirable.
 
-  (let ((restriction-min (point-min))
-        (restriction-max (point-max))
-        progress reached-beginning)
+  (let (progress reached-beginning)
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (and (slot-boundp obj 'step-callbacks)
                            (oref obj step-callbacks))))
@@ -830,10 +822,6 @@ their init."
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
     (cond (progress
-           ;; If the restriction was updated, call the after-narrow hook
-           (when (not (and (= restriction-min (point-min))
-                           (= restriction-max (point-max))))
-             (run-hooks 'ms-narrow-hook))
            (ms--feedback :backward))
           (reached-beginning
            (user-error "No more previous slides!")))))
@@ -1248,6 +1236,7 @@ deck of progress was made.")
                      (>= (point-max) end))
           (narrow-to-region (min (point-min) begin)
                             (max (point-max) end))
+          (run-hooks 'ms-narrow-hook)
           (when ms-slide-in-effect
             (ms-animation-setup begin end))
           (setq progress t))
@@ -1255,6 +1244,7 @@ deck of progress was made.")
                    (>= (point-max) end))
         ;; TODO overlay-based display
         (narrow-to-region begin end)
+        (run-hooks 'ms-narrow-hook)
         (ms--make-header)
         (goto-char (point-min))         ; necessary to reset the scroll
         (when (and ms-slide-in-effect
@@ -1651,7 +1641,8 @@ child is found."
           ;; TODO do this with overlays in a nested child ☢️
           (when heading
             (narrow-to-region (point-min)
-                              (org-element-property :begin heading)))
+                              (org-element-property :begin heading))
+            (run-hooks 'ms-narrow-hook))
           (ms-final finished)
           (setq progress t))))
     ;; Don't return any child objects to the deck or it will treat them like
@@ -2468,6 +2459,7 @@ each slide show from the contents view."
       ;; No first heading.  Just header.  Empty contents.
       (narrow-to-region (point-max)
                         (point-max)))
+    (run-hooks 'ms-narrow-hook)
     (ms--make-header t))
 
   (when ms-contents-selection-highlight
