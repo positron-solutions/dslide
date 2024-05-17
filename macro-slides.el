@@ -2277,7 +2277,8 @@ Unless optional DISPLAY is non-nil, the buffer is only set."
   "Explicit feedback for commands without visible side effects."
   (when-let ((feedback (plist-get ms-feedback-messages
                                   key)))
-    (message "%s" feedback)))
+    (let ((message-log-max nil))
+      (message "%s" feedback))))
 
 ;; TODO these could check for inheritance from some base class, which would save
 ;; people who write action names in the class property etc.
