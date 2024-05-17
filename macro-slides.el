@@ -1371,8 +1371,15 @@ Optional UNNAMED will return unnamed blocks as well."
       ;; TODO catch signals provide user feedback & options to navigate to the
       ;; failed block.
       (goto-char (org-element-property :begin block-element))
-      ;; t for don't cache.  We likely want effects
-      (org-babel-execute-src-block t))))
+      ;; Executing babel seems to widen and also creates messages, and this
+      ;; results in flashing.  The downside of just inhibiting re-display until
+      ;; after the call is that if re-display is needed, such as if calling
+      ;; `sleep-for' in a loop, then no updates will be visible.  However, the
+      ;; user should really handle this with a timer or process output and
+      ;; process sentinel etc.
+      (let ((inhibit-redisplay t))
+        ;; t for don't cache.  We likely want effects
+        (org-babel-execute-src-block t)))))
 
 (cl-defmethod ms--get-blocks ((obj ms-action-babel) &optional method-name)
   "Return the block with keyword value METHOD-NAME.
