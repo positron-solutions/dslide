@@ -52,7 +52,7 @@
 ;;
 ;; Usage:
 ;;    1. Open an org-mode file
-;;    2. Run `dslide-start'
+;;    2. Run `dslide-presentation-start'
 ;;    3. Use arrow keys.  See `dslide-mode-map'
 ;;
 ;; Note:
@@ -197,13 +197,20 @@ The current time will be used as a fallback."
            :stop "Stop ■"
            :after-last-slide "No more slides!")
   "Feedback messages for slide controls.
-Turn off by setting to nil.  Plist keys:
-- :start `dslide-start'
+Turn off by setting to nil.  Plist keys and where they are used:
+
+- :start `dslide-presentation-start'
+
 - :forward `dslide-presentation-forward'
+
 - :backward `dslide-presentation-backward'
-- :contents `dslide-contents'
-- :stop `dslide-stop'
+
+- :contents `dslide-display-contents'
+
+- :stop `dslide-presentation-stop'
+
   :after-last-slide: see `after-last-slide' hook"
+
   :type 'plist
   :group 'dslide)
 
@@ -271,7 +278,7 @@ This can either provide feedback or quit immediately etc.
 Consider using `dslide-push-step' and writing a callback that
 only reacts to the `forward' state.  This callback will then only
 run if the user immediately calls `dslide-presentation-forward'
-again.  `dslide-stop' is another good choice."
+again.  `dslide-presentation-stop' is another good choice."
   :group 'dslide
   :type 'hook)
 
@@ -458,12 +465,13 @@ coordinate with it.")
 Set up the state required for this sequence when going forward,
 entering the sequence from the beginning.
 
-Return values are ignored.  `dslide-begin' always counts as a step
-because it's a result of a nil return from `dslide-presentation-forward'.
+Return values are ignored.  `dslide-begin' always counts as a
+step because it's a result of a nil return from
+`dslide-presentation-forward'.
 
-This method should work together with `dslide-end' and `dslide-final' to
-ensure consistently valid state for `dslide-presentation-forward' and
-`dslide-presentation-backward'.")
+This method should work together with `dslide-end' and
+`dslide-final' to ensure consistently valid state for
+`dslide-presentation-forward' and `dslide-presentation-backward'.")
 
 (cl-defgeneric dslide-end (obj)
   "Init when going backwards.
@@ -471,7 +479,8 @@ Set up the state required for this sequence when going backward,
 entering the sequence from the end.
 
 Return values are ignored.  `dslide-end' always counts as a step
-because it's a result of a nil return from `dslide-presentation-backward'.
+because it's a result of a nil return from
+`dslide-presentation-backward'.
 
 The first job of this method is to perform setup, possibly by
 just calling init since they likely have similar side-effects.
@@ -480,7 +489,7 @@ Second, this method should reach the state that is equivalent to
 if the user called forward until no more progress could be made.
 
 The default implementation calls `dslide-begin' and then calls
-`dslide-step-forward' until no more progress can be made.  If this is
+`dslide-forward' until no more progress can be made.  If this is
 inappropriate, it should be overridden.
 
 In cases where you don't need a real backward implementation or
@@ -491,9 +500,9 @@ resulting in a sequence that always starts at the beginning and
 always proceeds to the end.  For a single step sequence that has
 identical effect in both directions, this is appropriate.
 
-This method should work together with `dslide-end' and `dslide-final' to
-ensure consistently valid state for `dslide-presentation-forward' and
-`dslide-presentation-backward'")
+This method should work together with `dslide-end' and
+`dslide-final' to ensure consistently valid state for
+`dslide-presentation-forward' and `dslide-presentation-backward'")
 
 (cl-defgeneric dslide-final (obj)
   "Called when exiting a sequence.
@@ -503,11 +512,11 @@ implements real backward behavior,
 
 All side-effects and states created by steps in the sequence or
 the `dslide-begin' and `dslide-end' methods must be cleaned up or
-otherwise managed or else `dslide-step-backward' and other sequences
+otherwise managed or else `dslide-backward' and other sequences
 of running a presentation will be brittle and likely fail when
 re-run.")
 
-(cl-defgeneric dslide-step-forward (obj)
+(cl-defgeneric dslide-forward (obj)
   "Make one step forward.
 The return value has meaning to the deck:
 
@@ -521,10 +530,10 @@ For sequences that don't make progress in a buffer, returning t
 is fine.  Returning a point of progress is necessary for the
 default implementation of `dslide-goto'.
 
-⚠ Every sequence of `dslide-step-forward' should return nil at some
+⚠ Every sequence of `dslide-forward' should return nil at some
 point or else infinite loops will result.")
 
-(cl-defgeneric dslide-step-backward (obj)
+(cl-defgeneric dslide-backward (obj)
   "Make one step backwards and return earliest point.
 The return value has meaning to the deck:
 
@@ -538,13 +547,13 @@ For sequences that don't make progress in a buffer, returning t
 is fine.  Returning a point of progress is necessary for the
 default implementation of `dslide-goto'.
 
-⚠ Every sequence of `dslide-step-backward' should return nil at some
+⚠ Every sequence of `dslide-backward' should return nil at some
 point or else infinite loops will result.")
 
 (cl-defgeneric dslide-goto (obj point)
   "Step forward until advancing beyond POINT.
 This method can usually be implemented on top of
-`dslide-step-forward' by advancing until POINT is exceeded.  Return
+`dslide-forward' by advancing until POINT is exceeded.  Return
 nil if POINT was not exceeded.  Return non-nil if the sense of
 progress exceeds POINT.  Usually, child actions will be
 responsible for determining if the POINT belongs to this slide or
@@ -585,11 +594,11 @@ simplify their implementation."
 (cl-defmethod dslide-end ((obj dslide-stateful-sequence))
   (let ((progress t))
     (while progress
-      (setq progress (dslide-step-forward obj)))))
+      (setq progress (dslide-forward obj)))))
 
-(cl-defmethod dslide-step-forward ((_ dslide-stateful-sequence)))
+(cl-defmethod dslide-forward ((_ dslide-stateful-sequence)))
 
-(cl-defmethod dslide-step-backward ((_ dslide-stateful-sequence)))
+(cl-defmethod dslide-backward ((_ dslide-stateful-sequence)))
 
 (cl-defmethod dslide-final ((_ dslide-stateful-sequence)))
 
@@ -597,7 +606,7 @@ simplify their implementation."
   (unless (eq 'skip (dslide-begin obj))
     (let (exceeded (advanced t))
       (while (and advanced (not exceeded))
-        (let ((progress (dslide-step-forward obj)))
+        (let ((progress (dslide-forward obj)))
           (if (and (numberp progress)
                    (>= progress point))
               (setq exceeded t)
@@ -696,7 +705,7 @@ their init."
 ;; next steps and callbacks were pushed onto the stack.  When one of them makes
 ;; progress, we're done.
 
-(cl-defmethod dslide-step-forward ((obj dslide-deck))
+(cl-defmethod dslide-forward ((obj dslide-deck))
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle
     ;; already
@@ -715,7 +724,7 @@ their init."
 
     (while (not (or progress reached-end))
       (let* ((current-slide (oref obj slide))
-             (result (dslide-step-forward current-slide))
+             (result (dslide-forward current-slide))
              next-slide)
 
         (if result
@@ -747,7 +756,7 @@ their init."
       (dslide--feedback :after-last-slide)
       (run-hooks 'dslide-after-last-slide-hook))))
 
-(cl-defmethod dslide-step-backward ((obj dslide-deck))
+(cl-defmethod dslide-backward ((obj dslide-deck))
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle
     ;; already
@@ -774,7 +783,7 @@ their init."
 
     (while (not (or progress reached-beginning))
       (let* ((current-slide (oref obj slide))
-             (result (dslide-step-backward current-slide))
+             (result (dslide-backward current-slide))
              previous-slide)
 
         (if result
@@ -900,7 +909,7 @@ heading and stores actions and their states.")
     (dslide-end slide-action))
   ;; Fairly certain the ordering of child and section actions doesn't actually
   ;; matter for `dslide-end', but this ordering matches the situation that would
-  ;; occur if the user just called `dslide-step-forward' repeatedly, and we want the
+  ;; occur if the user just called `dslide-forward' repeatedly, and we want the
   ;; end state to be as close to "normal" as possible.
   (when-let ((section-actions (oref obj section-actions)))
     (mapc #'dslide-end (reverse section-actions)))
@@ -921,30 +930,30 @@ heading and stores actions and their states.")
   ;; Clean up heading marker, which is shared by children
   (set-marker (oref obj begin) nil))
 
-(cl-defmethod dslide-step-forward ((obj dslide-slide))
+(cl-defmethod dslide-forward ((obj dslide-slide))
   (let ((section-actions (oref obj section-actions))
         (child-action (oref obj child-action))
         (slide-action (oref obj slide-action))
         progress)
     (while (and (not progress) section-actions)
-      (setq progress (dslide-step-forward (pop section-actions))))
+      (setq progress (dslide-forward (pop section-actions))))
     (unless (or progress (null child-action))
-      (setq progress (dslide-step-forward child-action)))
+      (setq progress (dslide-forward child-action)))
     (unless (or progress (null slide-action))
-      (setq progress (dslide-step-forward slide-action)))
+      (setq progress (dslide-forward slide-action)))
     progress))
 
-(cl-defmethod dslide-step-backward ((obj dslide-slide))
+(cl-defmethod dslide-backward ((obj dslide-slide))
   (let ((section-actions (oref obj section-actions))
         (child-action (oref obj child-action))
         (slide-action (oref obj slide-action))
         progress)
     (unless (null child-action)
-      (setq progress (dslide-step-backward child-action)))
+      (setq progress (dslide-backward child-action)))
     (while (and (not progress) section-actions)
-      (setq progress (dslide-step-backward (pop section-actions))))
+      (setq progress (dslide-backward (pop section-actions))))
     (unless (or progress (null slide-action))
-      (setq progress (dslide-step-backward slide-action)))
+      (setq progress (dslide-backward slide-action)))
     progress))
 
 ;; `dslide--make-slide' is very critical to the user-facing configuration and
@@ -1263,10 +1272,10 @@ deck of progress was made.")
 (cl-defmethod dslide-begin :after ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
-(cl-defmethod dslide-step-forward ((_ dslide-action-narrow)) ; odd
+(cl-defmethod dslide-forward ((_ dslide-action-narrow)) ; odd
   nil)
 
-(cl-defmethod dslide-step-backward ((obj dslide-action-narrow))
+(cl-defmethod dslide-backward ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
 (cl-defmethod dslide-end :after ((obj dslide-action-narrow))
@@ -1289,7 +1298,7 @@ deck of progress was made.")
     (mapc #'delete-overlay overlays)))
 
 ;; TODO add hide / un-hide methods to the base action
-(cl-defmethod dslide-step-forward ((obj dslide-action-item-reveal))
+(cl-defmethod dslide-forward ((obj dslide-action-item-reveal))
   ;; The implementation has mapped all of the items into overlays, so instead of
   ;; calling `dslide-section-next', we just use the overlay positions to walk
   ;; through the items.
@@ -1308,7 +1317,7 @@ deck of progress was made.")
     ;; return progress
     start))
 
-(cl-defmethod dslide-step-backward ((obj dslide-action-item-reveal))
+(cl-defmethod dslide-backward ((obj dslide-action-item-reveal))
   (when-let ((previous-item (dslide-section-previous obj 'item)))
     (oset obj overlays
           (cons (dslide-hide-element previous-item)
@@ -1418,14 +1427,14 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   (let ((predicate (dslide--method-block-pred (list method-name))))
     (dslide-section-map obj 'src-block predicate)))
 
-(cl-defmethod dslide-step-forward ((obj dslide-action-babel))
+(cl-defmethod dslide-forward ((obj dslide-action-babel))
   (when-let* ((predicate (dslide--method-block-pred
                           '("step-forward" "step-both") t))
               (next (dslide-section-next obj 'src-block predicate)))
     (dslide--block-execute next)
     (org-element-property :begin next)))
 
-(cl-defmethod dslide-step-backward ((obj dslide-action-babel))
+(cl-defmethod dslide-backward ((obj dslide-action-babel))
   (when-let* ((predicate (dslide--method-block-pred
                           '("step-backward" "step-both")))
               (prev (dslide-section-previous obj 'src-block predicate)))
@@ -1479,7 +1488,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
 ;; TODO make it just a link action?
-(cl-defmethod dslide-step-forward ((obj dslide-action-image))
+(cl-defmethod dslide-forward ((obj dslide-action-image))
   (when-let ((link (dslide-section-next obj 'link)))
     (dslide-push-window-config nil)
     ;; TODO success detection
@@ -1502,7 +1511,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
                (bury-buffer image-buffer)))))))
     (org-element-property :begin link)))
 
-(cl-defmethod dslide-step-backward ((obj dslide-action-image))
+(cl-defmethod dslide-backward ((obj dslide-action-image))
   (when-let ((link (dslide-section-previous obj 'link)))
     (dslide-push-window-config nil)
     ;; TODO success detection
@@ -1577,12 +1586,12 @@ child is found."
     :documentation "Current child."))
   "Default child action.  Children are independent slides.")
 
-(cl-defmethod dslide-step-forward ((obj dslide-child-action-slide))
+(cl-defmethod dslide-forward ((obj dslide-child-action-slide))
   ;; For child slides, we make a slide out of the next child heading and advance
   ;; our progress forward to the end of that child
   (let (progress)
     (when-let ((child (oref obj child)))
-      (setq progress (dslide-step-forward child))
+      (setq progress (dslide-forward child))
       (unless progress
         (dslide-final child)
         (oset obj child nil)))
@@ -1595,12 +1604,12 @@ child is found."
         (setq progress (org-element-property :begin child))))
     progress))
 
-(cl-defmethod dslide-step-backward ((obj dslide-child-action-slide))
+(cl-defmethod dslide-backward ((obj dslide-child-action-slide))
   ;; For child slides, we make a slide out of the previous child heading and
   ;; advance our progress backward to the beginning of that child
   (let (progress)
     (when-let ((child (oref obj child)))
-      (setq progress (dslide-step-backward child))
+      (setq progress (dslide-backward child))
       (unless progress
         (dslide-final child)
         (oset obj child nil)))
@@ -1639,12 +1648,12 @@ child is found."
     :documentation "Children that have been instantiated."))
   "Display children inline with the parent.")
 
-(cl-defmethod dslide-step-forward ((obj dslide-child-action-inline))
+(cl-defmethod dslide-forward ((obj dslide-child-action-inline))
   (let (progress exhausted)
     (while (not (or progress exhausted))
       ;; First try the most recently added child
       (setq progress (when-let* ((child (car (oref obj children))))
-                       (dslide-step-forward child)))
+                       (dslide-forward child)))
       ;; If the child didn't make progress, try to load up the next child
       (unless progress
         (if-let* ((child-heading (dslide-presentation-forward-child obj))
@@ -1662,12 +1671,12 @@ child is found."
           (setq exhausted t))))
     progress))
 
-(cl-defmethod dslide-step-backward ((obj dslide-child-action-inline))
+(cl-defmethod dslide-backward ((obj dslide-child-action-inline))
   (let (progress)
     (while (and (oref obj children) (not progress))
       ;; First try the most recently added child
       (setq progress (when-let* ((child (car (oref obj children))))
-                       (dslide-step-backward child)))
+                       (dslide-backward child)))
 
       ;; If the child didn't make progress, narrow it away
       (unless progress
@@ -2434,8 +2443,8 @@ Optional ERROR if you want to process `wrong-type-argument'."
   :doc "The keymap for `ms' mode."
   "<left>" #'dslide-presentation-backward
   "<right>" #'dslide-presentation-forward
-  "<up>" #'dslide-start
-  "<down>" #'dslide-stop)
+  "<up>" #'dslide-presentation-start
+  "<down>" #'dslide-presentation-stop)
 
 ;;;###autoload
 (define-minor-mode dslide-mode
@@ -2595,7 +2604,7 @@ source buffer."
 ;; * User Commands
 
 ;;;###autoload
-(defun dslide-stop ()
+(defun dslide-presentation-stop ()
   "Stop the presentation.
 It is recommended to not bind this to a controller button unless
 you have five buttons or will use the display button to stop and
@@ -2604,7 +2613,7 @@ can reliably select displays via other means."
   (dslide--stop))
 
 ;;;###autoload
-(defun dslide-start ()
+(defun dslide-presentation-start ()
   "Start presentation or secondary action.
 It is recommended to bind this in the `org-mode-map'.  It starts
 the mode if the mode is inactive.
@@ -2636,7 +2645,7 @@ video or custom actions."
   (if (dslide--showing-contents-p)
       (org-next-visible-heading 1)
     (dslide--ensure-slide-buffer)
-    (dslide-step-forward dslide--deck)))
+    (dslide-forward dslide--deck)))
 
 ;;;###autoload
 (defun dslide-presentation-backward ()
@@ -2646,6 +2655,6 @@ video or custom actions."
   (if (dslide--showing-contents-p)
       (org-previous-visible-heading 1)
     (dslide--ensure-slide-buffer)
-    (dslide-step-backward dslide--deck)))
+    (dslide-backward dslide--deck)))
 
 (provide 'dslide)
