@@ -4,7 +4,7 @@
 ;; Copyright (C) 2024 Positron
 ;;
 ;; Author: Positron <contact@positron.solutions>
-;; Version: 0.3.0
+;; Version: 0.3.1
 ;; Package-Requires: ((emacs "29.2"))
 ;; Maintainer: Positron <contact@positron.solutions>
 ;; URL: https://github.com/positron-solutions/dslide
@@ -1370,7 +1370,7 @@ steps.")
 Optional UNNAMED will return unnamed blocks as well."
   (lambda (block)
     (if-let* ((all-names (car (org-element-property
-                               :attr_ms block)))
+                               :attr_dslide block)))
               (names (string-split all-names)))
         (when (seq-intersection method-names names)
           block)
