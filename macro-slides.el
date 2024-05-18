@@ -1247,7 +1247,7 @@ deck of progress was made.")
 (cl-defmethod ms-init :after ((obj ms-action-narrow))
   (ms-narrow obj))
 
-(cl-defmethod ms-step-forward ((_ ms-action-narrow))
+(cl-defmethod ms-step-forward ((_ ms-action-narrow)) ; odd
   nil)
 
 (cl-defmethod ms-step-backward ((obj ms-action-narrow))
@@ -1625,8 +1625,7 @@ child is found."
           (ms-backward-child obj)       ; for marker effects 💡
           ;; TODO do this with overlays in a nested child ☢️
           (when heading
-            (narrow-to-region (point-min)
-                              (org-element-property :begin heading))
+            (narrow-to-region (point-min) (org-element-property :begin heading))
             (run-hooks 'ms-narrow-hook))
           (ms-final finished)
           (setq progress (car (oref obj children))))))
