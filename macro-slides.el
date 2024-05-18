@@ -369,6 +369,16 @@ obvious display style."
 See `ms-base-follows-slide'."
   :group 'macro-slides)
 
+(defface ms-babel-success-highlight
+  '((t :inherit hl-line))
+  "Temporarily highlight babel blocks that succeeded."
+  :group 'macro-slides)
+
+(defface ms-babel-error-highlight
+  '((t :inherit error))
+  "Temporarily highlight babel blocks that failed."
+  :group 'macro-slides)
+
 (defvar ms--debug nil
   "Set to t for logging slides and actions.")
 
@@ -1364,18 +1374,41 @@ Optional UNNAMED will return unnamed blocks as well."
 (defun ms--block-execute (block-element)
   (without-restriction
     (save-excursion
-      ;; TODO catch signals provide user feedback & options to navigate to the
-      ;; failed block.
-      (goto-char (org-element-property :begin block-element))
-      ;; Executing babel seems to widen and also creates messages, and this
-      ;; results in flashing.  The downside of just inhibiting re-display until
-      ;; after the call is that if re-display is needed, such as if calling
-      ;; `sleep-for' in a loop, then no updates will be visible.  However, the
-      ;; user should really handle this with a timer or process output and
-      ;; process sentinel etc.
-      (let ((inhibit-redisplay t))
-        ;; t for don't cache.  We likely want effects
-        (org-babel-execute-src-block t)))))
+      (let ((block-begin (org-element-property :begin block-element))
+            (block-end (org-element-property :end block-element)))
+        (goto-char block-begin)
+        ;; Executing babel seems to widen anxd also creates messages, and this
+        ;; results in flashing.  The downside of just inhibiting re-display until
+        ;; after the call is that if re-display is needed, such as if calling
+        ;; `sleep-for' in a loop, then no updates will be visible.  However, the
+        ;; user should really handle this with a timer or process output and
+        ;; process sentinel etc.
+        (condition-case user-wrote-flaky-babel
+            ;; t for don't cache.  We likely want effects
+            (progn (let ((inhibit-redisplay t))
+                     (org-babel-execute-src-block t))
+                   (ms--base-buffer-highlight-region
+                    block-begin block-end 'ms-babel-success-highlight))
+          ((debug error)
+           (ms--base-buffer-highlight-region
+            block-begin block-end 'ms-babel-error-highlight)
+           ;; TODO consolidate moving the point & window points in base buffer
+           (set-buffer (oref ms--deck base-buffer))
+           (goto-char block-begin)
+           (if-let ((windows (get-buffer-window-list)))
+               (progn
+                 (mapc (lambda (w) (set-window-point w block-begin)) windows)
+                 (select-window (car windows)))
+             (when (y-or-n-p "Block failed.  Visit failed block?")
+               (switch-to-buffer (oref ms--deck base-buffer))
+               (goto-char block-begin)
+               ;; TODO remove overlays after one command, like pulse
+               (recenter)))
+           ;; TODO option to try again / skip
+           ;; TODO integrate with ms--debug
+           (error "Babel block at %s failed: %s"
+                  (org-element-property :begin block-element)
+                  user-wrote-flaky-babel)))))))
 
 (cl-defmethod ms--get-blocks ((obj ms-action-babel) &optional method-name)
   "Return the block with keyword value METHOD-NAME.
@@ -2435,6 +2468,19 @@ Optional ERROR if you want to process `wrong-type-argument'."
   (widen)
   (org-fold-show-all)
   (ms-init ms--deck))
+
+(defun ms--base-buffer-highlight-region (beg end &optional face)
+  "Pulse region between BEG and END in base buffer.
+Optional FACE defaults to `ms-highlight'."
+  (unless (ms-live-p)
+    (error "Live deck not found"))
+  (let ((buffer (current-buffer))
+        (face (or face 'ms-highlight)))
+    (set-buffer (oref ms--deck base-buffer))
+    (let ((overlay (make-overlay beg end)))
+      (overlay-put overlay 'face face)
+      (push overlay ms--step-overlays))
+    (set-buffer buffer)))
 
 (defun ms--base-buffer-highlight-line (&optional pos face)
   "Highlight line containing POS or current point.
