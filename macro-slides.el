@@ -1462,6 +1462,10 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     :initform nil
     :initarg :fullscreen
     :documentation "Switch to full frame during display.")
+   (hide-mode-line
+    :initform t
+    :initarg :hide-mode-line
+    :documentation "Turn on `hide-mode-line-mode'.")
    (refresh
     :initform nil
     :initarg :refresh
@@ -1489,6 +1493,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
     (when (eq (buffer-local-value 'major-mode (current-buffer))
               'image-mode)
+      (when (oref obj hide-mode-line)
+        (hide-mode-line-mode 1))
       (image-transform-fit-to-window)
       (let ((image-buffer (current-buffer)))
         (ms-push-step
@@ -1510,6 +1516,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
     (when (eq (buffer-local-value 'major-mode (current-buffer))
               'image-mode)
+      (when (oref obj hide-mode-line)
+        (hide-mode-line-mode 1))
       (image-transform-fit-to-window)
       (let ((image-buffer (current-buffer)))
         (ms-push-step
