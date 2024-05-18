@@ -365,7 +365,7 @@ obvious display style."
 
 (defface ms-highlight
   '((t :inherit hl-line))
-  "Face used when following in the base buffer.
+  "Face used in base buffer to highlight progress.
 See `ms-base-follows-slide'."
   :group 'macro-slides)
 
@@ -384,10 +384,13 @@ See `ms-base-follows-slide'."
 This is global.  If a presentation is active, you can look at this variable to
 coordinate with it.")
 
-(defvar-local ms--overlays nil
+(defvar ms--overlays nil
   "Overlays used to hide or change contents display.")
 
-(defvar-local ms--header-overlay nil
+(defvar ms--step-overlays nil
+  "Overlays that only live for one step.")
+
+(defvar ms--header-overlay nil
   "Flag to check the status of overlay for a slide header.")
 
 ;; Shouldn't need one per buffer
@@ -714,6 +717,9 @@ their init."
     ;; already
     (error "No slide selected"))
 
+  (while ms--step-overlays
+    (delete-overlay (pop ms--step-overlays)))
+
   (let (progress reached-end)
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (oref obj step-callbacks)))
@@ -761,6 +767,9 @@ their init."
     ;; Calls implied from other commands should have started the lifecycle
     ;; already
     (error "No slide selected"))
+
+  (while ms--step-overlays
+    (delete-overlay (pop ms--step-overlays)))
 
   ;; Going backward is almost the same as going forward.  The big difference is
   ;; that when a slide is instantiated, it needs to be sent to its end.  Usually
@@ -2219,7 +2228,9 @@ hooks must occur in the deck's :slide-buffer."
 (defun ms--delete-overlays ()
   "Delete content overlays."
   (while ms--overlays
-    (delete-overlay (pop ms--overlays))))
+    (delete-overlay (pop ms--overlays)))
+  (while ms--step-overlays
+    (delete-overlay (pop ms--step-overlays))))
 
 (defun ms--animate (goal-time overlay initial-line-height)
   (if (time-less-p goal-time (current-time))
@@ -2425,15 +2436,32 @@ Optional ERROR if you want to process `wrong-type-argument'."
   (org-fold-show-all)
   (ms-init ms--deck))
 
+(defun ms--base-buffer-highlight-line (&optional pos face)
+  "Highlight line containing POS or current point.
+Optional FACE defaults to `ms-highlight'."
+  (unless (ms-live-p)
+    (error "Live deck not found"))
+  (let ((buffer (current-buffer))
+        (face (or face 'ms-highlight)))
+    (set-buffer (oref ms--deck base-buffer))
+    (save-excursion
+      (when pos (goto-char pos))
+      (let* ((beg (progn (vertical-motion 0) (point)))
+             (end (progn (vertical-motion 1) (point)))
+             (overlay (make-overlay beg end)))
+        (overlay-put overlay 'face face)
+        (push overlay ms--step-overlays)))
+    (set-buffer buffer)))
+
 (defun ms--follow (progress)
   "Set the base buffer window point to PROGRESS.
 PROGRESS must be an integer buffer location, not a marker."
   (unless (ms-live-p)
     (error "Live deck not found"))
   (let ((pos (cond ((integerp progress) progress)
-                     ((eieio-object-p progress)
-                      (marker-position (oref progress begin)))
-                     ((markerp progress) (marker-position progress)))))
+                   ((eieio-object-p progress)
+                    (marker-position (oref progress begin)))
+                   ((markerp progress) (marker-position progress)))))
     (when (null pos)
       (warn "Progress was null! %s" progress))
     (when (and pos ms-base-follows-slide)
@@ -2442,7 +2470,7 @@ PROGRESS must be an integer buffer location, not a marker."
                    (<= pos (point-max)))
         (widen))
       (goto-char pos)
-      (pulse-momentary-highlight-one-line pos 'ms-highlight)
+      (ms--base-buffer-highlight-line)
       ;; TODO maybe only two of these are actually necessary
       (org-fold-show-context)
       (org-fold-show-entry)
