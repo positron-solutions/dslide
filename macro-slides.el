@@ -363,6 +363,12 @@ obvious display style."
   "Face for highlighting the current slide root."
   :group 'macro-slides)
 
+(defface ms-highlight
+  '((t :inherit hl-line))
+  "Face used when following in the base buffer.
+See `ms-base-follows-slide'."
+  :group 'macro-slides)
+
 (defvar ms--debug nil
   "Set to t for logging slides and actions.")
 
@@ -736,26 +742,15 @@ their init."
           (oset obj slide next-slide)
           (ms-final current-slide)
 
-          ;; TODO extract behavior and add to other navigation actions
-          (when ms-base-follows-slide
-            (let ((pos (marker-position (oref next-slide begin))))
-              (set-buffer (oref obj base-buffer))
-              (unless (and (>= pos (point-min))
-                           (<= pos (point-max)))
-                (widen))
-              (when-let ((windows (get-buffer-window-list (current-buffer))))
-                (mapc (lambda (w) (set-window-point w pos)) windows))
-              (set-buffer (oref obj slide-buffer))))
-
-
           (ms-init next-slide)
           ;; Init counts as a step
-          (setq progress t))))
+          (setq progress next-slide))))
 
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
     (when progress
-      (ms--feedback :forward))
+      (ms--feedback :forward)
+      (ms--follow progress))
 
     (when reached-end
       (ms--feedback :after-last-slide)
@@ -804,24 +799,15 @@ their init."
           (oset obj slide previous-slide)
           (ms-final current-slide)
 
-          ;; TODO extract behavior and add to other navigation commands
-          (when ms-base-follows-slide
-            (let ((pos (marker-position (oref previous-slide begin))))
-              (set-buffer (oref obj base-buffer))
-              (unless (and (>= pos (point-min))
-                           (<= pos (point-max)))
-                (widen))
-              (when-let ((windows (get-buffer-window-list (current-buffer))))
-                (mapc (lambda (w) (set-window-point w pos)) windows))
-              (set-buffer (oref obj slide-buffer))))
           ;; end counts as a step.
           (ms-end previous-slide)
-          (setq progress t))))
+          (setq progress previous-slide))))
 
     ;; A lot of progress may have happened, but there will be only one feedback
     ;; message.
     (cond (progress
-           (ms--feedback :backward))
+           (ms--feedback :backward)
+           (ms--follow progress))
           (reached-beginning
            (user-error "No more previous slides!")))))
 
@@ -1238,7 +1224,7 @@ deck of progress was made.")
           (run-hooks 'ms-narrow-hook)
           (when ms-slide-in-effect
             (ms-animation-setup begin end))
-          (setq progress t))
+          (setq progress begin))
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
         ;; TODO overlay-based display
@@ -1249,7 +1235,7 @@ deck of progress was made.")
         (when (and ms-slide-in-effect
                    (not (oref obj inline)))
           (ms-animation-setup begin end))
-        (setq progress t)))
+        (setq progress begin)))
     ;; Return progress to count as step when re-narrowing after a child.
     progress))
 
@@ -1293,7 +1279,8 @@ deck of progress was made.")
   ;; through the items.
   (when-let* ((overlays (oref obj overlays))
               (first (car overlays))
-              (end (overlay-end first)))
+              (end (overlay-end first))
+              (start (overlay-start first)))
     ;; TODO We can let-bind animations false for child slides.
     ;; Or handle this via arguments in child actions
     (when ms-slide-in-effect
@@ -1302,7 +1289,8 @@ deck of progress was made.")
     (delete-overlay first)
     (oset obj overlays (cdr overlays))
     (ms-marker obj end)
-    t))
+    ;; return progress
+    start))
 
 (cl-defmethod ms-step-backward ((obj ms-action-item-reveal))
   (when-let ((previous-item (ms-section-previous obj 'item)))
@@ -1310,7 +1298,7 @@ deck of progress was made.")
           (cons (ms-hide-element previous-item)
                 (and (slot-boundp obj 'overlays)
                      (oref obj overlays))))
-    t))
+    (org-element-property :begin previous-item)))
 
 ;; ** Babel Action
 
@@ -1395,19 +1383,15 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   (when-let* ((predicate (ms--method-block-pred
                           '("step-forward" "step-both") t))
               (next (ms-section-next obj 'src-block predicate)))
-    (or (ms--block-execute next)
-        ;; If we found a next block, we made progress regardless of the block's
-        ;; return value
-        t)))
+    (ms--block-execute next)
+    (org-element-property :begin next)))
 
 (cl-defmethod ms-step-backward ((obj ms-action-babel))
   (when-let* ((predicate (ms--method-block-pred
                           '("step-backward" "step-both")))
               (prev (ms-section-previous obj 'src-block predicate)))
-    (or (ms--block-execute prev)
-        ;; If we found a previous block, we made progress regardless of the
-        ;; block's return value
-        t)))
+    (ms--block-execute prev)
+    (org-element-property :begin prev)))
 
 (cl-defmethod ms-init :after ((obj ms-action-babel))
   (when-let ((block-elements (ms--get-blocks obj "init")))
@@ -1467,8 +1451,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
              (if (oref obj kill-buffer)
                  (kill-buffer image-buffer)
                (bury-buffer image-buffer)))))))
-    ;; If we found a next image, progress was made
-    t))
+    (org-element-property :begin link)))
 
 (cl-defmethod ms-step-backward ((obj ms-action-image))
   (when-let ((link (ms-section-previous obj 'link)))
@@ -1489,8 +1472,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
              (if (oref obj kill-buffer)
                  (kill-buffer image-buffer)
                (bury-buffer image-buffer)))))))
-    ;; If we found a next image, progress was made
-    t))
+    (org-element-property :begin link)))
 
 ;; * Child Actions
 (defclass ms-child-action (ms-action) ()
@@ -1583,8 +1565,8 @@ child is found."
 (cl-defmethod ms-end :after ((obj ms-child-action-slide))
   (when-let ((child (ms-backward-child obj)))
     (let ((child (ms--make-slide child (oref ms--deck slide))))
-      (ms-end child)
-      (oset obj child child))))
+      (prog1 (ms-end child)
+        (oset obj child child)))))
 
 (cl-defmethod ms-final :after ((obj ms-child-action-slide))
   (when-let ((child (oref obj child)))
@@ -1612,7 +1594,6 @@ child is found."
       ;; First try the most recently added child
       (setq progress (when-let* ((child (car (oref obj children))))
                        (ms-step-forward child)))
-
       ;; If the child didn't make progress, try to load up the next child
       (unless progress
         (if-let* ((child-heading (ms-forward-child obj))
@@ -1625,12 +1606,10 @@ child is found."
                           :slide-action-args '(:include-restriction t :with-children t)
                           :child-action 'none)))
             (progn (ms-init child)
-                   (setq progress t)
+                   (setq progress child)
                    (push child (oref obj children)))
           (setq exhausted t))))
-    ;; Don't return any child objects to the deck or it will treat them like
-    ;; slides
-    (not (null progress))))
+    progress))
 
 (cl-defmethod ms-step-backward ((obj ms-child-action-inline))
   (let (progress)
@@ -1650,10 +1629,8 @@ child is found."
                               (org-element-property :begin heading))
             (run-hooks 'ms-narrow-hook))
           (ms-final finished)
-          (setq progress t))))
-    ;; Don't return any child objects to the deck or it will treat them like
-    ;; slides
-    (not (null progress))))
+          (setq progress (car (oref obj children))))))
+    progress))
 
 (cl-defmethod ms-end :after ((obj ms-child-action-inline))
   (ms-marker obj (org-element-property :begin (ms-heading obj)))
@@ -2447,6 +2424,32 @@ Optional ERROR if you want to process `wrong-type-argument'."
   (widen)
   (org-fold-show-all)
   (ms-init ms--deck))
+
+(defun ms--follow (progress)
+  "Set the base buffer window point to PROGRESS.
+PROGRESS must be an integer buffer location, not a marker."
+  (unless (ms-live-p)
+    (error "Live deck not found"))
+  (let ((pos (cond ((integerp progress) progress)
+                     ((eieio-object-p progress)
+                      (marker-position (oref progress begin)))
+                     ((markerp progress) (marker-position progress)))))
+    (when (null pos)
+      (warn "Progress was null! %s" progress))
+    (when (and pos ms-base-follows-slide)
+      (set-buffer (oref ms--deck base-buffer))
+      (unless (and (>= pos (point-min))
+                   (<= pos (point-max)))
+        (widen))
+      (goto-char pos)
+      (pulse-momentary-highlight-one-line pos 'ms-highlight)
+      ;; TODO maybe only two of these are actually necessary
+      (org-fold-show-context)
+      (org-fold-show-entry)
+      (org-fold-show-subtree)
+      (when-let ((windows (get-buffer-window-list (current-buffer))))
+        (mapc (lambda (w) (set-window-point w pos)) windows))
+      (set-buffer (oref ms--deck slide-buffer)))))
 
 (defun ms-display-contents ()
   "Switch to showing contents in the slide buffer.
