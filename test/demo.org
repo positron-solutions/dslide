@@ -69,7 +69,7 @@ This is an image slide.  You can view the images inline using ~org-toggle-inline
 
 Both backwards and forward are supported on this slide.
 
-#+attr_methods: init end
+#+attr_ms: init end
 #+begin_src elisp :results none
   (setq-local overlays nil)
   (goto-char (point-min))
@@ -79,27 +79,27 @@ Both backwards and forward are supported on this slide.
       (push overlay overlays)))
 #+end_src
 
-#+attr_methods: step-backward
+#+attr_ms: step-backward
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
 #+end_src
 
-#+attr_methods: step-both
+#+attr_ms: step-both
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
 #+end_src
 
-#+attr_methods: step-both
+#+attr_ms: step-both
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
 #+end_src
 
-#+attr_methods: step-forward end
+#+attr_ms: step-forward end
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
 #+end_src
 
-#+attr_methods: final
+#+attr_ms: final
 #+begin_src elisp :results none
   (mapc #'delete-overlay overlays)
   (makunbound 'overlays)
@@ -118,7 +118,7 @@ These three org blocks will not be displayed since this slide has no slide actio
 - Blocks can have methods
 - Multiple blocks can have the init, end, and final method.  They are always executed top to bottom.  This allows better code re-use.
 
-#+attr_methods: end init
+#+attr_ms: end init
 #+begin_src elisp :results none
   ;; No need to deal with restriction or restore point.
   (org-up-heading-safe)
@@ -129,7 +129,7 @@ These three org blocks will not be displayed since this slide has no slide actio
 #+end_src
 
 Some extra init can also be returned to with step backwards
-#+attr_methods: init step-backward
+#+attr_ms: init step-backward
 #+begin_src elisp :results none
   (overlay-put ms-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
@@ -137,7 +137,7 @@ Some extra init can also be returned to with step backwards
 #+end_src
 
 When going backwards, we begin at the end, which can also be stepped forwards to
-#+attr_methods: step-forward end
+#+attr_ms: step-forward end
 #+begin_src elisp :results none
   (overlay-put ms-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
@@ -145,7 +145,7 @@ When going backwards, we begin at the end, which can also be stepped forwards to
 #+end_src
 
 Our cleanup is always run
-#+attr_methods: final
+#+attr_ms: final
 #+begin_src elisp :results none
   (when (bound-and-true-p ms-can-has-overlay)
     (delete-overlay ms-can-has-overlay)
@@ -158,29 +158,29 @@ Our cleanup is always run
 - Let arbitrary buffers be shown while still completing steps within the slide-show
 - Run babel against other buffers 😈
 
-#+attr_methods: init
+#+attr_ms: init
 #+begin_src elisp :results none
   (require 'master-of-ceremonies)
 #+end_src
-#+attr_methods: final step-backward
+#+attr_ms: final step-backward
 #+begin_src elisp :results none
   (when-let ((buffer (get-buffer "*MC Focus*")))
     (kill-buffer buffer))
 #+end_src
 
-#+attr_methods: step-both
+#+attr_ms: step-both
   #+begin_src elisp :results none
   (mc-focus "🖊️")
   #+end_src
-#+attr_methods: step-both
+#+attr_ms: step-both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍")
   #+end_src
-#+attr_methods: step-both
+#+attr_ms: step-both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎")
   #+end_src
-#+attr_methods: step-both
+#+attr_ms: step-both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎🖊️")
   #+end_src

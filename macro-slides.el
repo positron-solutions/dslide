@@ -1327,17 +1327,17 @@ deck of progress was made.")
 By default blocks execute one by one with step-forward.  You can mark a block to
 be special with the keyword:
 
-- #+attr_methods: init
+- #+attr_ms: init
 
-- #+attr_methods: step-forward
+- #+attr_ms: step-forward
 
-- #+attr_methods: step-backward
+- #+attr_ms: step-backward
 
-- #+attr_methods: step-both
+- #+attr_ms: step-both
 
-- #+attr_methods: end
+- #+attr_ms: end
 
-- #+attr_methods: final
+- #+attr_ms: final
 
 Other than step-both, which executes in either step direction,
 these keywords correspond to the normal methods of the stateful
@@ -1360,7 +1360,7 @@ steps.")
 Optional UNNAMED will return unnamed blocks as well."
   (lambda (block)
     (if-let* ((all-names (car (org-element-property
-                               :attr_methods block)))
+                               :attr_ms block)))
               (names (string-split all-names)))
         (when (seq-intersection method-names names)
           block)
@@ -1410,7 +1410,7 @@ Optional UNNAMED will return unnamed blocks as well."
   "Return the block with keyword value METHOD-NAME.
 The keywords look like:
 
-#+attr_methods: METHOD-NAME
+#+attr_ms: METHOD-NAME
 
 The possible values for METHOD-NAME correspond to the
 stateful-sequence class methods.  METHOD-NAME is a string."

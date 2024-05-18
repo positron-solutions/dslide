@@ -160,7 +160,7 @@ The default classes and actions can be configured at the document or customize l
 ** Babel Scripting
 You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~ms-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~ms-action-babel~ class and examples in [[./test/demo.org]].
 
-The =#+attr_methods:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
+The =#+attr_ms:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
 - =init= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
 
