@@ -1645,7 +1645,8 @@ child is found."
                          :slide-action #'ms-action-narrow
                          :slide-action-args '(:include-restriction t :with-children t)
                          :child-action 'none)))
-            (ms-end child)
+            (let ((ms-slide-in-effect nil))
+              (ms-end child))
             (push child (oref obj children)))
         (setq exhausted t)))))
 
