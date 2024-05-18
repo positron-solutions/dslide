@@ -4,7 +4,7 @@
 
 * Controls
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: ms-action-item-reveal
+:DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
 :END:
 See the ~dslide-mode-map~ but basically, arrow keys.  Press the right arrow key.
 - → ~dslide-presentation-forward~
@@ -51,7 +51,7 @@ Wow, these breadcrumbs are very high-carb
 How many levels of headings could there be?
 * Inline Children
 :PROPERTIES:
-:DSLIDE_CHILD_ACTION: ms-child-action-inline
+:DSLIDE_CHILD_ACTION: dslide-child-action-inline
 :END:
 - You won't believe these animations
 - This is the world's greatest presentation software
@@ -66,7 +66,7 @@ This is a reason to be alive
 [[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
 * Flat Slide
 :PROPERTIES:
-:DSLIDE_SLIDE_ACTION: ms-action-narrow :with-children t
+:DSLIDE_SLIDE_ACTION: dslide-action-narrow :with-children t
 :DSLIDE_CHILD_ACTION: nil
 :END:
 This slide shows its child headings inline.
@@ -80,7 +80,7 @@ This slide shows its child headings inline.
 - Failure is an option
 * Reveal Items
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: ms-action-item-reveal
+:DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
 :END:
 Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
@@ -89,9 +89,9 @@ Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
 * Image Slides
 :PROPERTIES:
-:DSLIDE_SLIDE_ACTION: ms-action-narrow
-:DSLIDE_SECTION_ACTIONS: ms-action-image ms-action-babel
-:DSLIDE_CHILD_ACTION: ms-child-action-slide
+:DSLIDE_SLIDE_ACTION: dslide-action-narrow
+:DSLIDE_SECTION_ACTIONS: dslide-action-image dslide-action-babel
+:DSLIDE_CHILD_ACTION: dslide-child-action-slide
 :END:
 This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
 
@@ -101,7 +101,7 @@ This is an image slide.  You can view the images inline using ~org-toggle-inline
  [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * Babel Slide Integration
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: ms-action-babel
+:DSLIDE_SECTION_ACTIONS: dslide-action-babel
 :END:
 
 Both backwards and forward are supported on this slide.
@@ -148,7 +148,7 @@ Can has display?
 ** No Display!  Only Execute!
 :PROPERTIES:
 :DSLIDE_SLIDE_ACTION: nil
-:DSLIDE_SECTION_ACTIONS: ms-action-babel
+:DSLIDE_SECTION_ACTIONS: dslide-action-babel
 :END:
 These three org blocks will not be displayed since this slide has no slide action.  They will however execute when navigating forward and backward.  Note these features:
 
@@ -160,7 +160,7 @@ These three org blocks will not be displayed since this slide has no slide actio
   ;; No need to deal with restriction or restore point.
   (org-up-heading-safe)
   (if (re-search-forward "\?" nil t)
-      (setq-local ms-can-has-overlay
+      (setq-local dslide-can-has-overlay
                   (make-overlay (match-end 0) (match-end 0)))
     (message "Ouchie, the document changed!"))
 #+end_src
@@ -168,7 +168,7 @@ These three org blocks will not be displayed since this slide has no slide actio
 Some extra init can also be returned to with step backwards
 #+attr_dslide: init step-backward
 #+begin_src elisp :results none
-  (overlay-put ms-can-has-overlay 'after-string
+  (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
                            'face 'error))
 #+end_src
@@ -176,7 +176,7 @@ Some extra init can also be returned to with step backwards
 When going backwards, we begin at the end, which can also be stepped forwards to
 #+attr_dslide: step-forward end
 #+begin_src elisp :results none
-  (overlay-put ms-can-has-overlay 'after-string
+  (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
                            'face 'success))
 #+end_src
@@ -184,13 +184,13 @@ When going backwards, we begin at the end, which can also be stepped forwards to
 Our cleanup is always run
 #+attr_dslide: final
 #+begin_src elisp :results none
-  (when (bound-and-true-p ms-can-has-overlay)
-    (delete-overlay ms-can-has-overlay)
-    (makunbound 'ms-can-has-overlay))
+  (when (bound-and-true-p dslide-can-has-overlay)
+    (delete-overlay dslide-can-has-overlay)
+    (makunbound 'dslide-can-has-overlay))
 #+end_src
 * Package Integration
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: ms-action-babel
+:DSLIDE_SECTION_ACTIONS: dslide-action-babel
 :END:
 - You need the ~master-of-ceremonies~ package installed to complete this slide.
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
