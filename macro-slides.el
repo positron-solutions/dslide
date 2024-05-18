@@ -1171,10 +1171,9 @@ Errors when asked for a marker before one has been set."
   "Move marker forward by one org element of TYPE and return element.
 Marker is moved to the end of the heading if no matching element
 is found."
-  (if-let ((next (ms--section-next (ms-heading obj)
-                                   type
-                                   (ms-marker obj)
-                                   pred info no-recursion)))
+  (if-let ((next (ms--section-next
+                  (ms-heading obj) type (ms-marker obj)
+                  pred info no-recursion)))
       (prog1 next
         (ms-marker obj (org-element-property :begin next)))
     (ms-marker obj (org-element-property :end (ms-heading obj)))
@@ -1185,10 +1184,9 @@ is found."
   "Move marker backward by one org element of TYPE and return element.
 Marker is moved to the beginning of the heading if no matching
 element is found."
-  (if-let ((previous (ms--section-previous (ms-heading obj)
-                                           type
-                                           (ms-marker obj)
-                                           pred info no-recursion)))
+  (if-let ((previous (ms--section-previous
+                      (ms-heading obj) type (ms-marker obj)
+                      pred info no-recursion)))
       (prog1 previous
         (ms-marker obj (org-element-property :begin previous)))
     (ms-marker obj (org-element-property :begin (ms-heading obj)))
