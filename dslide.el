@@ -453,12 +453,12 @@ coordinate with it.")
 ;; a maximum of six methods and a minimum of two, just init and forward, you
 ;; have enough behavior to properly fit the user interface.
 
-(cl-defgeneric dslide-init (obj)
+(cl-defgeneric dslide-begin (obj)
   "Called when entering a sequence.
 Set up the state required for this sequence when going forward,
 entering the sequence from the beginning.
 
-Return values are ignored.  `dslide-init' always counts as a step
+Return values are ignored.  `dslide-begin' always counts as a step
 because it's a result of a nil return from `dslide-presentation-forward'.
 
 This method should work together with `dslide-end' and `dslide-final' to
@@ -479,13 +479,13 @@ just calling init since they likely have similar side-effects.
 Second, this method should reach the state that is equivalent to
 if the user called forward until no more progress could be made.
 
-The default implementation calls `dslide-init' and then calls
+The default implementation calls `dslide-begin' and then calls
 `dslide-step-forward' until no more progress can be made.  If this is
 inappropriate, it should be overridden.
 
 In cases where you don't need a real backward implementation or
 progressing backwards would have no sensible behavior, you can
-delegate this to `dslide-init' and possibly delegate `dslide-backward' to
+delegate this to `dslide-begin' and possibly delegate `dslide-backward' to
 `dslide-presentation-forward', resulting in a sequence that always starts at the
 beginning and always proceeds to the end.  For a single step
 sequence that has identical effect in both directions, this is
@@ -502,7 +502,7 @@ with the sequence succeeding when run again.  If your sequence
 implements real backward behavior,
 
 All side-effects and states created by steps in the sequence or
-the `dslide-init' and `dslide-end' methods must be cleaned up or
+the `dslide-begin' and `dslide-end' methods must be cleaned up or
 otherwise managed or else `dslide-step-backward' and other sequences
 of running a presentation will be brittle and likely fail when
 re-run.")
@@ -580,7 +580,7 @@ implementations for the rest, unless they want to optimize or
 simplify their implementation."
   :abstract t)
 
-(cl-defmethod dslide-init ((_ dslide-stateful-sequence)))
+(cl-defmethod dslide-begin ((_ dslide-stateful-sequence)))
 
 (cl-defmethod dslide-end ((obj dslide-stateful-sequence))
   (let ((progress t))
@@ -594,7 +594,7 @@ simplify their implementation."
 (cl-defmethod dslide-final ((_ dslide-stateful-sequence)))
 
 (cl-defmethod dslide-goto ((obj dslide-stateful-sequence) point)
-  (unless (eq 'skip (dslide-init obj))
+  (unless (eq 'skip (dslide-begin obj))
     (let (exceeded (advanced t))
       (while (and advanced (not exceeded))
         (let ((progress (dslide-step-forward obj)))
@@ -660,7 +660,7 @@ maintaining state between mode activations or when switching
 between slides and contents.  Class can be overridden to affect
 root behaviors.  See `dslide-default-deck-class'")
 
-(cl-defmethod dslide-init ((obj dslide-deck))
+(cl-defmethod dslide-begin ((obj dslide-deck))
   "For the deck class, init needs to call init on slides until one succeeds.
 This could result in skipping slides that do not report any readiness during
 their init."
@@ -671,7 +671,7 @@ their init."
   ;; TODO This line is critical to starting up the state machine.  Slides
   ;; are still inferring their need to narrow.
   (narrow-to-region (point) (point)) ; signal to slide to draw itself
-  (dslide-init (oref obj slide)))
+  (dslide-begin (oref obj slide)))
 
 (cl-defmethod dslide-end ((_ dslide-deck))
   (error "Deck has no valid concept of starting at the end."))
@@ -733,7 +733,7 @@ their init."
           (oset obj slide next-slide)
           (dslide-final current-slide)
 
-          (dslide-init next-slide)
+          (dslide-begin next-slide)
           ;; Init counts as a step
           (setq progress next-slide))))
 
@@ -761,7 +761,7 @@ their init."
   ;; the default implementation, which calls step-forward until progress is
   ;; exhausted, is fine.  Certain actions with side-effects may not like this,
   ;; and they should implement an actual `dslide-end' method as well as idempotent
-  ;; `dslide-init' and `dslide-final' if any support for going backwards is desirable.
+  ;; `dslide-begin' and `dslide-final' if any support for going backwards is desirable.
 
   (let (progress reached-beginning)
     ;; Burn up a step callback until one returns non-nil
@@ -887,13 +887,13 @@ Live within slide action lifecycle. See
 functions. The Slide is a stateful node that hydrates around a
 heading and stores actions and their states.")
 
-(cl-defmethod dslide-init ((obj dslide-slide))
+(cl-defmethod dslide-begin ((obj dslide-slide))
   (when-let ((slide-action (oref obj slide-action)))
-    (dslide-init slide-action))
+    (dslide-begin slide-action))
   (when-let ((section-actions (oref obj section-actions)))
-    (mapc #'dslide-init section-actions))
+    (mapc #'dslide-begin section-actions))
   (when-let ((child-action (oref obj child-action)))
-    (dslide-init child-action)))
+    (dslide-begin child-action)))
 
 (cl-defmethod dslide-end ((obj dslide-slide))
   (when-let ((slide-action (oref obj slide-action)))
@@ -1260,7 +1260,7 @@ deck of progress was made.")
 ;; get it right.  The key thing to note is that a parent can't re-display itself
 ;; unless it's going backwards.  It needs to display itself during end even
 ;; though the end of its children may clobber it.  This works, just awkwardly.
-(cl-defmethod dslide-init :after ((obj dslide-action-narrow))
+(cl-defmethod dslide-begin :after ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
 (cl-defmethod dslide-step-forward ((_ dslide-action-narrow)) ; odd
@@ -1278,7 +1278,7 @@ deck of progress was made.")
     :initform nil))
   "Hide all items and then reveal them one by one.")
 
-(cl-defmethod dslide-init :after ((obj dslide-action-item-reveal))
+(cl-defmethod dslide-begin :after ((obj dslide-action-item-reveal))
   (oset obj overlays (dslide-section-map obj 'item #'dslide-hide-element)))
 
 ;; The default `dslide-end' method is sufficient since this action will
@@ -1432,7 +1432,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (dslide--block-execute prev)
     (org-element-property :begin prev)))
 
-(cl-defmethod dslide-init :after ((obj dslide-action-babel))
+(cl-defmethod dslide-begin :after ((obj dslide-action-babel))
   (when-let ((block-elements (dslide--get-blocks obj "init")))
     (mapc #'dslide--block-execute block-elements)))
 
@@ -1469,7 +1469,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     :documentation "Reload images.  See `org-display-inline-images'."))
   "Show images fullscreen in a buffer.")
 
-(cl-defmethod dslide-init :after ((obj dslide-action-image))
+(cl-defmethod dslide-begin :after ((obj dslide-action-image))
   (org-display-inline-images
    (oref obj include-linked)
    (oref obj refresh)
@@ -1590,7 +1590,7 @@ child is found."
       (when-let ((child (dslide-presentation-forward-child obj)))
         ;; TODO transitive action customization
         (let ((child (dslide--make-slide child (oref dslide--deck slide))))
-          (dslide-init child)
+          (dslide-begin child)
           (oset obj child child))
         (setq progress (org-element-property :begin child))))
     progress))
@@ -1656,7 +1656,7 @@ child is found."
                           ;; TODO this won't compose at all
                           :slide-action-args '(:include-restriction t :with-children t)
                           :child-action 'none)))
-            (progn (dslide-init child)
+            (progn (dslide-begin child)
                    (setq progress child)
                    (push child (oref obj children)))
           (setq exhausted t))))
@@ -2471,7 +2471,7 @@ Optional ERROR if you want to process `wrong-type-argument'."
   (oset dslide--deck slide-buffer-state 'slides)
   (widen)
   (org-fold-show-all)
-  (dslide-init dslide--deck))
+  (dslide-begin dslide--deck))
 
 (defun dslide--base-buffer-highlight-region (beg end &optional face)
   "Pulse region between BEG and END in base buffer.
