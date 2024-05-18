@@ -27,15 +27,6 @@ Isn't this animation so cool?
 This is a reason to be alive
 ** Pen 🖊️
 [[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
-* Reveal Items
-:PROPERTIES:
-:MS_SECTION_ACTIONS: ms-action-item-reveal
-:END:
-Positron is deeply committed to bringing you the finest in:
-- Pen 🖊️
-- Pineapple 🍍
-- Apple 🍎
-- Pen 🖊️
 * Flat Slide
 :PROPERTIES:
 :MS_SLIDE_ACTION: ms-action-narrow :with-children t
@@ -50,6 +41,69 @@ This slide shows its child headings inline.
 ** Red Team
 - Uses some metasploit and calls it a day
 - Failure is an option
+* Reveal Items
+:PROPERTIES:
+:MS_SECTION_ACTIONS: ms-action-item-reveal
+:END:
+Positron is deeply committed to bringing you the finest in:
+- Pen 🖊️
+- Pineapple 🍍
+- Apple 🍎
+- Pen 🖊️
+* Image Slides
+:PROPERTIES:
+:MS_SLIDE_ACTION: ms-action-narrow
+:MS_SECTION_ACTIONS: ms-action-image ms-action-babel
+:MS_CHILD_ACTION: ms-child-action-slide
+:END:
+This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
+
+#+ATTR_HTML: :width 45%
+ [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
+#+ATTR_HTML: :width 45%
+ [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+* Babel Slide Integration
+:PROPERTIES:
+:MS_SECTION_ACTIONS: ms-action-babel
+:END:
+
+Both backwards and forward are supported on this slide.
+
+#+attr_methods: init end
+#+begin_src elisp :results none
+  (setq-local overlays nil)
+  (goto-char (point-min))
+  (while (re-search-forward "overlay" nil t)
+    (let ((overlay (make-overlay (match-beginning 0)
+                                 (match-end 0))))
+      (push overlay overlays)))
+#+end_src
+
+#+attr_methods: step-backward
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
+#+end_src
+
+#+attr_methods: step-both
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
+#+end_src
+
+#+attr_methods: step-both
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
+#+end_src
+
+#+attr_methods: step-forward end
+#+begin_src elisp :results none
+  (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
+#+end_src
+
+#+attr_methods: final
+#+begin_src elisp :results none
+  (mapc #'delete-overlay overlays)
+  (makunbound 'overlays)
+#+end_src
 * Hidden Babel Slide
 This slide has a child, but it will not be displayed.  It will only run the babel block within, which finds and updates the text below:
 
@@ -97,59 +151,6 @@ Our cleanup is always run
     (delete-overlay ms-can-has-overlay)
     (makunbound 'ms-can-has-overlay))
 #+end_src
-* Babel Slide Integration
-:PROPERTIES:
-:MS_SECTION_ACTIONS: ms-action-babel
-:END:
-
-Both backwards and forward are supported on this slide.
-
-#+attr_methods: init end
-#+begin_src elisp :results none
-  (setq-local overlays nil)
-  (goto-char (point-min))
-  (while (re-search-forward "overlay" nil t)
-    (let ((overlay (make-overlay (match-beginning 0)
-                                 (match-end 0))))
-      (push overlay overlays)))
-#+end_src
-
-#+attr_methods: step-backward
-#+begin_src elisp :results none
-  (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
-#+end_src
-
-#+attr_methods: step-both
-#+begin_src elisp :results none
-  (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
-#+end_src
-
-#+attr_methods: step-both
-#+begin_src elisp :results none
-  (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
-#+end_src
-
-#+attr_methods: step-forward end
-#+begin_src elisp :results none
-  (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
-#+end_src
-
-#+attr_methods: final
-#+begin_src elisp :results none
-  (mapc #'delete-overlay overlays)
-  (makunbound 'overlays)
-#+end_src
-
-* Image Slides
-:PROPERTIES:
-:MS_SECTION_ACTIONS: ms-action-image
-:END:
-This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
-
-#+ATTR_HTML: :width 45%
- [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
-#+ATTR_HTML: :width 45%
- [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * Package Integration
 :PROPERTIES:
 :MS_SECTION_ACTIONS: ms-action-babel
