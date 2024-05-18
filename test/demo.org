@@ -1,7 +1,44 @@
-#+title:	Macro Slides
+#+title:	DSL IDE
 #+author:	Positron
 #+email:	contact@positron.solutions
 
+* Controls
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: ms-action-item-reveal
+:END:
+See the ~dslide-mode-map~ but basically, arrow keys.  Press the right arrow key.
+- → ~dslide-presentation-forward~
+- ← ~dslide-presentation-backward~
+- ↑ ~dslide-presentation-start~ (default secondary action shows contents)
+- ↓ ~dslide-presentation-stop~
+* Customization
+View customize variables by calling =M-x customize-group RET dslide=
+*** Slide Actions
+Slide actions are configured using the heading's property drawer.
+*** Hiding Markup
+Check out ~mc-hide-markup-mode~ in the [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package.
+*** Steezing to Org Markup
+The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
+
+In short, use:
+- ~org-modern~
+- ~org-appear~
+- ~nerd-icons~ for more cheesy (Emacs logo)
+- And set the faces for org headings and document title.
+
+Don't forget built-in ~emoji-search~ and searching ~insert-char~.
+
+Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
+*** Bindings
+Bind the command ~dslide-presentation-start~ in the ~org-mode-map~.  Any key will do.
+* Follow Along
+This presentation is shown in an indirect buffer.  See the mode line.  The buffer name should be =deck: demo.org= or something similar.
+
+Split the window =C-x 3= or ~split-window-right~ and switch to the base buffer, =demo.org=
+
+When you advance with ~dslide-presentation-forward~, you can see the presentation's progress point highlighted in the base buffer.  This makes it easier to debug babel blocks and other actions.
+* Contents
+Call ~dslide-presentation-start~ during an already running presentation to start the "secondary" action.  Later this might mean playing a video etc.  By default it will display the contents.
 * Breadcrumbs
 This information goes deep
 ** Deep
@@ -14,7 +51,7 @@ Wow, these breadcrumbs are very high-carb
 How many levels of headings could there be?
 * Inline Children
 :PROPERTIES:
-:MS_CHILD_ACTION: ms-child-action-inline
+:DSLIDE_CHILD_ACTION: ms-child-action-inline
 :END:
 - You won't believe these animations
 - This is the world's greatest presentation software
@@ -29,8 +66,8 @@ This is a reason to be alive
 [[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
 * Flat Slide
 :PROPERTIES:
-:MS_SLIDE_ACTION: ms-action-narrow :with-children t
-:MS_CHILD_ACTION: nil
+:DSLIDE_SLIDE_ACTION: ms-action-narrow :with-children t
+:DSLIDE_CHILD_ACTION: nil
 :END:
 This slide shows its child headings inline.
 - The slide action shows the entire contents, not just the section
@@ -43,7 +80,7 @@ This slide shows its child headings inline.
 - Failure is an option
 * Reveal Items
 :PROPERTIES:
-:MS_SECTION_ACTIONS: ms-action-item-reveal
+:DSLIDE_SECTION_ACTIONS: ms-action-item-reveal
 :END:
 Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
@@ -52,9 +89,9 @@ Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
 * Image Slides
 :PROPERTIES:
-:MS_SLIDE_ACTION: ms-action-narrow
-:MS_SECTION_ACTIONS: ms-action-image ms-action-babel
-:MS_CHILD_ACTION: ms-child-action-slide
+:DSLIDE_SLIDE_ACTION: ms-action-narrow
+:DSLIDE_SECTION_ACTIONS: ms-action-image ms-action-babel
+:DSLIDE_CHILD_ACTION: ms-child-action-slide
 :END:
 This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
 
@@ -64,12 +101,12 @@ This is an image slide.  You can view the images inline using ~org-toggle-inline
  [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * Babel Slide Integration
 :PROPERTIES:
-:MS_SECTION_ACTIONS: ms-action-babel
+:DSLIDE_SECTION_ACTIONS: ms-action-babel
 :END:
 
 Both backwards and forward are supported on this slide.
 
-#+attr_ms: init end
+#+attr_dslide: init end
 #+begin_src elisp :results none
   (setq-local overlays nil)
   (goto-char (point-min))
@@ -79,27 +116,27 @@ Both backwards and forward are supported on this slide.
       (push overlay overlays)))
 #+end_src
 
-#+attr_ms: step-backward
+#+attr_dslide: step-backward
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
 #+end_src
 
-#+attr_ms: step-both
+#+attr_dslide: step-both
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
 #+end_src
 
-#+attr_ms: step-both
+#+attr_dslide: step-both
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
 #+end_src
 
-#+attr_ms: step-forward end
+#+attr_dslide: step-forward end
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
 #+end_src
 
-#+attr_ms: final
+#+attr_dslide: final
 #+begin_src elisp :results none
   (mapc #'delete-overlay overlays)
   (makunbound 'overlays)
@@ -110,15 +147,15 @@ This slide has a child, but it will not be displayed.  It will only run the babe
 Can has display?
 ** No Display!  Only Execute!
 :PROPERTIES:
-:MS_SLIDE_ACTION: nil
-:MS_SECTION_ACTIONS: ms-action-babel
+:DSLIDE_SLIDE_ACTION: nil
+:DSLIDE_SECTION_ACTIONS: ms-action-babel
 :END:
 These three org blocks will not be displayed since this slide has no slide action.  They will however execute when navigating forward and backward.  Note these features:
 
 - Blocks can have methods
 - Multiple blocks can have the init, end, and final method.  They are always executed top to bottom.  This allows better code re-use.
 
-#+attr_ms: end init
+#+attr_dslide: end init
 #+begin_src elisp :results none
   ;; No need to deal with restriction or restore point.
   (org-up-heading-safe)
@@ -129,7 +166,7 @@ These three org blocks will not be displayed since this slide has no slide actio
 #+end_src
 
 Some extra init can also be returned to with step backwards
-#+attr_ms: init step-backward
+#+attr_dslide: init step-backward
 #+begin_src elisp :results none
   (overlay-put ms-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
@@ -137,7 +174,7 @@ Some extra init can also be returned to with step backwards
 #+end_src
 
 When going backwards, we begin at the end, which can also be stepped forwards to
-#+attr_ms: step-forward end
+#+attr_dslide: step-forward end
 #+begin_src elisp :results none
   (overlay-put ms-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
@@ -145,7 +182,7 @@ When going backwards, we begin at the end, which can also be stepped forwards to
 #+end_src
 
 Our cleanup is always run
-#+attr_ms: final
+#+attr_dslide: final
 #+begin_src elisp :results none
   (when (bound-and-true-p ms-can-has-overlay)
     (delete-overlay ms-can-has-overlay)
@@ -153,34 +190,35 @@ Our cleanup is always run
 #+end_src
 * Package Integration
 :PROPERTIES:
-:MS_SECTION_ACTIONS: ms-action-babel
+:DSLIDE_SECTION_ACTIONS: ms-action-babel
 :END:
-- Let arbitrary buffers be shown while still completing steps within the slide-show
-- Run babel against other buffers 😈
+- You need the ~master-of-ceremonies~ package installed to complete this slide.
+- Let arbitrary buffers be shown while still completing steps within the slide-show.
+- Run babel against other buffers 😈.
 
-#+attr_ms: init
+#+attr_dslide: init
 #+begin_src elisp :results none
   (require 'master-of-ceremonies)
 #+end_src
-#+attr_ms: final step-backward
+#+attr_dslide: final step-backward
 #+begin_src elisp :results none
   (when-let ((buffer (get-buffer "*MC Focus*")))
     (kill-buffer buffer))
 #+end_src
 
-#+attr_ms: step-both
+#+attr_dslide: step-both
   #+begin_src elisp :results none
   (mc-focus "🖊️")
   #+end_src
-#+attr_ms: step-both
+#+attr_dslide: step-both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍")
   #+end_src
-#+attr_ms: step-both
+#+attr_dslide: step-both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎")
   #+end_src
-#+attr_ms: step-both
+#+attr_dslide: step-both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎🖊️")
   #+end_src

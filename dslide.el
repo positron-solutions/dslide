@@ -35,11 +35,11 @@
 
 ;;; Commentary:
 
-;; DSL IDE is a highly programmable presentation framework that first
-;; displays Org files as presentations but also can integrate your presentation
-;; with any Emacs buffer and also with Org Babel.  By integrating arbitrary
-;; Emacs Lisp into the simple forward-backward user interface, you can make
-;; anything Emacs does easy to present.
+;; DSL IDE is a highly programmable presentation framework that first displays
+;; Org files as presentations but also can integrate your presentation with any
+;; Emacs buffer and also with Org Babel.  By integrating arbitrary Emacs Lisp
+;; into the simple forward-backward user interface, you can make anything Emacs
+;; does easy to present.
 ;;
 ;; See the README and manual M-x info-display-manual RET dslide RET.
 ;;

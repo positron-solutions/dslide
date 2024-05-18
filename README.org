@@ -1,40 +1,15 @@
-#+title:	Macro Slides
+#+title:	Domain Specific slIDEs
 #+author:	Positron
 #+email:	contact@positron.solutions
 
-* Installation
-This isn't on a package archive yet.  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates.
- #+begin_src elisp
-   ;; package-vc
-   (package-vc-install
-    '(macro-slides
-      :url "https://github.com/positron-solutions/macro-slides.git"))
-
-   ;; using elpaca's with explicit recipe
-   (use-package macro-slides
-     :elpaca (macro-slides :host github
-                           :repo "positron-solutions/macro-slides"))
-
-   ;; straight with explicit recipe
-   (use-package macro-slides
-     :straight (macro-slides :type git :host github
-                             :repo "positron-solutions/macro-slides"))
-
-   ;; or use manual load-path & require, you brave yak shaver
- #+end_src
-** Try It Out
-With just defaults, run ~ms-start~ on your existing documents.  You can load the examples in the =/test= directory to see a showcase of configuration behavior.
-
-The default keymap uses arrow keys.  Left and right are ~ms-forward~ and ~ms-backward~.  Up is ~ms-start~ and will show the contents.  Down is ~ms-stop~ and will stop the slide show.
-* Overview
-- A presentation framework that can incorporate *anything* Emacs does
-- Any buffer can be part of a presentation sequence
+* A Presentation Framework
 - Present Org documents with babel integration
-- Extensible presentation sequences and display options
+- Incorporate *anything* Emacs does into a presentation
+- Extensible for org and beyond
 ** Simple User Interface
 Fully programmable sequences behind a two-button interface:
-- ~ms-forward~
-- ~ms-backward~
+- ~dslide-presentation-forward~
+- ~dslide-presentation-backward~
 ** Present Org Documents 🦄
 - Document header generated from keywords
 - Breadcrumbs
@@ -47,15 +22,40 @@ Fully programmable sequences behind a two-button interface:
 - Integration with Elisp programs and arbitrary Emacs buffers
 - Custom class support for extending the framework
 ** Status 🛠️
-Version 0.2.1 👷
-- Deciding the configuration API and naming
+Version 0.3.0 👷
+- Stabilizing the API and naming
 - Gathering user feedback & experience
 - Accepting PR's and issue reports
+- Composed children actions coming soon™
 
-The internal API is beginning to stabilize.  I think the user API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
+The user-facing API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
+* Installation
+This isn't on a package archive yet.  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates.
+ #+begin_src elisp
+   ;; package-vc
+   (package-vc-install
+    '(dslide
+      :url "https://github.com/positron-solutions/dslide.git"))
+
+   ;; using elpaca's with explicit recipe
+   (use-package dslide
+     :elpaca (dslide :host github
+                           :repo "positron-solutions/dslide"))
+
+   ;; straight with explicit recipe
+   (use-package dslide
+     :straight (dslide :type git :host github
+                             :repo "positron-solutions/dslide"))
+
+   ;; or use manual load-path & require, you brave yak shaver
+ #+end_src
+** Try It Out
+With just defaults, run ~dslide-presentation-start~ on your existing documents.  You can load the examples in the [[./test/demo.org]] file to see a showcase of configuration behavior.
+
+The default keymap uses arrow keys.  Left and right are ~dslide-presentation-forward~ and ~dslide-presentation-backward~.  Up is ~dslide-presentation-start~ and will show the contents.  Down is ~dslide-presentation-stop~ and will stop the slide show.
 * Features
 ** Contents Navigation
-Call ~ms-contents~ to show a contents overview.  Calling ~ms-forward~ and ~ms-backward~ in the contents can quickly move through headings.  Call ~ms-start~ again to resume the presentation from that point.
+Call ~dslide-contents~ to show a contents overview.  Calling ~dslide-presentation-forward~ and ~dslide-presentation-backward~ in the contents can quickly move through headings.  Call ~dslide-presentation-start~ again to resume the presentation from that point.
 ** Clean Buffer State
 The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy 💩.
 ** Follow Along
@@ -63,56 +63,63 @@ If you display the slideshow in one window or frame, you can configure the point
 * Glossary
 - *Deck*: an object that is used to relate the display and base buffer and is the root of all sequences
 - *Slide*: an object that interprets an org heading to hydrate its actions
-- *Action*: an object that responds to ~ms-forward~ and ~ms-backward~ calls and implements lifecycle methods to initialize and clean up state
-- *Step*: a single call to ~ms-foward~ or ~ms-backward~, usually delegated down to ~ms-step-forward~ and ~ms-step-backward~ methods
+- *Action*: an object that responds to ~dslide-presentation-forward~ and ~dslide-presentation-backward~ calls and implements lifecycle methods to initialize and clean up state
+- *Step*: a single call to ~dslide-presentation-foward~ or ~dslide-presentation-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods
 - *Contents*: use org folding to create a view of folded headings to quickly navigate slides
 - *Slide Buffer*: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name.
   + Inderect buffer and =slide-buffer= are used interchangeably
-  + Base buffer or =base-buffer= is used pretty execlusively
+  + Base buffer or =base-buffer= is used pretty exclusively
 * Configuring
-Be sure to check =M-x= ~customize-group~ =macro-slides= to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
+Be sure to check =M-x= ~customize-group~ =dslide= to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
 
-Many settings can be configured at the global level through customize variables, the document level through keywords, and the slide level through the property drawer.
+Many settings can be configured at:
+- global level through customize variables
+- document level through keywords
+- slide level through the property drawer
 ** Binding
-You likely want to start the mode via ~ms-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~ms-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
+You likely want to start the mode via ~dslide-presentation-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~dslide-presentation-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
+
+All commands begin with ~dslide-presentation~ 💡
 #+begin_src elisp
-  (keymap-set org-mode-map [f5] #'ms-start)
+  (keymap-set org-mode-map "<f5>" #'dslide-presentation-start)
 #+end_src
-Once the global minor mode, ~ms-mode~ is active, additional bindings in ~ms-mode-map~ are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
+Once the global minor mode, ~dslide-mode~ is active, additional bindings in ~dslide-mode-map~ are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
 *** Secondary Commands 🚧
-Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~ms-start~ binding within presentations to enter / exit these branches.
+Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~dslide-presentation-start~ binding within presentations to enter / exit these branches.
 ** Hooks
 Because slides and actions have a life-cycle and can easily find their own heading, consider making a custom action and setting that action on slides where it's needed.
 
-Beware of using the normal ~ms-mode-hook~ 😱 because it runs *in the base buffer* ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use ~ms-start-hook~. 💡
+Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base buffer* ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use ~dslide-start-hook~. 💡
 
-- ~ms-start-hook~ Is run in the indirect buffer after it is set it.  This is what you want.
-- ~ms-stop-hook~ is run in the base buffer because the indirect buffer is already dead.
-- ~ms-contents-hook~ is run after switching to contents.  It runs in the display buffer.
-- ~ms-narrow-hook~ is run whenever a ~ms-forward~ or ~ms-backward~ changes the narrow state.  Because this is done by watching the restriction, it might do what you want 🤷🏻‍♂️
-- ~ms-after-last-slide-hook~ is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before exiting the presentation or set it to just ~ms-stop~ to exit without feedback.  Another option is to use ~ms-push-step~ to push a callback that will only run when called going forward.
+- ~dslide-start-hook~ Is run in the indirect buffer after it is set it.  This is what you want.
+- ~dslide-stop-hook~ is run in the base buffer because the indirect buffer is already dead.
+- ~dslide-contents-hook~ is run after switching to contents.  It runs in the display buffer.
+- ~dslide-narrow-hook~ is run whenever a ~dslide-presentation-forward~ or ~dslide-presentation-backward~ changes the narrow state.
+- ~dslide-after-last-slide-hook~ is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add ~dslide-presentation-stop~ to exit without feedback.
+
+  Another option is to use ~dslide-push-step~ to push a callback that will only run when called going forward.
 #+begin_src elisp
   (defun my-stop-if-forward ()
     (mc-push-step (lambda (direction)
                     (when (eq direction 'forward)
                       ;; Be sure to return t or the hook will run again.
-                      (prog1 t (ms-stop))))))
+                      (prog1 t (dslide-presentation-stop))))))
 
-  (setq ms-after-last-slide-hook #'my-stop-if-forward)
+  (setq dslide-after-last-slide-hook #'my-stop-if-forward)
 #+end_src
 ** Recommended MC Settings
 The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
 #+begin_src elisp
   ;; Something like this should work
-  (add-hook 'ms-start-hook mc-hide-markup-mode)
-  (add-hook 'ms-narrow-hook #'mc-hide-refresh)
+  (add-hook 'dslide-start-hook mc-hide-markup-mode)
+  (add-hook 'dslide-narrow-hook #'mc-hide-refresh)
 #+end_src
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
-- =MS_SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
-- =MS_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
-- =MS_CHILD_ACTION=: Used to customize if and how child headings become slides
+- =DSLIDE_SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
+- =DSLIDE_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+- =DSLIDE_CHILD_ACTION=: Used to customize if and how child headings become slides
 
 Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 
@@ -122,7 +129,7 @@ Regular Org Mode markup is used to add actions to headings.  See more examples i
 #+begin_src org
   ,* Full Screen Images
   :PROPERTIES:
-  :MS_ACTIONS: ms-action-images
+  :DSLIDE_ACTIONS: dslide-action-images
   :END:
   ,#+attr_html: :width 50%
   [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
@@ -133,14 +140,14 @@ Many actions understand arguments, allowing tuning of similar behaviors from the
 Configuring the slot is done by adding plist-style properties after the class name:
 #+begin_src org
   :PROPERTIES:
-  :MS_SECTION_ACTIONS: ms-action-item-reveal :inline t
+  :DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal :inline t
   :END:
 #+end_src
 You can also use "property+" syntax to add to a property, and these accept plist arguments too:
 #+begin_src org
   :PROPERTIES:
-  :MS_SECTION_ACTIONS: ms-action-babel
-  :MS_SECTION_ACTIONS+: ms-action-images :refresh t
+  :DSLIDE_SECTION_ACTIONS: dslide-action-babel
+  :DSLIDE_SECTION_ACTIONS+: dslide-action-images :fullscreen t
   :END:
 #+end_src
 * Customizing
@@ -151,32 +158,32 @@ The deck and slide class as well as actions can all be sub-classed.  Use the exi
 - *Slide:*  Slides can be configured extensively by changing their actions.  However, for more vertical cooperation between slides or cooperation among actions, extended slides could be useful.
 - *Deck*:  If the core methods of the deck are insufficient, extension is another option besides advice, hooks, and modifying the source.
 
-If you suspect you might need to sub-class the ~ms-slide~ or ~ms-deck~, please file an issue because your use case is probably interesting.
+If you suspect you might need to sub-class the ~dslide-slide~ or ~dslide-deck~, please file an issue because your use case is probably interesting.
 ** Default Classes
-The default classes and actions can be configured at the document or customize level.  Set the =MS_DECK_CLASS= and =MS_SLIDE_CLASS= as well as other properties that work at the heading level.  The order of precedence (*Not fully implemented* 🚧):
+The default classes and actions can be configured at the document or customize level.  Set the =DSLIDE_DECK_CLASS= and =DSLIDE_SLIDE_CLASS= as well as other properties that work at the heading level.  The order of precedence (*Not fully implemented* 🚧):
 - Property definition of the current heading
 - Property definition in the document
 - Customize variable
 ** Babel Scripting
-You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~ms-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~ms-action-babel~ class and examples in [[./test/demo.org]].
+You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~dslide-action-babel~ action.  You just need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards.  See the ~dslide-action-babel~ class and examples in [[./test/demo.org]].
 
 The =#+attr_ms:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
-- =init= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
+- =begin= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
 
 - =final= is only called when no progress can be made or if the presentation is stopped.
 
-- =step-forward= and =step-backward= are self-explanatory.  Position your =step-backward= blocks *above* any block that they undo
+- =forward= and =backward= are self-explanatory.  Position your =backward= blocks *above* any block that they undo
 
-- =step-both= runs either direction.  It will not repeat in place when reversing.  Use sepate =step-forward= and =step-backward= blocks for that 💡
+- =both= runs either direction.  It will not repeat in place when reversing.  Use seperate =forward= and =backward= blocks for that 💡
 *** Step Callbacks
-See ~ms-push-step~ for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume ~ms-forward~ and ~ms-backward~ itself, a callback may be easier.
+See ~dslide-push-step~ for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume ~dslide-presentation-forward~ and ~dslide-presentation-backward~ itself, a callback may be easier.
 
-Because babel blocks are not actions, using ~ms-push-step~ may be the only way to optionally add a step callback from a babel block.
+Because babel blocks are not actions, using ~dslide-push-step~ may be the only way to optionally add a step callback from a babel block.
 * Package Pairings
-This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~ms-forward~ ~ms-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
+This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~dslide-presentation-forward~ ~dslide-presentation-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
 ** Master of Ceremonies
-The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package contains utilities for display & presentation frame setup that are not specific to using Macro Slides.
+The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package contains utilities for display & presentation frame setup that are not specific to using DSL IDE.
 - *hide markup*
 - display a region full-screen
 - silence messages during presentation
@@ -185,52 +192,58 @@ The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-cere
 ** Open Broadcaster Software
 Sacha Chua has written an OBS plugin integration helpful for video integration [[https://github.com/sachac/obs-websocket-el][obs-websocket-el]].
 ** Orgit
-~orgit~ can be used to show commits as links, which open with =ms-action-links=
+~orgit~ can be used to show commits as links, which open with =dslide-action-links= 🚧  This is a lie.  I was going to support this as a demonstration of a custom action.
 ** moom.el
 The [[https://github.com/takaxp/moom#org-mode-org-tree-slide][moom]] package contains some commands for resizing text and repositioning frames.
+** Org Modern
+Bullets and many prettifications of common org markups.  The markup that you don't hide looks better with org modern.
+** Org Appear
+Never worry about turning on pretty links for a presentation.  Edit them by just moving the point inside.
 * Domain Model
 This is a description of how the pieces of the program *must* fit together.  For any deep customization or hacking, the section is essential reading.  At the least, it will *greatly improve your success*.
 
 ⚠️ Even if the current implementation differs, trust this domain model and expect the implementation to approach it.
 
-- The user interface ~ms-forward~ and ~ms-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
-- There are several ways to linearize the tree structure of org headings and to compose their presentation.  Sequences of forward and backward actions must be nested to accomplish many desirable goals.
-- Supporting nested sequences can be made to implement just about anything while still keeping the user interface simple.
+- The user interface ~dslide-presentation-forward~ and ~dslide-presentation-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
+- Because Org's basic structure is about trees, we need to nest sequences of steps.
+- The element parser and presentation tends to prefer breadth-first style, working on the section element before the child headings.
 ** Stateful Sequence Class
 This class is the heart of providing the common user interface and convenient implementation interface for extending the package.
 *** Command Pattern
-The basis of all undo systems is to implement reverse actions that decide their behavior from the updated state or to save mementos that allow undoing forward actions.  This is the [[https://en.wikipedia.org/wiki/Command_pattern][command pattern]].
+The basis of all undo systems is either:
+- implement reverse actions that decide their behavior from the updated state
+- save mementos that allow undoing forward actions.
 
-Navigating the linear sequence of a presentation is very similar to an undo system.  Log-backed architectures such as git or event-sourcing can similarly be viewed as navigating to any point in a sequence by applying or rolling back a sequence of changes.
+This is the [[https://en.wikipedia.org/wiki/Command_pattern][command pattern]].  Navigating the linear sequence of a presentation is very similar to an undo system.  Log-backed architectures such as git or event-sourcing can similarly be viewed as navigating to any point in a sequence by applying or rolling back a sequence of changes.
 *** Setup & Teardown
-At the boundaries of a sequence of forward and reverse actions, it may be necessary to build up or tear down some state.  The stateful sequence adds ~ms-init~, ~ms-final~, and a variation of ~ms-init~, ~ms-end~.
+At the boundaries of a sequence of forward and reverse actions, it may be necessary to build up or tear down some state.
 
-The role of ~ms-end~ is to perform initialization at the end.  It is optional as the default implementation is to call ~ms-int~ and then ~ms-step-forward~ until no more progress can be made.  However, this may be costly or undesirable due to side-effects.
+There are two setup methods:
+- ~dslide-begin~ for setup going forwards
+- ~dslide-end~ for setup going backwards
+
+Additionally, for teardown there is ~dslide-final~ that is always called last, when the action or slide will be garbage collected and wants to clean up overlays etc.
 *** Indexing Via Point
-In order to support contents based navigation, we need to be able to play a slide forward up to the current point.  This may require instantiating some parent slides and playing them forward to a child.  To avoid the need for parents to know about children, the ~ms-goto~ method was introduced.
+In order to support contents based navigation, we need to be able to play a slide forward up to the current point.  This may require instantiating some parent slides and playing them forward to a child.  To avoid the need for parents to know about children, the ~dslide-goto~ method was introduced.
 *** Stateful Sequence Interface
-The conclusion of the command pattern, setup & teardown, and indexing via point is the ~ms-stateful-sequence~ class.  Anything that implements its interface can be controlled by ~ms-forward~ and ~ms-backward~.  The full interface:
+The conclusion of the command pattern, setup & teardown, and indexing via point is the ~dslide-stateful-sequence~ class.  Anything that implements its interface can be controlled by ~dslide-presentation-forward~ and ~dslide-presentation-backward~.  The full interface:
 
-- ~ms-init~ & ~ms-end~
-- ~ms-final~
-- ~ms-step-forward~ & ~ms-step-backward~
-- ~ms-goto~
+- ~dslide-begin~ & ~dslide-end~
+- ~dslide-final~
+- ~dslide-forward~ & ~dslide-backward~
+- ~dslide-goto~
 **** Re-Using Implementations
-+ The default implementation of ~ms-end~ is achieved by just walking forward from ~ms-init~, calling ~ms-step-forward~ until it returns =nil=.
++ The default implementation of ~dslide-end~ is achieved by just walking forward from ~dslide-begin~, calling ~dslide-forward~ until it returns =nil=.
 
-+ Implementing ~ms-goto~ is optional as long as ~ms-init~ and ~ms-step-forward~ can implement ~ms-end~ and report their furthest extent of progress accurately.
++ Implementing ~dslide-goto~ is optional as long as ~dslide-begin~ and ~dslide-forward~ can implement ~dslide-end~ and report their furthest extent of progress accurately.
 
-+ Ideally ~ms-forward~ & ~ms-backward~ along with ~ms-init~ & ~ms-end~ form a closed system, but for the convenience of the implementer, it's fine to use an idempotent ~ms-init~ as the ~ms-backward~ step if granular backward is difficult or not valuable to implement.
++ Ideally ~dslide-presentation-forward~ & ~dslide-presentation-backward~ along with ~dslide-begin~ & ~dslide-end~ form a closed system, but for the convenience of the implementer, it's fine to use an idempotent ~dslide-begin~ as the ~dslide-presentation-backward~ step if granular backward is difficult or not valuable to implement.
 ** Sequence Composition
 Navigating a tree involves depth.  Descendants may care about what happened in ancestors.  Ancestors may care about what descendants leave behind.  There may be conventions about what happens when descending into a child or returning from one.
-*** Call Stack Execution
-Like the command pattern is a helpful model for designing forward and backwards presentation navigation, the [[https://en.wikipedia.org/wiki/Call_stack][call stack]] is a helpful model for understanding composition of our stateful sequences.
+*** Telescoping Calls
+At one time, slides were to be mostly independent and not running at the same time.  While this simplified some things, it was limited.
 
-In the model call stack, the caller & callee only cooperate at the call site or by side-effects, aka globals.  If callee is pure, the call site is the only way that they communicate.
-
-Slides are mostly pretty pure.  The provided actions generally do not look outside of the contents of the heading they are attached to.  If they touch the child headings, it is generally to hydrate them into slides and then forward stateful sequence calls into them.
-**** Actions are like Sub-Routines
-A sub-routine is generally coupled to its containing routine.  It may do work in addition to other sub-routines or even cooperate with them via ad-hoc coupling.  While the function call stack is nice and clean, because actions run concurrently and might be working on the same parts of the buffer, they are the dirty guts within the near isolation of the slide.
+Nesting slide actions might require updating several children concurrently.  This was impossible to implement without pulling logic down into the parent slide's actions.  Thus, the implementation calls through parents into children usually.
 *** Child, Section, and Slide
 It is extremely natural that a slide action will fill one of three roles:
 - Narrow to the contents its actions work on
@@ -238,29 +251,27 @@ It is extremely natural that a slide action will fill one of three roles:
 - Perform steps on the heading's children, including instantiating slides and calling their methods, which may narrow to them
 **** Multiple Slide Property Keys
 The three natural roles for actions are why there are more than one heading property for configuring actions.  Each action is easier to implement if they only fill one role.  It is easier for the user to configure a slide if they only have to declare one action.  By breaking up the slide's typical actions, we can configure with enough granularity to usually only touch one heading property.  The only drawback is that hydration has to do a little bit of extra work.
-*** Trees & Stacks
+**** Actions are Concurrent
+(mostly).  Each slide is holding onto several actions.  The lifetime of the slide action encompasses the section and child.  There are some remaining quirks that are likely more to do with badly implemented children 🚧
+*** Trees & Lifetime
 If something depends on something else existing or having been set up, its lifetime must be fully encompassed by that other thing.  Especially since we are going forward & backward, cleanups must happen on both ends of a sequence.
 
 It is natural that a parent heading out-lives its child.  User can take advantage of this by using the document or higher level headings to store state that needs to be shared by children.  The ~final~ calls for those things can call cleanup.
 *** Slides & Action Lifetime
-Actions live, for the most part, as long as the slide.  Their ~ms-init~ method is called at the very beginning.  An action that reveals items must hide them before the user first sees them.
+Actions live, for the most part, as long as the slide.  Their ~dslide-begin~ method is called at the very beginning.  An action that reveals items must hide them before the user first sees them.
 
-A consequence of this is that there are usually multiple actions alive at once.  Something has to hold onto them.  Right now, it's the slide.   There is only one slide usually in play, and it holds a reference to its parent so that it can "return".  🚧 In the future, the actions may hold onto child actions and only one action might be alive at a time.  This would be desirable.  It just takes some mild rework of the implementation.
+A consequence of this is that there are usually multiple actions alive at once.  Something has to hold onto them.  This is the slide.
 * Contributing
 - Since you likely just need something to magically happen, the recommended option is to place a hamburger in the [[https://github.com/sponsors/positron-solutions][hamburger jar]] and file an issue.
 - If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
 ** Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
-*** Display Options
-Some hooks or explicit display buffer calls may be beneficial.
 *** Secondary Commands
-See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~ms-start~
-*** ~ms-goto~, starting from point
+See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-presentation-start~
+*** ~dslide-goto~, starting from point
 Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
 *** Affiliated Buffers
 There is no tracking whether a buffer is part of the presentation or not.  How would a buffer become one?  Should it be implicit?  Without any sort of tracking, the consequence is that having a presentation open leaves the minor mode bindings hot.  These commands do weird things when run from these situations, especially if running babel scripts, so some kind of first-class buffer affiliation seems necessary.
-*** Mode Lifecycle
-Starting and stopping the mode need some work.  The minor mode is global, so it's sensitive in every buffer, but it doesn't always call things in the right buffer.  I think double-start also still has a bug.  Easy to clean up.
 *** Non-Graphic Display
 For terminals, the line-height based slide-in effect is not supported.
 *** Sub-Sequence Call & Restore
