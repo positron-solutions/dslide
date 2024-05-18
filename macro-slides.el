@@ -1458,6 +1458,10 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     :initform t
     :initarg :include-linked
     :documentation "Loads linked images.  See `org-display-inline-images'.")
+   (fullscreen
+    :initform nil
+    :initarg :fullscreen
+    :documentation "Switch to full frame during display.")
    (refresh
     :initform nil
     :initarg :refresh
@@ -1477,10 +1481,10 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 (cl-defmethod ms-step-forward ((obj ms-action-image))
   (when-let ((link (ms-section-next obj 'link)))
     (ms-push-window-config nil)
-
     ;; TODO success detection
     (let ((org-link-frame-setup '((file . find-file)))
-          (display-buffer-overriding-action '(display-buffer-full-frame)))
+          (display-buffer-overriding-action (when (oref obj fullscreen)
+                                              '(display-buffer-full-frame))))
       (org-link-open link))
 
     (when (eq (buffer-local-value 'major-mode (current-buffer))
@@ -1498,10 +1502,10 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 (cl-defmethod ms-step-backward ((obj ms-action-image))
   (when-let ((link (ms-section-previous obj 'link)))
     (ms-push-window-config nil)
-
     ;; TODO success detection
     (let ((org-link-frame-setup '((file . find-file)))
-          (display-buffer-overriding-action '(display-buffer-full-frame)))
+          (display-buffer-overriding-action (when (oref obj fullscreen)
+                                              '(display-buffer-full-frame))))
       (org-link-open link))
 
     (when (eq (buffer-local-value 'major-mode (current-buffer))
