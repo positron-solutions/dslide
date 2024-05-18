@@ -602,32 +602,6 @@ simplify their implementation."
               (setq exceeded t)
             (setq advanced progress)))))))
 
-;; ** Progress
-(defclass ms-progress-tracking ()
-  ((marker
-    :initform nil
-    :initarg :marker
-    :documentation "Marker used to track progress"))
-  "A utility class for other classes that track progress.
-Progress is tracked by reading and updating a marker.")
-
-(cl-defgeneric ms-marker (obj))
-
-(cl-defmethod ms-marker ((obj ms-progress-tracking)
-                         &optional pom)
-  "Set internal marker to POM or return marker position if set.
-Errors when asked for a marker before one has been set."
-  (let ((marker (or (oref obj marker)
-                    (pcase (type-of pom)
-                      ('marker pom)
-                      ('integer (set-marker (make-marker) pom))
-                      ('symbol nil)))))
-    (when (and marker pom)
-      (set-marker marker pom))
-    (if (and marker (marker-buffer marker))
-        (marker-position (oset obj marker marker))
-      (error "No marker was initialized"))))
-
 ;; ** Parent
 ;; TODO this class is kind of half-baked.  It was intended to wrap up the
 ;; filtering functionality and needing to find next and previous children.
@@ -654,7 +628,7 @@ children. Decks and slides have children.")
 
 ;; ** Deck
 ;; TODO extract non-org-specific behavior to sequence-root class.
-(defclass ms-deck (ms-progress-tracking ms-parent)
+(defclass ms-deck (ms-parent)
   ((slide
     :initform nil
     :documentation "The active sequence or slide.
@@ -1046,11 +1020,13 @@ Many optional ARGS.  See code."
                            (if (consp slide-action-class)
                                (apply (car slide-action-class)
                                       :begin begin
+                                      :marker (copy-marker begin)
                                       (append args
                                               slide-action-args
                                               (cdr slide-action-class)))
                              (apply slide-action-class
                                     :begin begin
+                                    :marker (copy-marker begin)
                                     (append args
                                             slide-action-args)))))
 
@@ -1067,9 +1043,14 @@ Many optional ARGS.  See code."
             (mapcar
              (lambda (c) (when c
                       (if (consp c)
-                          (apply (car c) :begin begin
+                          (apply (car c)
+                                 :begin begin
+                                 :marker (copy-marker begin)
                                  (append args (cdr c)))
-                        (apply c :begin begin args))))
+                        (apply c
+                               :begin begin
+                               :marker (copy-marker begin)
+                               args))))
              section-action-classes))
 
            ;; TODO Likely some precedence funk here.  Copied from above.
@@ -1087,15 +1068,16 @@ Many optional ARGS.  See code."
                            (if (consp child-action-class)
                                (apply (car child-action-class)
                                       :begin begin
+                                      :marker (copy-marker begin)
                                       (append args
                                               child-action-args
                                               (cdr child-action-class)))
                              (apply child-action-class
                                     :begin begin
+                                    :marker (copy-marker begin)
                                     (append
                                      args
                                      child-action-args)))))
-
            (filter
             (or (ms--filter
                  (or (org-element-property :MS_FILTER heading)
@@ -1143,11 +1125,17 @@ Many optional ARGS.  See code."
 ;; backward methods. TODO TODO TODO 🚧
 
 ;; ** Base Action
-(defclass ms-action (ms-stateful-sequence ms-progress-tracking)
+(defclass ms-action (ms-stateful-sequence)
   ((begin
-    :initform nil :initarg :begin
+    :initform nil
+    :initarg :begin
     :documentation "Marker for beginning of heading.  Used to
 re-hydrate the org element for use in mapping over the section etc.")
+   (marker
+    :initform nil
+    :initarg :marker
+    :documentation "Marker used to track progress.
+It is initialized to the same value as the `begin' slot.")
    (inline
      :initform nil
      :initarg :inline
@@ -1163,6 +1151,20 @@ to some technique that works with contents above and below."))
     (if (eq (org-element-type heading) 'headline)
         heading
       (error "Begin marker no longer points at a heading"))))
+
+(cl-defmethod ms-marker ((obj ms-action) &optional pom)
+  "Set internal marker to POM or return marker position if set.
+Errors when asked for a marker before one has been set."
+  (let ((marker (or (oref obj marker)
+                    (pcase (type-of pom)
+                      ('marker pom)
+                      ('integer (set-marker (make-marker) pom))
+                      ('symbol nil)))))
+    (when (and marker pom)
+      (set-marker marker pom))
+    (if (and marker (marker-buffer marker))
+        (marker-position (oset obj marker marker))
+      (error "No marker was initialized"))))
 
 (cl-defmethod ms-section-next
   ((obj ms-action) type &optional pred info no-recursion)
@@ -1201,11 +1203,7 @@ NO-RECURSION will avoid descending into children."
    (ms-heading obj)
    type fun info first-match no-recursion))
 
-(cl-defmethod ms-init ((obj ms-action))
-  (ms-marker obj (org-element-property :begin (ms-heading obj))))
-
-(cl-defmethod ms-end ((obj ms-action))
-  (ms-marker obj (org-element-property :end (ms-heading obj))))
+;; init and end are using the defaults.  override these if inappropriate.
 
 (cl-defmethod ms-final ((obj ms-action))
   (when-let ((marker (oref obj marker)))
