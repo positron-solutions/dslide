@@ -159,6 +159,50 @@ The deck and slide class as well as actions can all be sub-classed.  Use the exi
 - *Deck*:  If the core methods of the deck are insufficient, extension is another option besides advice, hooks, and modifying the source.
 
 If you suspect you might need to sub-class the ~dslide-slide~ or ~dslide-deck~, please file an issue because your use case is probably interesting.
+*** Custom Action
+The ~dslide-section-next~  and ~dslide-section-previous~ method documentation are very helpful behavior for quickly writing custom actions.  They advance the action's =:marker= forwards and backwards to the next matching element and return that element so we can do something with it.
+
+- declare a class
+- override a few methods
+- now you too can paint the paragraphs red
+#+begin_src elisp
+
+  (defclass dslide-action-red-paragraphs (dslide-action)
+    ((overlays :initform nil))
+    "Paint the paragraphs red, one by one.")
+
+  ;; Default no-op `dslide-init' is sufficient
+
+  ;; Default implementation of `dslide-end', which just plays forward to the end,
+  ;; is well-behaved with this class.
+
+  ;; Remove any remaining overlays when calling final.
+  (cl-defmethod dslide-final :after ((obj dslide-action-red-paragraphs))
+    (mapc #'delete-overlay (oref obj overlays)))
+
+  ;; Find the next paragraph and add an overlay if it exists
+  (cl-defmethod dslide-forward ((obj dslide-action-red-paragraphs))
+    (when-let ((paragraph (dslide-section-next obj 'paragraph)))
+      (let* ((beg (org-element-property :begin paragraph))
+             (end (org-element-property :end paragraph))
+             (new-overlay (make-overlay beg end)))
+        (overlay-put new-overlay 'face 'error)
+        (push new-overlay (oref obj overlays))
+        ;; Return non-nil to indicate progress was made.  This also informs the
+        ;; highlight when following the slides in the base buffer.
+        beg)))
+
+  (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
+    (when-let* ((overlay (pop (oref obj overlays))))
+      (delete-overlay overlay))
+    ;; If there is a preceding overlay, move to its beginning else move to the
+    ;; beginning of the heading.
+    (if-let ((overlay (car (oref obj overlays))))
+        (prog1 t
+          (dslide-marker obj (overlay-start overlay)))
+      (dslide-marker obj (org-element-property :begin (dslide-heading obj)))))
+#+end_src
+
 ** Default Classes
 The default classes and actions can be configured at the document or customize level.  Set the =DSLIDE_DECK_CLASS= and =DSLIDE_SLIDE_CLASS= as well as other properties that work at the heading level.  The order of precedence (*Not fully implemented* 🚧):
 - Property definition of the current heading
