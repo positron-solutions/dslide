@@ -158,29 +158,29 @@ This is an image slide.  You can view the images inline using ~org-toggle-inline
 - Run babel against other buffers 😈
 
 #+attr_methods: init
-#+begin_src elisp :results silent
+#+begin_src elisp :results none
   (require 'master-of-ceremonies)
 #+end_src
 #+attr_methods: final step-backward
-#+begin_src elisp :results silent
+#+begin_src elisp :results none
   (when-let ((buffer (get-buffer "*MC Focus*")))
     (kill-buffer buffer))
 #+end_src
 
 #+attr_methods: step-both
-  #+begin_src elisp :results silent
+  #+begin_src elisp :results none
   (mc-focus "🖊️")
   #+end_src
 #+attr_methods: step-both
-#+begin_src elisp :results silent
+#+begin_src elisp :results none
   (mc-focus "🖊️🍍")
   #+end_src
 #+attr_methods: step-both
-#+begin_src elisp :results silent
+#+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎")
   #+end_src
 #+attr_methods: step-both
-#+begin_src elisp :results silent
+#+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎🖊️")
   #+end_src
 * Thanks for Watching
