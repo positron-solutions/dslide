@@ -563,10 +563,9 @@ simplify their implementation."
 (cl-defmethod ms-init ((_ ms-stateful-sequence)))
 
 (cl-defmethod ms-end ((obj ms-stateful-sequence))
-  (unless (eq 'skip (ms-init obj))
-    (let ((progress t))
-      (while progress
-        (setq progress (ms-step-forward obj))))))
+  (let ((progress t))
+    (while progress
+      (setq progress (ms-step-forward obj)))))
 
 (cl-defmethod ms-step-forward ((_ ms-stateful-sequence)))
 
