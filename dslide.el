@@ -307,8 +307,8 @@ contain any elements they act on.  You can add classes to this
 list in order to have default behaviors for some org elements.
 
 You can configure this per-heading by setting the
-MS_SECTION_ACTIONS keyword.  You can configure it for the
-document default by adding an MS_SECTION_ACTIONS keyword."
+DSLIDE_SECTION_ACTIONS keyword.  You can configure it for the
+document default by adding an DSLIDE_SECTION_ACTIONS keyword."
   :type '(list function)
   :group 'dslide)
 
@@ -319,8 +319,8 @@ Value is an action class, usually extending
 the child headings, which come after the section element.
 
 You can configure this per-heading by setting the
-MS_CHILD_ACTION keyword.  You can configure it for the
-document default by adding an MS_CHILD_ACTION keyword."
+DSLIDE_CHILD_ACTION keyword.  You can configure it for the
+document default by adding an DSLIDE_CHILD_ACTION keyword."
   :type 'function
   :group 'dslide)
 
@@ -330,9 +330,9 @@ Value should be a custom class extending `ms'.  You
 can override methods if the built-in implementation is
 insufficient.  Consider upstreaming changes.
 
-You can configure this per heading by setting the MS_CLASS
+You can configure this per heading by setting the DSLIDE_CLASS
 property.  You can configure it for the document default by
-adding an MS_CLASS keyword."
+adding an DSLIDE_CLASS keyword."
   :type 'symbol
   :group 'dslide)
 
@@ -341,7 +341,7 @@ adding an MS_CLASS keyword."
 Value should be a custom class extending `dslide-deck'.
 Use this to modify the root-level behaviors, including switching
 to children and finding siblings.  You can configure this for the
-document by adding the MS_ROOT_CLASS keyword."
+document by adding the DSLIDE_ROOT_CLASS keyword."
   :type 'symbol
   :group 'dslide)
 
@@ -351,9 +351,9 @@ The function used as actions should accept an org element, a
 `headline' type element and return it if it is a valid heading or
 return nil if it should be skipped.
 
-You can configure this per heading by setting the MS_FILTER
+You can configure this per heading by setting the DSLIDE_FILTER
 keyword.  You can configure it for the document default by adding
-an MS_FILTER keyword."
+an DSLIDE_FILTER keyword."
   :type 'function
   :group 'dslide)
 
@@ -428,23 +428,23 @@ coordinate with it.")
 ;; traverses both forward and backward.
 ;;
 ;; There are some states that may need to be set up or torn down at the
-;; boundaries of the sequence.  These are handled by three methods, init, end,
+;; boundaries of the sequence.  These are handled by three methods, begin, end,
 ;; and final.
 ;;
-;; End is essentially init for going in reverse.  Usually this is the same as
-;; calling init and then stepping forward until no more progress is made.
+;; End is essentially begin for going in reverse.  Usually this is the same as
+;; calling begin and then stepping forward until no more progress is made.
 ;; However doing it this way would be unable to avoid extra work and could even
 ;; create headaches when implementing sequences that shouldn't use reverse to
 ;; un-execute the forwards steps or in cases where implementing this is too
 ;; complex to pay off to the user.  For these reasons, the implementation of
 ;; `dslide-end' is left up to the user.
 ;;
-;; Goto essentially is just a careful use of step-forward.  If every forward
+;; Goto essentially is just a careful use of forward.  If every forward
 ;; step properly reports its maximum extent of progress, we can use forward and
-;; init to implement every goto.
+;; begin to implement every goto.
 ;;
-;; Finally, step-forward and step-backward should navigate the states between
-;; init / end and final.  They just return non-nil until they are done.  The
+;; Finally, forward and backward should navigate the states between
+;; begin / end and final.  They just return non-nil until they are done.  The
 ;; caller doesn't care about the implementation, and that is why EIEIO is used.
 ;;
 ;; Sub-sequences can rely on the parent state to exist for their entire
@@ -456,8 +456,8 @@ coordinate with it.")
 ;; amounts to limit coupling the parent and child sequences.
 ;;
 ;; A lazy implementer can forego methods by delegating them to simpler
-;; idempotent methods, such as using an idempotent init for step-backward.  With
-;; a maximum of six methods and a minimum of two, just init and forward, you
+;; idempotent methods, such as using an idempotent begin for backward.  With
+;; a maximum of six methods and a minimum of two, just begin and forward, you
 ;; have enough behavior to properly fit the user interface.
 
 (cl-defgeneric dslide-begin (obj)
@@ -474,7 +474,7 @@ This method should work together with `dslide-end' and
 `dslide-presentation-forward' and `dslide-presentation-backward'.")
 
 (cl-defgeneric dslide-end (obj)
-  "Init when going backwards.
+  "Begin when going backwards.
 Set up the state required for this sequence when going backward,
 entering the sequence from the end.
 
@@ -483,7 +483,7 @@ because it's a result of a nil return from
 `dslide-presentation-backward'.
 
 The first job of this method is to perform setup, possibly by
-just calling init since they likely have similar side-effects.
+just calling begin since they likely have similar side-effects.
 
 Second, this method should reach the state that is equivalent to
 if the user called forward until no more progress could be made.
@@ -572,11 +572,11 @@ the same as storing a stack pointer for returning to the caller."))
   "An interface definition for linear sequences of steps.
 This is an abstract class.
 
-The sequence can be traversed forwards and backward.  `init' and
+The sequence can be traversed forwards and backward.  `begin' and
 `foward' are conjugates of `end' and 'backward'.
 
 Because the sequence steps may rely on some setup and should
-perform necessary teardown, the stateful sequence provides `init'
+perform necessary teardown, the stateful sequence provides `begin'
 `end' and `final' methods.
 
 It can also be indexed by high-level navigation commands.  The
@@ -670,9 +670,9 @@ between slides and contents.  Class can be overridden to affect
 root behaviors.  See `dslide-default-deck-class'")
 
 (cl-defmethod dslide-begin ((obj dslide-deck))
-  "For the deck class, init needs to call init on slides until one succeeds.
+  "For the deck class, begin needs to call begin on slides until one succeeds.
 This could result in skipping slides that do not report any readiness during
-their init."
+their begin."
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle already
     (error "No slide selected"))
@@ -743,7 +743,7 @@ their init."
           (dslide-final current-slide)
 
           (dslide-begin next-slide)
-          ;; Init counts as a step
+          ;; Begin counts as a step
           (setq progress next-slide))))
 
     ;; A lot of progress may have happened, but there will be only one feedback
@@ -767,7 +767,7 @@ their init."
 
   ;; Going backward is almost the same as going forward.  The big difference is
   ;; that when a slide is instantiated, it needs to be sent to its end.  Usually
-  ;; the default implementation, which calls step-forward until progress is
+  ;; the default implementation, which calls forward until progress is
   ;; exhausted, is fine.  Certain actions with side-effects may not like this,
   ;; and they should implement an actual `dslide-end' method as well as idempotent
   ;; `dslide-begin' and `dslide-final' if any support for going backwards is desirable.
@@ -1004,11 +1004,11 @@ Many optional ARGS.  See code."
     ;; Hydrate the slide's configuration as classes and arguments and then
     ;; instantiate them all.
     (let* ((keywords (org-collect-keywords
-                      '("MS_SLIDE_ACTION"
-                        "MS_SECTION_ACTIONS"
-                        "MS_CHILD_ACTION"
-                        "MS_FILTER"
-                        "MS_CLASS")))
+                      '("DSLIDE_SLIDE_ACTION"
+                        "DSLIDE_SECTION_ACTIONS"
+                        "DSLIDE_CHILD_ACTION"
+                        "DSLIDE_FILTER"
+                        "DSLIDE_CLASS")))
 
            (args `(:inline ,inline))
 
@@ -1018,8 +1018,8 @@ Many optional ARGS.  See code."
            (slide-action-class
             (or slide-action-class
                 (if-let ((declared
-                          (or (org-element-property :MS_SLIDE_ACTION heading)
-                              (cdr (assoc-string "MS_SLIDE_ACTION"
+                          (or (org-element-property :DSLIDE_SLIDE_ACTION heading)
+                              (cdr (assoc-string "DSLIDE_SLIDE_ACTION"
                                                  keywords)))))
                     (dslide--parse-class-with-args declared)
                   dslide-default-slide-action)))
@@ -1046,8 +1046,8 @@ Many optional ARGS.  See code."
            ;; the restriction.
            (section-action-classes
             (or (dslide--parse-classes-with-args
-                 (or (org-element-property :MS_SECTION_ACTIONS heading)
-                     (cdr (assoc-string "MS_SECTION_ACTIONS" keywords))))
+                 (or (org-element-property :DSLIDE_SECTION_ACTIONS heading)
+                     (cdr (assoc-string "DSLIDE_SECTION_ACTIONS" keywords))))
                 dslide-default-section-actions))
            (section-actions
             (mapcar
@@ -1067,8 +1067,8 @@ Many optional ARGS.  See code."
            (child-action-class
             (or child-action-class
                 (if-let ((declared
-                          (or (org-element-property :MS_CHILD_ACTION heading)
-                              (cdr (assoc-string "MS_CHILD_ACTION"
+                          (or (org-element-property :DSLIDE_CHILD_ACTION heading)
+                              (cdr (assoc-string "DSLIDE_CHILD_ACTION"
                                                  keywords)))))
                     (dslide--parse-class-with-args declared)
                   dslide-default-child-action)))
@@ -1090,13 +1090,13 @@ Many optional ARGS.  See code."
                                      child-action-args)))))
            (filter
             (or (dslide--filter
-                 (or (org-element-property :MS_FILTER heading)
-                     (cdr (assoc-string "MS_FILTER" keywords))))
+                 (or (org-element-property :DSLIDE_FILTER heading)
+                     (cdr (assoc-string "DSLIDE_FILTER" keywords))))
                 dslide-default-filter))
            (class
             (or (dslide--parse-class-with-args
-                 (or (org-element-property :MS_CLASS heading)
-                     (cdr (assoc-string "MS_CLASS"
+                 (or (org-element-property :DSLIDE_CLASS heading)
+                     (cdr (assoc-string "DSLIDE_CLASS"
                                         keywords))))
                 dslide-default-class)))
 
@@ -1211,7 +1211,7 @@ NO-RECURSION will avoid descending into children."
    (dslide-heading obj)
    type fun info first-match no-recursion))
 
-;; init and end are using the defaults.  override these if inappropriate.
+;; begin and end are using the defaults.  override these if inappropriate.
 
 (cl-defmethod dslide-final ((obj dslide-action))
   (when-let ((marker (oref obj marker)))
@@ -1327,31 +1327,31 @@ deck of progress was made.")
 
 ;; ** Babel Action
 
-;; TODO automatically map the blocks during init and remove results... this is
+;; TODO automatically map the blocks during begin and remove results... this is
 ;; kind of implemented but seems to inconsistently work.
 ;; TODO configure results removal behavior with an argument
 ;; TODO any display jank concerns due to results?  Possibly inhibit re-display.
-;; TODO integrate with skipping with init and end.
+;; TODO integrate with skipping with begin and end.
 (defclass dslide-action-babel (dslide-action)
   () "Execute source blocks as steps.
-By default blocks execute one by one with step-forward.  You can mark a block to
+By default blocks execute one by one with forward.  You can mark a block to
 be special with the keyword:
 
-- #+attr_ms: init
+- #+attr_ms: begin
 
-- #+attr_ms: step-forward
+- #+attr_ms: forward
 
-- #+attr_ms: step-backward
+- #+attr_ms: backward
 
-- #+attr_ms: step-both
+- #+attr_ms: both
 
 - #+attr_ms: end
 
 - #+attr_ms: final
 
-Other than step-both, which executes in either step direction,
+Other than both, which executes in either step direction,
 these keywords correspond to the normal methods of the stateful
-sequence class.  Blocks with method init, end, and final are all
+sequence class.  Blocks with method begin, end, and final are all
 executed during the corresponding method and do not count as
 steps.")
 
@@ -1429,20 +1429,20 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod dslide-forward ((obj dslide-action-babel))
   (when-let* ((predicate (dslide--method-block-pred
-                          '("step-forward" "step-both") t))
+                          '("forward" "both") t))
               (next (dslide-section-next obj 'src-block predicate)))
     (dslide--block-execute next)
     (org-element-property :begin next)))
 
 (cl-defmethod dslide-backward ((obj dslide-action-babel))
   (when-let* ((predicate (dslide--method-block-pred
-                          '("step-backward" "step-both")))
+                          '("backward" "both")))
               (prev (dslide-section-previous obj 'src-block predicate)))
     (dslide--block-execute prev)
     (org-element-property :begin prev)))
 
 (cl-defmethod dslide-begin :after ((obj dslide-action-babel))
-  (when-let ((block-elements (dslide--get-blocks obj "init")))
+  (when-let ((block-elements (dslide--get-blocks obj "begin")))
     (mapc #'dslide--block-execute block-elements)))
 
 (cl-defmethod dslide-end :after ((obj dslide-action-babel))
@@ -2010,10 +2010,10 @@ Does not modify the point."
 Each predicate should take one argument, an org element."
   (lambda (element)
     (seq-reduce
-     (lambda (init pred)
+     (lambda (begin pred)
        (when (or (not pred)
-                 (and init (funcall pred init)))
-         init))
+                 (and begin (funcall pred begin)))
+         begin))
      predicates element)))
 
 ;; * Slide Header

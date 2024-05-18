@@ -13,11 +13,11 @@ See the ~dslide-mode-map~ but basically, arrow keys.  Press the right arrow key.
 - ↓ ~dslide-presentation-stop~
 * Customization
 View customize variables by calling =M-x customize-group RET dslide=
-*** Slide Actions
+** Slide Actions
 Slide actions are configured using the heading's property drawer.
-*** Hiding Markup
+** Hiding Markup
 Check out ~mc-hide-markup-mode~ in the [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package.
-*** Steezing to Org Markup
+** Steezing to Org Markup
 The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
 
 In short, use:
@@ -29,7 +29,7 @@ In short, use:
 Don't forget built-in ~emoji-search~ and searching ~insert-char~.
 
 Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
-*** Bindings
+** Bindings
 Bind the command ~dslide-presentation-start~ in the ~org-mode-map~.  Any key will do.
 * Follow Along
 This presentation is shown in an indirect buffer.  See the mode line.  The buffer name should be =deck: demo.org= or something similar.
@@ -106,7 +106,7 @@ This is an image slide.  You can view the images inline using ~org-toggle-inline
 
 Both backwards and forward are supported on this slide.
 
-#+attr_dslide: init end
+#+attr_dslide: begin end
 #+begin_src elisp :results none
   (setq-local overlays nil)
   (goto-char (point-min))
@@ -116,22 +116,22 @@ Both backwards and forward are supported on this slide.
       (push overlay overlays)))
 #+end_src
 
-#+attr_dslide: step-backward
+#+attr_dslide: backward
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
 #+end_src
 
-#+attr_dslide: step-both
+#+attr_dslide: both
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
 #+end_src
 
-#+attr_dslide: step-both
+#+attr_dslide: both
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
 #+end_src
 
-#+attr_dslide: step-forward end
+#+attr_dslide: forward end
 #+begin_src elisp :results none
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
 #+end_src
@@ -150,12 +150,12 @@ Can has display?
 :DSLIDE_SLIDE_ACTION: nil
 :DSLIDE_SECTION_ACTIONS: dslide-action-babel
 :END:
-These three org blocks will not be displayed since this slide has no slide action.  They will however execute when navigating forward and backward.  Note these features:
+These four org blocks will not be displayed since this slide has no slide action.  They will however execute when navigating forward and backward.  Note these features:
 
 - Blocks can have methods
-- Multiple blocks can have the init, end, and final method.  They are always executed top to bottom.  This allows better code re-use.
+- Multiple blocks can have the begin, end, and final method.  They are always executed top to bottom.  This allows better code re-use.
 
-#+attr_dslide: end init
+#+attr_dslide: end begin
 #+begin_src elisp :results none
   ;; No need to deal with restriction or restore point.
   (org-up-heading-safe)
@@ -165,8 +165,8 @@ These three org blocks will not be displayed since this slide has no slide actio
     (message "Ouchie, the document changed!"))
 #+end_src
 
-Some extra init can also be returned to with step backwards
-#+attr_dslide: init step-backward
+Some extra setup that can also be returned to with step backwards
+#+attr_dslide: begin backward
 #+begin_src elisp :results none
   (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
@@ -174,14 +174,14 @@ Some extra init can also be returned to with step backwards
 #+end_src
 
 When going backwards, we begin at the end, which can also be stepped forwards to
-#+attr_dslide: step-forward end
+#+attr_dslide: forward end
 #+begin_src elisp :results none
   (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
                            'face 'success))
 #+end_src
 
-Our cleanup is always run
+Our cleanup is always run, after everything
 #+attr_dslide: final
 #+begin_src elisp :results none
   (when (bound-and-true-p dslide-can-has-overlay)
@@ -196,29 +196,29 @@ Our cleanup is always run
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
 - Run babel against other buffers 😈.
 
-#+attr_dslide: init
+#+attr_dslide: begin
 #+begin_src elisp :results none
   (require 'master-of-ceremonies)
 #+end_src
-#+attr_dslide: final step-backward
+#+attr_dslide: final backward
 #+begin_src elisp :results none
   (when-let ((buffer (get-buffer "*MC Focus*")))
     (kill-buffer buffer))
 #+end_src
 
-#+attr_dslide: step-both
+#+attr_dslide: both
   #+begin_src elisp :results none
   (mc-focus "🖊️")
   #+end_src
-#+attr_dslide: step-both
+#+attr_dslide: both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍")
   #+end_src
-#+attr_dslide: step-both
+#+attr_dslide: both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎")
   #+end_src
-#+attr_dslide: step-both
+#+attr_dslide: both
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎🖊️")
   #+end_src
