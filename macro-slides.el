@@ -1954,15 +1954,15 @@ PREDICATE should return matching children."
 
 (defun ms--element-root (element &optional type)
   "Get the root parent of ELEMENT of TYPE.
-TYPE is a list or type symbol."
-  (let ((parent (org-element-property :parent element)))
-    (while parent
-      (if (or (not type)
-              (ms-type-p parent type))
-          (setq element parent
-                parent (org-element-property :parent parent))
-        (setq parent nil)))
-    element))
+TYPE is a list or type symbol.  Parents not of TYPE will be
+skipped and the last matching parent will be returned.  ELEMENT
+could be the root."
+  (let (found)
+    (while element
+      (when (or (not type) (ms-type-p element type))
+        (setq found element))
+      (setq element (org-element-property :parent element)))
+    found))
 
 (defun ms--document-first-heading ()
   "Return the first heading element"
@@ -1984,15 +1984,10 @@ TYPE is a list or type symbol."
   "Return the root heading if the point is contained by one.
 Does not modify the point."
   (save-excursion
-    (when point
-      (goto-char point))
+    (when point (goto-char point))
     (let* ((element (org-element-at-point))
-           (parent (ms--element-root
-                    element 'headline)))
-      (if (eq 'headline (org-element-type element))
-          element
-        (or parent
-            (ms--any-heading))))))
+           (parent (ms--element-root element 'headline)))
+      (or parent (ms--any-heading)))))
 
 (defun ms--any-heading ()
   "Return any heading that can be found.
