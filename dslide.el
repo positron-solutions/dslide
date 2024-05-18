@@ -1,10 +1,10 @@
-;;; dslide.el --- DSL IDE. A presentation framework. -*- lexical-binding: t; -*-
+;;; dslide.el --- Da SLIDE. A presentation framework. -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2011-2023 Takaaki ISHIKAWA
 ;; Copyright (C) 2024 Positron
 ;;
 ;; Author: Positron <contact@positron.solutions>
-;; Version: 0.2.1
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "29.2"))
 ;; Maintainer: Positron <contact@positron.solutions>
 ;; URL: https://github.com/positron-solutions/dslide
