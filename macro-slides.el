@@ -2459,6 +2459,7 @@ each slide show from the contents view."
 
   (widen)
   (org-overview)
+  (recenter)
 
   (when ms-contents-header
     (if-let ((first (ms--document-first-heading)))
