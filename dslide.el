@@ -1460,7 +1460,10 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   (when-let ((block-elements (dslide--get-blocks obj "begin")))
     (mapc #'dslide--block-execute block-elements)))
 
-(cl-defmethod dslide-end :after ((obj dslide-action-babel))
+(cl-defmethod dslide-end ((obj dslide-action-babel))
+  ;; Do not use the default implementation because it will play all blocks
+  ;; forward.
+  (dslide-marker obj (org-element-property :end (dslide-heading obj)))
   (when-let ((block-elements (dslide--get-blocks obj "end")))
     (mapc #'dslide--block-execute block-elements)))
 
