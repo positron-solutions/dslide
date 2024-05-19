@@ -1,4 +1,4 @@
-;;; dslide.el --- Domain Specific sLIDE. A presentation framework. -*- lexical-binding: t; -*-
+;;; dslide.el --- Domain Specific sLIDEs. A presentation framework -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2011-2023 Takaaki ISHIKAWA
 ;; Copyright (C) 2024 Positron
