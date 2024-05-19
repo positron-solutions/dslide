@@ -105,6 +105,11 @@ The rabbit hole has only the bounds of your imagination
 Wow, these breadcrumbs are very high-carb
 ***** Okay Deep Enough!
 How many levels of headings could there be?
+* No Header Slide
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-action-narrow :header nil
+:END:
+This slide has no header.
 * Inline Children
 :PROPERTIES:
 :DSLIDE_CHILD_ACTION: dslide-child-action-inline

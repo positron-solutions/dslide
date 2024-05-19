@@ -1235,8 +1235,17 @@ NO-RECURSION will avoid descending into children."
 ;; ** Default Slide Action
 (defclass dslide-action-narrow (dslide-action)
   ((include-restriction
-    :initform nil :initarg :include-restriction
+    :initform nil
+    :initarg :include-restriction
     :documentation "Include the existing restriction.")
+   (breadcrumbs
+    :initform t
+    :initarg :breadcrumbs
+    :documentation "Show breadcrumbs in the header.")
+   (header
+    :initform t
+    :initarg :header
+    :documentation "Show header.")
    (with-children
     :initform nil :initarg :with-children
     :documentation "Narrow should include children.
@@ -1270,7 +1279,8 @@ deck of progress was made.")
         ;; TODO overlay-based display
         (narrow-to-region begin end)
         (run-hooks 'dslide-narrow-hook)
-        (dslide--make-header)
+        (let ((dslide-header (oref obj header)))
+          (dslide--make-header (null (oref obj breadcrumbs))))
         (goto-char (point-min))         ; necessary to reset the scroll
         (when (and dslide-slide-in-effect
                    (not (oref obj inline)))
