@@ -1466,7 +1466,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (dslide--block-execute prev)
     (org-element-property :begin prev)))
 
-(cl-defmethod dslide-begin :after ((obj dslide-action-babel))
+(cl-defmethod dslide-begin ((obj dslide-action-babel))
   (when-let ((block-elements (dslide--get-blocks obj "begin")))
     (mapc #'dslide--block-execute block-elements)))
 
