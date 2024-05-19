@@ -145,9 +145,7 @@ Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
 * Image Slides
 :PROPERTIES:
-:DSLIDE_SLIDE_ACTION: dslide-action-narrow
-:DSLIDE_SECTION_ACTIONS: dslide-action-image dslide-action-babel
-:DSLIDE_CHILD_ACTION: dslide-child-action-slide
+:DSLIDE_SECTION_ACTIONS: dslide-action-image
 :END:
 This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
 
