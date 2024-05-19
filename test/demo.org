@@ -81,13 +81,13 @@ The babel block below is a custom action supporting both forward, each step maki
 
   (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
     (when-let* ((overlay (pop (oref obj overlays))))
-      (delete-overlay overlay))
+      (delete-overlay overlay)
     ;; If there is a preceding overlay, move to its beginning else move to the
     ;; beginning of the heading.
     (if-let ((overlay (car (oref obj overlays))))
         (prog1 t
           (dslide-marker obj (overlay-start overlay)))
-      (dslide-marker obj (org-element-property :begin (dslide-heading obj)))))
+      (dslide-marker obj (org-element-property :begin (dslide-heading obj))))))
 #+end_src
 *** Custom Action Demo
 :PROPERTIES:

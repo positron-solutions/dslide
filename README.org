@@ -196,13 +196,13 @@ The ~dslide-section-next~  and ~dslide-section-previous~ method documentation ar
 
   (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
     (when-let* ((overlay (pop (oref obj overlays))))
-      (delete-overlay overlay))
-    ;; If there is a preceding overlay, move to its beginning else move to the
-    ;; beginning of the heading.
-    (if-let ((overlay (car (oref obj overlays))))
-        (prog1 t
-          (dslide-marker obj (overlay-start overlay)))
-      (dslide-marker obj (org-element-property :begin (dslide-heading obj)))))
+      (delete-overlay overlay)
+      ;; If there is a preceding overlay, move to its beginning else move to the
+      ;; beginning of the heading.
+      (if-let ((overlay (car (oref obj overlays))))
+          (prog1 t
+            (dslide-marker obj (overlay-start overlay)))
+        (dslide-marker obj (org-element-property :begin (dslide-heading obj))))))
 #+end_src
 
 ** Default Classes
