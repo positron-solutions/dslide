@@ -58,7 +58,7 @@ The babel block below is a custom action supporting both forward, each step maki
     ((overlays :initform nil))
     "Paint the paragraphs red, one by one.")
 
-  ;; Default no-op `dslide-init' is sufficient
+  ;; Default no-op `dslide-begin' is sufficient
 
   ;; Default implementation of `dslide-end', which just plays forward to the end,
   ;; is well-behaved with this class.
