@@ -307,9 +307,9 @@ keyword."
 ;; TODO test the use of plist args
 (defcustom dslide-default-section-actions '()
   "Actions that run within the section display action lifecycle.
-It's value is a list of `dslide-action' sub-classes or (CLASS . ARGS)
+It's value is a list of symbol `dslide-action' sub-classes or (CLASS . ARGS)
 forms where ARGS is a plist.  Each subclass will be instantiated
-into an action object.  See the `dslide-action' class and its methods
+into an action object.  See the symbol `dslide-action' class and its methods
 to learn about writing custom actions.
 
 Many section actions are no-op whenever the content doesn't
@@ -325,7 +325,7 @@ document default by adding an DSLIDE_SECTION_ACTIONS keyword."
 (defcustom dslide-default-child-action #'dslide-child-action-slide
   "Action run after section lifecycle.
 Value is an action class, usually extending
-`dslide-child-action'.  The usual purpose is to manage
+symbol `dslide-child-action'.  The usual purpose is to manage
 the child headings, which come after the section element.
 
 You can configure this per-heading by setting the
@@ -348,7 +348,7 @@ adding an DSLIDE_CLASS keyword."
 
 (defcustom dslide-default-deck-class 'dslide-deck
   "A class to more deeply modify overall deck behavior.
-Value should be a custom class extending `dslide-deck'.
+Value should be a custom class extending symbol `dslide-deck'.
 Use this to modify the root-level behaviors, including switching
 to children and finding siblings.  You can configure this for the
 document by adding the DSLIDE_ROOT_CLASS keyword."
@@ -481,9 +481,8 @@ coordinate with it.")
 ;; have enough behavior to properly fit the user interface.
 
 (cl-defgeneric dslide-begin (obj)
-  "Called when entering a sequence.
-Set up the state required for this sequence when going forward,
-entering the sequence from the beginning.
+  "Set up the initial state of OBJ when going forward.
+The sequence is being entered from its beginning.
 
 Return values are ignored.  `dslide-begin' always counts as a
 step because it's a result of a nil return from
@@ -494,9 +493,8 @@ This method should work together with `dslide-end' and
 `dslide-deck-forward' and `dslide-deck-backward'.")
 
 (cl-defgeneric dslide-end (obj)
-  "Begin when going backwards.
-Set up the state required for this sequence when going backward,
-entering the sequence from the end.
+  "Set up the initial state of OBJ when going backward.
+The sequence is being entered from the end.
 
 Return values are ignored.  `dslide-end' always counts as a step
 because it's a result of a nil return from
@@ -525,7 +523,7 @@ This method should work together with `dslide-end' and
 `dslide-deck-forward' and `dslide-deck-backward'")
 
 (cl-defgeneric dslide-final (obj)
-  "Called when exiting a sequence.
+  "Clean up any remaining state of OBJ.
 Implement this method to clean up any state that would interfere
 with the sequence succeeding when run again.  If your sequence
 implements real backward behavior,
@@ -537,7 +535,7 @@ of running a presentation will be brittle and likely fail when
 re-run.")
 
 (cl-defgeneric dslide-forward (obj)
-  "Make one step forward.
+  "Advance OBJ forward by one step.
 The return value has meaning to the deck:
 
 - t: progress was made
@@ -550,11 +548,11 @@ For sequences that don't make progress in a buffer, returning t
 is fine.  Returning a point of progress is necessary for the
 default implementation of `dslide-goto'.
 
-⚠ Every sequence of `dslide-forward' should return nil at some
-point or else infinite loops will result.")
+⚠ Every sequence repeated calls to of `dslide-forward' should
+return nil at some point or else infinite loops will result.")
 
 (cl-defgeneric dslide-backward (obj)
-  "Make one step backwards and return earliest point.
+  "Advance OBJ backward by one step.
 The return value has meaning to the deck:
 
 - t: progress was made
@@ -567,11 +565,11 @@ For sequences that don't make progress in a buffer, returning t
 is fine.  Returning a point of progress is necessary for the
 default implementation of `dslide-goto'.
 
-⚠ Every sequence of `dslide-backward' should return nil at some
-point or else infinite loops will result.")
+⚠ Every sequence of repeated calls to `dslide-backward' should
+return nil at some point or else infinite loops will result.")
 
 (cl-defgeneric dslide-goto (obj point)
-  "Step forward until advancing beyond POINT.
+  "Advance OBJ forward beyond POINT.
 This method can usually be implemented on top of
 `dslide-forward' by advancing until POINT is exceeded.  Return
 nil if POINT was not exceeded.  Return non-nil if the sense of
@@ -600,7 +598,7 @@ perform necessary teardown, the stateful sequence provides `begin'
 
 It can also be indexed by high-level navigation commands.  The
 implementation of `dslide-goto' Sequences can run as sub-sequences,
-where one sequence calls into another. 🚧 This capability is largely
+where one sequence calls into another.  🚧 This capability is largely
 unimplemented, but compatible with existing work.
 
 Classes that wish to implement the stateful sequence interface
@@ -641,8 +639,7 @@ simplify their implementation."
     :initform nil
     :initarg :filter
     :documentation "Function to filter child headings."))
-  "The parent class implements methods that need to filter
-children. Decks and slides have children.")
+  "Class for objects that contain children.")
 
 ;; TODO highly indirect and delegates down to a really crappy implementation
 ;; that nobody else should ever want to use
@@ -684,26 +681,27 @@ work as well.")
 FORM is just a list as steps will always be run before any
 sequence ends or makes progress.."))
 
-  "The Deck is responsible for selecting the parent node and
-maintaining state between mode activations or when switching
-between slides and contents.  Class can be overridden to affect
-root behaviors.  See `dslide-default-deck-class'")
+  "Root sequence that dispatches commands to slides.
+Holds states such as those needed when switching between slides
+and contents.  Is responsible for picking root headings and hydrating them into
+slides and their actions.
+
+Class can be overridden to affect root behaviors.  See
+`dslide-default-deck-class'")
 
 (cl-defmethod dslide-begin ((obj dslide-deck))
-  "For the deck class, begin needs to call begin on slides until one succeeds.
-This could result in skipping slides that do not report any readiness during
-their begin."
+  "Initialize the first slide of OBJ."
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle already
     (error "No slide selected"))
 
   ;; TODO This line is critical to starting up the state machine.  Slides
   ;; are still inferring their need to narrow.
-  (narrow-to-region (point) (point)) ; signal to slide to draw itself
+  (narrow-to-region (point) (point))    ; signal to slide to draw itself
   (dslide-begin (oref obj slide)))
 
 (cl-defmethod dslide-end ((_ dslide-deck))
-  (error "Deck has no valid concept of starting at the end."))
+  (error "Deck has no valid concept of starting at the end"))
 
 (cl-defmethod dslide-final ((obj dslide-deck))
   (when-let ((slide (oref obj slide)))
@@ -830,9 +828,7 @@ their begin."
            (user-error "No more previous slides!")))))
 
 (cl-defmethod dslide--choose-slide ((obj dslide-deck) how)
-  "Set the current slide, according to HOW.
-Optional POINT allows resolving a slide by walking the tree to
-find the slide that displays that POINT."
+  "Set the current slide of OBJ, according to HOW."
   ;; TODO apply filter when choosing starting slide
   (cond ((eq how 'first)
          (oset obj slide (dslide--make-slide
@@ -845,14 +841,13 @@ find the slide that displays that POINT."
          (let ((base-point (with-current-buffer (oref obj base-buffer)
                              (point))))
            ;; TODO implement looking inside the slides using `goto' and recover
-           ;; the child with POINT
+           ;; the child with a point argument.
            (oset obj slide
                  (dslide--make-slide
                   (dslide--root-heading-at-point base-point) obj))))))
 
-;; TODO probably don't need methods for the functions below
 (cl-defmethod dslide-deck-live-p ((obj dslide-deck))
-  "Check if all the buffers are alive or can be recovered."
+  "Check if all of OBJ's buffers are alive or can be recovered."
   ;; TODO in some circumstances, an indirect buffer might exist, but we should
   ;; probably kill it if it was created outside the current instance's lifecycle
   (and (buffer-live-p (oref obj base-buffer))
@@ -907,9 +902,11 @@ Live within slide action lifecycle. See
     :initform nil :initarg :begin
     :documentation "Marker for retrieving this heading's org element."))
 
-  "Slides store some local state and delegate behavior to several
-functions. The Slide is a stateful node that hydrates around a
-heading and stores actions and their states.")
+  "Stores and coordinates the actions of a heading.
+The life-cycles of actions that run for a heading overlap, and
+the slide object coordinates this overlap.  It delegates the
+`stateful-sequence' calls into the actions in the appropriate
+order.")
 
 (cl-defmethod dslide-begin ((obj dslide-slide))
   (when-let ((slide-action (oref obj slide-action)))
@@ -993,7 +990,8 @@ heading and stores actions and their states.")
 
 (defun dslide--make-slide (heading parent &rest args)
   "Hydrate a slide object from a HEADING element.
-Many optional ARGS.  See code."
+Many optional ARGS.  See code.  PARENT is possibly redundant and
+may be refactored out."
   ;; function doesn't error but results in nil begin marker if we don't fail
   (unless heading
     (error "No heading provided"))
@@ -1137,7 +1135,7 @@ Many optional ARGS.  See code."
     (dslide--make-slide previous-heading (oref obj parent))))
 
 (cl-defmethod dslide-heading ((obj dslide-slide))
-  "Return the slide's heading element."
+  "Return the OBJ's heading element."
   (org-element-at-point (oref obj begin)))
 
 ;; * Actions
@@ -1171,14 +1169,14 @@ to some technique that works with contents above and below."))
   :abstract t)
 
 (cl-defmethod dslide-heading ((obj dslide-action))
-  "Return the slide's heading element."
+  "Return the OBJ's heading element."
   (let ((heading (org-element-at-point (oref obj begin))))
     (if (eq (org-element-type heading) 'headline)
         heading
       (error "Begin marker no longer points at a heading"))))
 
 (cl-defmethod dslide-marker ((obj dslide-action) &optional pom)
-  "Set internal marker to POM or return marker position if set.
+  "Set OBJ's marker slot to POM or return marker position.
 Errors when asked for a marker before one has been set."
   (let ((marker (or (oref obj marker)
                     (pcase (type-of pom)
@@ -1191,11 +1189,16 @@ Errors when asked for a marker before one has been set."
         (marker-position (oset obj marker marker))
       (error "No marker was initialized"))))
 
-(cl-defmethod dslide-section-next
-  ((obj dslide-action) type &optional pred info no-recursion)
-  "Move marker forward by one org element of TYPE and return element.
+(cl-defmethod dslide-section-next ((obj dslide-action) type
+                                   &optional pred info no-recursion)
+  "Advance OBJ's marker by one element of TYPE and return element.
+Optional PRED INFO and NO-RECURSION are the same as for
+`dslide-contents-map'.
+
 Marker is moved to the end of the heading if no matching element
-is found."
+is found.  This allows actions to differentiate being at the last
+element from having been called one more time after being done
+with the last element."
   (if-let ((next (dslide--section-next
                   (dslide-heading obj) type (dslide-marker obj)
                   pred info no-recursion)))
@@ -1206,9 +1209,13 @@ is found."
 
 (cl-defmethod dslide-section-previous
   ((obj dslide-action) type &optional pred info no-recursion)
-  "Move marker backward by one org element of TYPE and return element.
+  "Move OBJ's marker backward by element of TYPE and return element.
+Optional PRED INFO and NO-RECURSION are the same as for
+`dslide-contents-map'.
+
 Marker is moved to the beginning of the heading if no matching
-element is found."
+element is found.  This allows actions to differentiate the begin
+state from being at the first matching element."
   (if-let ((previous (dslide--section-previous
                       (dslide-heading obj) type (dslide-marker obj)
                       pred info no-recursion)))
@@ -1217,11 +1224,11 @@ element is found."
     (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
     nil))
 
-(cl-defmethod dslide-section-map
-  ((obj dslide-action) type fun &optional info first-match no-recursion)
-  "Map FUN over TYPE elements in SLIDE section.
-FIRST-MATCH only finds the first non-nil returned from FUN.
-NO-RECURSION will avoid descending into children."
+(cl-defmethod dslide-section-map ((obj dslide-action) type fun
+                                  &optional info first-match no-recursion)
+  "Map FUN over TYPE elements in OBJ's heading's section.
+Optional PRED INFO FIRST-MATCH and NO-RECURSION are the same as
+for `dslide-contents-map'."
   (dslide--section-map
    (dslide-heading obj)
    type fun info first-match no-recursion))
@@ -1257,7 +1264,9 @@ action is capable of performing such narrowing and informing the
 deck of progress was made.")
 
 (cl-defmethod dslide-narrow ((obj dslide-action-narrow))
-  "Narrow to this slide's heading."
+  "Narrow to OBJ's heading.
+This function must return nil when it performs no update to the
+restriction, meaning no progress was made."
   (let* ((progress)
          (heading (dslide-heading obj))
          (begin (oref obj begin))
@@ -1313,7 +1322,9 @@ deck of progress was made.")
   "Hide all items and then reveal them one by one.")
 
 (cl-defmethod dslide-begin :after ((obj dslide-action-item-reveal))
-  (oset obj overlays (dslide-section-map obj 'item #'dslide-hide-element)))
+  (oset obj overlays
+        (dslide-section-map
+         obj 'item (lambda (e) (dslide-hide-element e (oref obj inline))))))
 
 ;; The default `dslide-end' method is sufficient since this action will
 ;; just add overlays starting from the end of items.
@@ -1388,9 +1399,8 @@ steps.")
          (goto-char (org-element-property :begin e))
          (org-babel-remove-result-one-or-many nil))))))
 
-(defun dslide--method-block-pred
-    (method-names &optional unnamed)
-  "Return a predicate to match the METHOD-NAME.
+(defun dslide--method-block-pred (method-names &optional unnamed)
+  "Return a predicate to match the METHOD-NAMES.
 Optional UNNAMED will return unnamed blocks as well."
   (lambda (block)
     (if-let* ((all-names (car (org-element-property
@@ -1442,7 +1452,7 @@ Optional UNNAMED will return unnamed blocks as well."
                   user-wrote-flaky-babel)))))))
 
 (cl-defmethod dslide--get-blocks ((obj dslide-action-babel) &optional method-name)
-  "Return the block with keyword value METHOD-NAME.
+  "Return OBJ's block with keyword value METHOD-NAME.
 The affiliated keywords look like:
 
 #+attr_dslide: METHOD-NAME METHOD-NAME METHOD-NAME
@@ -1568,9 +1578,9 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   :abstract t)
 
 (cl-defmethod dslide-deck-forward-child ((obj dslide-action))
-  "Return the next direct child heading and advance the marker.
-Marker is moved to the end of the heading if no matching child is
-found."
+  "Advance OBJ's marker while returning next child heading.
+Marker is moved to the end of OBJ's heading if no matching
+child is found."
   (if-let* ((marker (dslide-marker obj))
             (heading (dslide-heading obj))
             (target-level (1+ (org-element-property :level heading)))
@@ -1587,8 +1597,8 @@ found."
     nil))
 
 (cl-defmethod dslide-deck-backward-child ((obj dslide-action))
-  "Return previous direct child heading and advance the marker backward.
-Marker is moved to the beginning of the heading if no matching
+  "Advance OBJ's marker backward while returning previous child.
+Marker is moved to the beginning of OBJ's heading if no matching
 child is found."
   (if-let* ((marker (dslide-marker obj))
             (heading (dslide-heading obj))
@@ -1830,8 +1840,9 @@ its height and width for filling in other content."
 
 (defun dslide--map
     (element type fun &optional info first-match no-recursion)
-  "Map over the contents of the ELEMENT.
-TYPE and FUNCTION are described in `org-element-map'."
+  "Map FUN over the contents of the ELEMENT matching TYPE.
+INFO, FIRST-MATCH, and NO-RECURSION are described in
+`org-element-map'."
   (let ((type (if (listp type) type (list type))))
     (save-excursion
       (save-restriction
@@ -1843,8 +1854,9 @@ TYPE and FUNCTION are described in `org-element-map'."
 
 (defun dslide--contents-map
     (element type fun &optional info first-match no-recursion)
-  "Map over the contents of the ELEMENT.
-TYPE and FUNCTION are described in `org-element-map'."
+  "Map FUN over the contents of the ELEMENT matching TYPE.
+INFO, FIRST-MATCH, and NO-RECURSION are described in
+`org-element-map'."
   (let ((type (if (listp type) type (list type))))
     (save-excursion
       (save-restriction
@@ -1857,17 +1869,18 @@ TYPE and FUNCTION are described in `org-element-map'."
 
 (defun dslide--section-map
     (heading type fun &optional info first-match no-recursion)
-  "Map the SECTION of HEADING.
-This includes all text up to the first child."
+  "Map FUN over elements matching TYPE in the SECTION of HEADING.
+This includes all text up to the first child.  INFO, FIRST-MATCH,
+and NO-RECURSION are described in `org-element-map'."
   (when-let ((section (dslide--section heading)))
     (dslide--map section type fun info
-             first-match no-recursion)))
+                 first-match no-recursion)))
 
 (defun dslide--section-next
     (heading type after &optional pred info no-recursion)
-  "Return next element of TYPE that begins after AFTER.
-Optional PRED should accept ELEMENT and return non-nil if
-matched."
+  "Return HEADING's next element of TYPE that begins after AFTER.
+PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
+`org-element-map'."
   (let* ((combined-pred (dslide-and
                          pred
                          (lambda (e) (> (org-element-property :begin e) after)))))
@@ -1876,9 +1889,9 @@ matched."
 
 (defun dslide--section-previous
     (heading type before &optional pred info no-recursion)
-  "Return previous element of TYPE that starts before BEFORE.
-Optional PRED should accept ELEMENT and return non-nil if
-matched."
+    "Return HEADING's previous element of TYPE before BEFORE.
+PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
+`org-element-map'."
   (let* ((combined-pred (dslide-and
                          pred
                          (lambda (e) (< (org-element-property :begin e) before)))))
@@ -1893,7 +1906,7 @@ matched."
    heading 'section #'identity nil t t))
 
 (defun dslide--section-begin (heading)
-  "Always returns a point, even for empty headings."
+  "Always return a point, even if HEADING is empty."
   (if-let ((section (dslide--map
                      heading 'section #'identity nil t t)))
       (org-element-property :begin section)
@@ -1901,7 +1914,7 @@ matched."
         (org-element-property :end heading))))
 
 (defun dslide--section-end (heading)
-  "Always returns a point, even for empty headings."
+  "Always return a point, even if HEADING is empty."
   (let ((not-self (lambda (e) (unless (equal (org-element-property :begin e)
                                         (org-element-property :begin heading))
                            e))))
@@ -1973,7 +1986,7 @@ be a list of types or a type from `org-element-all-elements.'"
       (eq element-type type))))
 
 (defun dslide--child-predicate (heading &optional predicate)
-  "Returns a predicate to filter direct children matching PREDICATE.
+  "Create PREDICATE matching children of HEADING.
 PREDICATE should return matching children."
   (let ((level (org-element-property :level heading))
         (predicate (or predicate #'identity)))
@@ -1982,8 +1995,8 @@ PREDICATE should return matching children."
            (funcall predicate child)
            child))))
 
+;; TODO symbol bloat
 (defun dslide--heading-p (element)
-  "Really wish they would just normalize headline and heading."
   (dslide-type-p element 'headline))
 
 (defun dslide--element-root (element &optional type)
@@ -1999,7 +2012,7 @@ could be the root."
     found))
 
 (defun dslide--document-first-heading ()
-  "Return the first heading element"
+  "Return the first heading element in the buffer."
   (save-restriction
     (widen)
     (save-excursion
@@ -2015,8 +2028,7 @@ could be the root."
               (org-element-at-point))))))))
 
 (defun dslide--root-heading-at-point (&optional point)
-  "Return the root heading if the point is contained by one.
-Does not modify the point."
+  "Return the root heading if the POINT is contained by one."
   (save-excursion
     (when point (goto-char point))
     (let* ((element (org-element-at-point))
@@ -2024,8 +2036,7 @@ Does not modify the point."
       (or parent (dslide--any-heading)))))
 
 (defun dslide--any-heading ()
-  "Return any heading that can be found.
-Does not modify the point."
+  "Return any heading that can be found."
   (save-excursion
     (if (not (numberp (org-back-to-heading-or-point-min)))
         (org-element-at-point)
@@ -2343,7 +2354,9 @@ Unless optional DISPLAY is non-nil, the buffer is only set."
   (cadr (assoc-string key (org-collect-keywords `(,key)))))
 
 (defun dslide--feedback (key)
-  "Explicit feedback for commands without visible side effects."
+  "Show feedback message for KEY.
+See `dslide-feedback-messages'.  This provides Explicit feedback
+for commands without visible side effects."
   (when-let ((feedback (plist-get dslide-feedback-messages
                                   key)))
     (let ((message-log-max nil))
@@ -2429,7 +2442,8 @@ Unless optional DISPLAY is non-nil, the buffer is only set."
 ;; upstream by the parse functions
 (defun dslide--class (class-name &optional signal)
   "CLASS-NAME is a string or symbol that should be a class name.
-Optional ERROR if you want to process `wrong-type-argument'."
+Optional SIGNAL if you want to process `wrong-type-argument' in
+the caller."
   (let* ((symbol (or (when (symbolp class-name)
                        class-name)
                      (intern-soft class-name)))
@@ -2640,6 +2654,7 @@ can reliably select displays via other means."
   (interactive)
   (dslide--stop))
 
+;; TODO make secondary actions supported
 ;;;###autoload
 (defun dslide-deck-start ()
   "Start presentation or secondary action.
@@ -2686,3 +2701,5 @@ video or custom actions."
     (dslide-backward dslide--deck)))
 
 (provide 'dslide)
+
+;;; dslide.el ends here
