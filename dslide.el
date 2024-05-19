@@ -143,7 +143,7 @@ start with a specific starting function."
   :type 'boolean
   :group 'dslide)
 
-(defcustom dslide-contents-header t
+(defcustom dslide-header t
   "Display header in contents buffer.
 When this is disabled, the keywords for title etc will remain
 visible, albeit scrolled away because of how `org-overview'
@@ -2552,7 +2552,7 @@ each slide show from the contents view."
   (org-overview)
   (recenter)
 
-  (when dslide-contents-header
+  (when dslide-header
     (if-let ((first (dslide--document-first-heading)))
         (narrow-to-region (org-element-property :begin first)
                           (point-max))
