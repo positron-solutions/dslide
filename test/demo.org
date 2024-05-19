@@ -1,4 +1,4 @@
-#+title:	DSL IDE
+#+title:	Domain Specific sLIDEs
 #+author:	Positron
 #+email:	contact@positron.solutions
 
@@ -10,10 +10,21 @@
 :DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
 :END:
 See the ~dslide-mode-map~ but basically, arrow keys.
-- ➡️ ~dslide-presentation-forward~
-- ⬅️ ~dslide-presentation-backward~
-- ⬆️ ~dslide-presentation-start~ (default secondary action shows contents)
-- ⬇️ ~dslide-presentation-stop~
+- right arrow ➡️ ~dslide-presentation-forward~
+- left arrow  ⬅️ ~dslide-presentation-backward~
+- up arrow    ⬆️ ~dslide-presentation-start~ (default secondary action shows contents)
+- down arrow  ⬇️ ~dslide-presentation-stop~
+*** Contents View
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
+:END:
+After a presentation is started, up arrow ⬆️ goes to the contents view.
+
+Inside the contents view:
+- up arrow    ⬆️ goes back to the slides
+- down arrow  ⬇️ will quit the presentation
+- left arrow  ⬅️ navigates to previous root heading
+- right arrow ➡️ navigates to the next root heading
 * Customization
 View customize variables by calling =M-x customize-group RET dslide=
 ** Slide Actions
@@ -88,13 +99,11 @@ Democracy depends on an informed citizenry and the social cohesion that those ci
 
 The essence of democracy is the resolve of individuals working together to shape our institutions and our society in ways that allow all of us to flourish.
 * Follow Along
-This presentation is shown in an indirect buffer.  See the mode line.  The buffer name should be =deck: demo.org= or something similar.
+This presentation is shown in an *indirect buffer*.  See the mode line.  The buffer name should be =deck: demo.org= or something similar.
 
 Split the window =C-x 3= or ~split-window-right~ and switch to the base buffer, =demo.org=
 
 When you advance with ~dslide-presentation-forward~, you can see the presentation's progress point highlighted in the base buffer.  This makes it easier to debug babel blocks and other actions.
-* Contents
-Call ~dslide-presentation-start~ during an already running presentation to start the "secondary" action.  Later this might mean playing a video etc.  By default it will display the contents.
 * Breadcrumbs
 This information goes deep
 ** Deep
