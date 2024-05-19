@@ -34,6 +34,59 @@ Don't forget built-in ~emoji-search~ and searching ~insert-char~.
 Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
 ** Bindings
 Bind the command ~dslide-presentation-start~ in the ~org-mode-map~.  Any key will do.
+** Custom Actions
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:END:
+The babel block below is a custom action supporting both forward, each step making a paragraph red when going forward or removing the red when going backward.
+
+#+attr_dslide: begin end
+#+begin_src elisp
+
+  (defclass dslide-action-red-paragraphs (dslide-action)
+    ((overlays :initform nil))
+    "Paint the paragraphs red, one by one.")
+
+  ;; Default no-op `dslide-init' is sufficient
+
+  ;; Default implementation of `dslide-end', which just plays forward to the end,
+  ;; is well-behaved with this class.
+
+  ;; Remove any remaining overlays when calling final.
+  (cl-defmethod dslide-final :after ((obj dslide-action-red-paragraphs))
+    (mapc #'delete-overlay (oref obj overlays)))
+
+  ;; Find the next paragraph and add an overlay if it exists
+  (cl-defmethod dslide-forward ((obj dslide-action-red-paragraphs))
+    (when-let ((paragraph (dslide-section-next obj 'paragraph)))
+      (let* ((beg (org-element-property :begin paragraph))
+             (end (org-element-property :end paragraph))
+             (new-overlay (make-overlay beg end)))
+        (overlay-put new-overlay 'face 'error)
+        (push new-overlay (oref obj overlays))
+        ;; Return non-nil to indicate progress was made.  This also informs the
+        ;; highlight when following the slides in the base buffer.
+        beg)))
+
+  (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
+    (when-let* ((overlay (pop (oref obj overlays))))
+      (delete-overlay overlay))
+    ;; If there is a preceding overlay, move to its beginning else move to the
+    ;; beginning of the heading.
+    (if-let ((overlay (car (oref obj overlays))))
+        (prog1 t
+          (dslide-marker obj (overlay-start overlay)))
+      (dslide-marker obj (org-element-property :begin (dslide-heading obj)))))
+#+end_src
+*** Custom Action Demo
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: dslide-action-red-paragraphs
+:END:
+Massachusetts, in particular, has always been one of the laboratories of democracy. It's where people try things before they're popular. It's where we experiment.
+
+Democracy depends on an informed citizenry and the social cohesion that those citizens can show even when they disagree.
+
+The essence of democracy is the resolve of individuals working together to shape our institutions and our society in ways that allow all of us to flourish.
 * Follow Along
 This presentation is shown in an indirect buffer.  See the mode line.  The buffer name should be =deck: demo.org= or something similar.
 
