@@ -2,15 +2,18 @@
 #+author:	Positron
 #+email:	contact@positron.solutions
 
-* Controls
+* Start
+1. Run =M-x= ~dslide-presentation-start~.
+2. Press the right arrow key ➡️
+** Controls
 :PROPERTIES:
 :DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
 :END:
-See the ~dslide-mode-map~ but basically, arrow keys.  Press the right arrow key.
-- → ~dslide-presentation-forward~
-- ← ~dslide-presentation-backward~
-- ↑ ~dslide-presentation-start~ (default secondary action shows contents)
-- ↓ ~dslide-presentation-stop~
+See the ~dslide-mode-map~ but basically, arrow keys.
+- ➡️ ~dslide-presentation-forward~
+- ⬅️ ~dslide-presentation-backward~
+- ⬆️ ~dslide-presentation-start~ (default secondary action shows contents)
+- ⬇️ ~dslide-presentation-stop~
 * Customization
 View customize variables by calling =M-x customize-group RET dslide=
 ** Slide Actions
