@@ -1,4 +1,4 @@
-;;; dslide.el --- Da SLIDE. A presentation framework. -*- lexical-binding: t; -*-
+;;; dslide.el --- Domain Specific sLIDE. A presentation framework. -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2011-2023 Takaaki ISHIKAWA
 ;; Copyright (C) 2024 Positron
@@ -81,7 +81,7 @@
 ;; For hackers wishing to extend the code, in addition, you will want to check
 ;; `dslide--make-slide' if you want your slides to hydrate actions differently.
 ;; Also pay very close attention to `dslide-stateful-sequence' and how sequences and
-;; steps can be pushed, like a function call stack.
+;; steps can be pushed.
 ;;
 ;; This package is a fork and mostly complete re-write of org-tree-slide by
 ;; Takaaki ISHIKAWA.  Thanks to everyone who worked on org-tree-slide over the
@@ -122,11 +122,9 @@ implicitly start the mode.
 
 - `point': the slideshow always begins at the slide under point.
 
-You can achieve `first' behavior by calling `dslide-first-slide'.  If
-you want to navigate slides with the point, you should use the
-contents mode with `dslide-contents'.  To avoid losing your place,
-use `dslide-slides' to toggle between the base buffer and slides
-buffer."
+If you just want to navigate slides with the point, you should
+use the contents mode by calling `dslide-presentation-start' in a
+presentation that is already started."
   :type '(choice (const :tag "First slide" first)
                  (const :tag "Slide at point" point))
   :group 'dslide)
@@ -155,19 +153,19 @@ works."
 
 (defcustom dslide-header-author t
   "Show the email in the header.
-If there is a #+author: header, it will be used."
+If there is a #+author: keyword, it will be used."
   :type 'boolean
   :group 'dslide)
 
 (defcustom dslide-header-email t
   "Show the email in the header.
-If there is a #+email: header, it will be used."
+If there is a #+email: keyword, it will be used."
   :type 'boolean
   :group 'dslide)
 
 (defcustom dslide-header-date t
   "Show the date in the header.
-If there is a #+date: header, it will be used.
+If there is a #+date: keyword, it will be used.
 The current time will be used as a fallback."
   :type 'boolean
   :group 'dslide)
@@ -209,7 +207,7 @@ Turn off by setting to nil.  Plist keys and where they are used:
 
 - :stop `dslide-presentation-stop'
 
-  :after-last-slide: see `after-last-slide' hook"
+- :after-last-slide: see `after-last-slide-hook'"
 
   :type 'plist
   :group 'dslide)
@@ -295,6 +293,7 @@ keyword."
   :type 'function
   :group 'dslide)
 
+;; TODO test the use of plist args
 (defcustom dslide-default-section-actions '()
   "Actions that run within the section display action lifecycle.
 It's value is a list of `dslide-action' sub-classes or (CLASS . ARGS)
@@ -326,9 +325,9 @@ document default by adding an DSLIDE_CHILD_ACTION keyword."
 
 (defcustom dslide-default-class 'dslide-slide
   "A class to more deeply modify slide behavior.
-Value should be a custom class extending `ms'.  You
-can override methods if the built-in implementation is
-insufficient.  Consider upstreaming changes.
+Value should be a custom class extending `dslide'.  You can
+override methods if the built-in implementation is insufficient.
+Consider upstreaming changes.
 
 You can configure this per heading by setting the DSLIDE_CLASS
 property.  You can configure it for the document default by
@@ -420,36 +419,46 @@ coordinate with it.")
   "Configure `display-buffer-alist' to override.")
 
 ;; * Classes
+;; - `dslide-deck': is the first thing called into by
+;;   `dslide-presentation-forward' and `dslide-presentation-backward'.
+;;
+;; - `dslide-slide': interprets an org heading into some actions, which
+;;
+;; - `dslide-action': does most of the actual work of narrowing, hiding,
+;;   animating, executing babel etc.
 
-;; This generic functions below are the most important interfaces for all
-;; hacking of this package.
+;; The generic functions below are the most important interfaces for all hacking
+;; of this package.
 ;;
 ;; The domain model first must describe a linear sequence of steps that the user
 ;; traverses both forward and backward.
 ;;
 ;; There are some states that may need to be set up or torn down at the
-;; boundaries of the sequence.  These are handled by three methods, begin, end,
-;; and final.
+;; boundaries of the sequence.  These are handled by three methods:
+;; - `dslide-begin'
+;; - `dslide-end'
+;; - `dslide-final'
 ;;
-;; End is essentially begin for going in reverse.  Usually this is the same as
-;; calling begin and then stepping forward until no more progress is made.
-;; However doing it this way would be unable to avoid extra work and could even
-;; create headaches when implementing sequences that shouldn't use reverse to
-;; un-execute the forwards steps or in cases where implementing this is too
-;; complex to pay off to the user.  For these reasons, the implementation of
-;; `dslide-end' is left up to the user.
+;; `dslide-end' is essentially begin for going in reverse.  Usually this is the
+;; same as calling begin and then stepping forward until no more progress is
+;; made.  However doing it this way would be unable to avoid extra work and
+;; could even create headaches when implementing sequences that shouldn't use
+;; reverse to un-execute the forwards steps or in cases where implementing this
+;; is too complex to pay off to the user.  For these reasons, the implementation
+;; of `dslide-end' is left up to the user.
 ;;
-;; Goto essentially is just a careful use of forward.  If every forward
+;; `dslide-goto' essentially is just a careful use of forward.  If every forward
 ;; step properly reports its maximum extent of progress, we can use forward and
 ;; begin to implement every goto.
 ;;
-;; Finally, forward and backward should navigate the states between
-;; begin / end and final.  They just return non-nil until they are done.  The
-;; caller doesn't care about the implementation, and that is why EIEIO is used.
+;; Finally, `dslide-forward' and `dslide-backward' should navigate the states
+;; between begin or end and final.  They just return non-nil until they are
+;; done.  The caller doesn't care about the implementation, and that is why
+;; EIEIO is used.
 ;;
 ;; Sub-sequences can rely on the parent state to exist for their entire
-;; lifetime. The parent sequence will not call its own `dslide-final' until after it
-;; has called the sub-sequence's `dslide-final'.
+;; lifetime. The parent sequence will not call its own `dslide-final' until
+;; after it has called the sub-sequence's `dslide-final'.
 ;;
 ;; Sub-sequences currently don't have any first-class extensible support for
 ;; entering or exiting the sub-sequence.  Such cooperation is present in limited
@@ -562,12 +571,11 @@ action.")
 
 ;; ** Stateful Sequence
 (defclass dslide-stateful-sequence ()
+  ;; TODO parent slot is possibly vestigial
   ((parent
     :initval nil
     :initarg :parent
-    :documentation "Parent or root sequence.
-Usually a deck or slide.  In the function stack analogy, this is
-the same as storing a stack pointer for returning to the caller."))
+    :documentation "Parent or root sequence."))
 
   "An interface definition for linear sequences of steps.
 This is an abstract class.
@@ -581,7 +589,8 @@ perform necessary teardown, the stateful sequence provides `begin'
 
 It can also be indexed by high-level navigation commands.  The
 implementation of `dslide-goto' Sequences can run as sub-sequences,
-where one sequence calls into another.
+where one sequence calls into another. 🚧 This capability is largely
+unimplemented, but compatible with existing work.
 
 Classes that wish to implement the stateful sequence interface
 just need to support a few methods and then rely on the generic
@@ -697,13 +706,8 @@ their begin."
 ;; are run for effect or are no-op, things that don't count as steps or are
 ;; slides that decide at runtime to be skipped.
 ;;
-;; There are many little user-facing behaviors, such as following the slide in
-;; the base buffer with the point.  These are best done from the sequence root.
-;; It bloats the function, but has little effect on the complexity of the logic.
-;;
-;; So that sounds like a lot, but it's really simple.  Loop through whatever
-;; next steps and callbacks were pushed onto the stack.  When one of them makes
-;; progress, we're done.
+;; In short, loop through whatever next steps and callbacks were pushed onto the
+;; stack.  When one of them makes progress, we're done.
 
 (cl-defmethod dslide-forward ((obj dslide-deck))
   (unless (oref obj slide)
@@ -1330,24 +1334,23 @@ deck of progress was made.")
 ;; TODO automatically map the blocks during begin and remove results... this is
 ;; kind of implemented but seems to inconsistently work.
 ;; TODO configure results removal behavior with an argument
-;; TODO any display jank concerns due to results?  Possibly inhibit re-display.
 ;; TODO integrate with skipping with begin and end.
 (defclass dslide-action-babel (dslide-action)
   () "Execute source blocks as steps.
 By default blocks execute one by one with forward.  You can mark a block to
 be special with the keyword:
 
-- #+attr_ms: begin
+- #+attr_dslide: begin
 
-- #+attr_ms: forward
+- #+attr_dslide: forward
 
-- #+attr_ms: backward
+- #+attr_dslide: backward
 
-- #+attr_ms: both
+- #+attr_dslide: both
 
-- #+attr_ms: end
+- #+attr_dslide: end
 
-- #+attr_ms: final
+- #+attr_dslide: final
 
 Other than both, which executes in either step direction,
 these keywords correspond to the normal methods of the stateful
@@ -1405,6 +1408,7 @@ Optional UNNAMED will return unnamed blocks as well."
                (progn
                  (mapc (lambda (w) (set-window-point w block-begin)) windows)
                  (select-window (car windows)))
+             ;; TODO asking `y-or-n-p' defies the two-button interface
              (when (y-or-n-p "Block failed.  Visit failed block?")
                (switch-to-buffer (oref dslide--deck base-buffer))
                (goto-char block-begin)
@@ -1418,9 +1422,9 @@ Optional UNNAMED will return unnamed blocks as well."
 
 (cl-defmethod dslide--get-blocks ((obj dslide-action-babel) &optional method-name)
   "Return the block with keyword value METHOD-NAME.
-The keywords look like:
+The affiliated keywords look like:
 
-#+attr_ms: METHOD-NAME
+#+attr_dslide: METHOD-NAME METHOD-NAME METHOD-NAME
 
 The possible values for METHOD-NAME correspond to the
 stateful-sequence class methods.  METHOD-NAME is a string."
@@ -2110,10 +2114,9 @@ assumes the buffer is restricted and that there is a first tree."
         (concat previous (apply #'propertize delim props)
                 next)))))
 
-;; TODO element API
+;; TODO use element API
 (defun dslide--get-parents (delim)
   "Get parent headings and concat them with DELIM."
-
   ;; The implementation here uses the regex & point-based techniques so that
   ;; we're extracting buffer strings, which saves us from having to re-style
   ;; them to match whatever is in the buffer.
@@ -2231,7 +2234,7 @@ hooks must occur in the deck's :slide-buffer."
 
       ;; stale buffers likely indicate an issue
       (when-let ((stale-buffer (get-buffer slide-buffer-name)))
-        (display-warning '(ms dslide--ensure-deck)
+        (display-warning '(dslide dslide--ensure-deck)
                          "Stale deck buffer was killed")
         (kill-buffer slide-buffer-name))
 
@@ -2335,7 +2338,7 @@ Unless optional DISPLAY is non-nil, the buffer is only set."
                collect symbol
                else
                do (display-warning
-                   '(ms
+                   '(dslide
                      dslide-class
                      dslide-filter)
                    (format "Class name not a class: %s" name))))))
@@ -2348,7 +2351,7 @@ Unless optional DISPLAY is non-nil, the buffer is only set."
     (if (functionp symbol)
         symbol
       (display-warning
-       '(ms
+       '(dslide
          dslide-class
          dslide-filter)
        (format "Filter name not a function: %s" filter-name)))))
@@ -2384,9 +2387,8 @@ Unless optional DISPLAY is non-nil, the buffer is only set."
             (push class class-with-args)
             (while-let ((token (car tokens))
                         (tokenp (dslide--keyword-symbol-p token)))
-              ;; TODO this could create new symbols?  Anyway, using `make-symbol'
-              ;; is extremely ill-advised here ☢️ and `intern-soft' should work
-              ;; since the class should already exist, but I didn't check on this.
+              ;; `intern-soft' only creates the symbol if it corresponds to an
+              ;; existing class (among other things)
               (push (intern-soft (pop tokens)) class-with-args)
               (let ((val (pop tokens)))
                 (push (car (read-from-string val)) class-with-args)))
@@ -2440,7 +2442,7 @@ Optional ERROR if you want to process `wrong-type-argument'."
 ;; * Lifecycle
 
 (defvar-keymap dslide-mode-map
-  :doc "The keymap for `ms' mode."
+  :doc "The keymap for `dslide-mode'."
   "<left>" #'dslide-presentation-backward
   "<right>" #'dslide-presentation-forward
   "<up>" #'dslide-presentation-start

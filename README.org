@@ -1,4 +1,4 @@
-#+title:	Domain Specific slIDEs
+#+title:	Domain Specific sLIDEs
 #+author:	Positron
 #+email:	contact@positron.solutions
 
@@ -23,7 +23,7 @@ Fully programmable sequences behind a two-button interface:
 - Custom class support for extending the framework
 ** Status 🛠️
 Version 0.3.0 👷
-- Stabilizing the API and naming
+- Stabilizing the API and naming (as in not stable yet)
 - Gathering user feedback & experience
 - Accepting PR's and issue reports
 - Composed children actions coming soon™
@@ -113,7 +113,9 @@ The out-of-the-box experience can be a bit messy due to property drawers, keywor
   ;; Something like this should work
   (add-hook 'dslide-start-hook mc-hide-markup-mode)
   (add-hook 'dslide-narrow-hook #'mc-hide-refresh)
+  (add-hook 'dslide-start-hook mc-hide-cursor-mode)
 #+end_src
+🚧 I implemented ~mc~'s hiding with overlays, but I might switch to font-locking.  Overlays were easier to clean up, but since switching to using an indirect buffer for the presentation, this is no longer a problem.
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
@@ -249,7 +251,7 @@ This is a description of how the pieces of the program *must* fit together.  For
 ⚠️ Even if the current implementation differs, trust this domain model and expect the implementation to approach it.
 
 - The user interface ~dslide-presentation-forward~ and ~dslide-presentation-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
-- Because Org's basic structure is about trees, we need to nest sequences of steps.
+- Because Org's basic structure is about trees, we need to nest sequences of steps to represent a tree of sequences.  Not flattening the tree is more flexible and was chosen.
 - The element parser and presentation tends to prefer breadth-first style, working on the section element before the child headings.
 ** Stateful Sequence Class
 This class is the heart of providing the common user interface and convenient implementation interface for extending the package.
