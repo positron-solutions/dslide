@@ -22,7 +22,7 @@ Fully programmable sequences behind a two-button interface:
 - Integration with Elisp programs and arbitrary Emacs buffers
 - Custom class support for extending the framework
 ** Status 🛠️
-Version 0.3.0 👷
+Version 0.3.2 👷
 - Stabilizing the API and naming (as in not stable yet)
 - Gathering user feedback & experience
 - Accepting PR's and issue reports
@@ -168,7 +168,6 @@ The ~dslide-section-next~  and ~dslide-section-previous~ method documentation ar
 - override a few methods
 - now you too can paint the paragraphs red
 #+begin_src elisp
-
   (defclass dslide-action-red-paragraphs (dslide-action)
     ((overlays :initform nil))
     "Paint the paragraphs red, one by one.")
