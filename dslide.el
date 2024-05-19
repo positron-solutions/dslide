@@ -52,7 +52,7 @@
 ;;
 ;; Usage:
 ;;    1. Open an org-mode file
-;;    2. Run `dslide-presentation-start'
+;;    2. Run `dslide-deck-start'
 ;;    3. Use arrow keys.  See `dslide-mode-map'
 ;;
 ;; Note:
@@ -123,7 +123,7 @@ implicitly start the mode.
 - `point': the slideshow always begins at the slide under point.
 
 If you just want to navigate slides with the point, you should
-use the contents mode by calling `dslide-presentation-start' in a
+use the contents mode by calling `dslide-deck-start' in a
 presentation that is already started."
   :type '(choice (const :tag "First slide" first)
                  (const :tag "Slide at point" point))
@@ -208,15 +208,15 @@ Can be a float or integer."
   "Feedback messages for slide controls.
 Turn off by setting to nil.  Plist keys and where they are used:
 
-- :start `dslide-presentation-start'
+- :start `dslide-deck-start'
 
-- :forward `dslide-presentation-forward'
+- :forward `dslide-deck-forward'
 
-- :backward `dslide-presentation-backward'
+- :backward `dslide-deck-backward'
 
 - :contents `dslide-display-contents'
 
-- :stop `dslide-presentation-stop'
+- :stop `dslide-deck-stop'
 
 - :after-last-slide: see `after-last-slide-hook'"
 
@@ -286,8 +286,8 @@ affect display in another buffer will not trigger this hook."
 This can either provide feedback or quit immediately etc.
 Consider using `dslide-push-step' and writing a callback that
 only reacts to the `forward' state.  This callback will then only
-run if the user immediately calls `dslide-presentation-forward'
-again.  `dslide-presentation-stop' is another good choice."
+run if the user immediately calls `dslide-deck-forward'
+again.  `dslide-deck-stop' is another good choice."
   :group 'dslide
   :type 'hook)
 
@@ -431,7 +431,7 @@ coordinate with it.")
 
 ;; * Classes
 ;; - `dslide-deck': is the first thing called into by
-;;   `dslide-presentation-forward' and `dslide-presentation-backward'.
+;;   `dslide-deck-forward' and `dslide-deck-backward'.
 ;;
 ;; - `dslide-slide': interprets an org heading into some actions, which
 ;;
@@ -487,11 +487,11 @@ entering the sequence from the beginning.
 
 Return values are ignored.  `dslide-begin' always counts as a
 step because it's a result of a nil return from
-`dslide-presentation-forward'.
+`dslide-deck-forward'.
 
 This method should work together with `dslide-end' and
 `dslide-final' to ensure consistently valid state for
-`dslide-presentation-forward' and `dslide-presentation-backward'.")
+`dslide-deck-forward' and `dslide-deck-backward'.")
 
 (cl-defgeneric dslide-end (obj)
   "Begin when going backwards.
@@ -500,7 +500,7 @@ entering the sequence from the end.
 
 Return values are ignored.  `dslide-end' always counts as a step
 because it's a result of a nil return from
-`dslide-presentation-backward'.
+`dslide-deck-backward'.
 
 The first job of this method is to perform setup, possibly by
 just calling begin since they likely have similar side-effects.
@@ -515,14 +515,14 @@ inappropriate, it should be overridden.
 In cases where you don't need a real backward implementation or
 progressing backwards would have no sensible behavior, you can
 delegate this to `dslide-begin' and possibly delegate
-`dslide-presentation-backward' to `dslide-presentation-forward',
+`dslide-deck-backward' to `dslide-deck-forward',
 resulting in a sequence that always starts at the beginning and
 always proceeds to the end.  For a single step sequence that has
 identical effect in both directions, this is appropriate.
 
 This method should work together with `dslide-end' and
 `dslide-final' to ensure consistently valid state for
-`dslide-presentation-forward' and `dslide-presentation-backward'")
+`dslide-deck-forward' and `dslide-deck-backward'")
 
 (cl-defgeneric dslide-final (obj)
   "Called when exiting a sequence.
@@ -1567,7 +1567,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   "Base class for child actions."
   :abstract t)
 
-(cl-defmethod dslide-presentation-forward-child ((obj dslide-action))
+(cl-defmethod dslide-deck-forward-child ((obj dslide-action))
   "Return the next direct child heading and advance the marker.
 Marker is moved to the end of the heading if no matching child is
 found."
@@ -1586,7 +1586,7 @@ found."
     (dslide-marker obj (org-element-property :end (dslide-heading obj)))
     nil))
 
-(cl-defmethod dslide-presentation-backward-child ((obj dslide-action))
+(cl-defmethod dslide-deck-backward-child ((obj dslide-action))
   "Return previous direct child heading and advance the marker backward.
 Marker is moved to the beginning of the heading if no matching
 child is found."
@@ -1624,7 +1624,7 @@ child is found."
         (dslide-final child)
         (oset obj child nil)))
     (unless progress
-      (when-let ((child (dslide-presentation-forward-child obj)))
+      (when-let ((child (dslide-deck-forward-child obj)))
         ;; TODO transitive action customization
         (let ((child (dslide--make-slide child (oref dslide--deck slide))))
           (dslide-begin child)
@@ -1642,7 +1642,7 @@ child is found."
         (dslide-final child)
         (oset obj child nil)))
     (unless progress
-      (when-let ((child (dslide-presentation-backward-child obj)))
+      (when-let ((child (dslide-deck-backward-child obj)))
         ;; TODO transitive action customization
         (let ((child (dslide--make-slide child (oref dslide--deck slide))))
           (dslide-end child)
@@ -1651,7 +1651,7 @@ child is found."
     progress))
 
 (cl-defmethod dslide-end :after ((obj dslide-child-action-slide))
-  (when-let ((child (dslide-presentation-backward-child obj)))
+  (when-let ((child (dslide-deck-backward-child obj)))
     (let ((child (dslide--make-slide child (oref dslide--deck slide))))
       (prog1 (dslide-end child)
         (oset obj child child)))))
@@ -1684,7 +1684,7 @@ child is found."
                        (dslide-forward child)))
       ;; If the child didn't make progress, try to load up the next child
       (unless progress
-        (if-let* ((child-heading (dslide-presentation-forward-child obj))
+        (if-let* ((child-heading (dslide-deck-forward-child obj))
                   (child (dslide--make-slide
                           child-heading
                           (oref dslide--deck slide)
@@ -1710,7 +1710,7 @@ child is found."
       (unless progress
         (let* ((finished (pop (oref obj children)))
                (heading (dslide-heading finished)))
-          (dslide-presentation-backward-child obj)       ; for marker effects 💡
+          (dslide-deck-backward-child obj)       ; for marker effects 💡
           ;; TODO do this with overlays in a nested child ☢️
           (when heading
             (narrow-to-region (point-min) (org-element-property :begin heading))
@@ -1724,7 +1724,7 @@ child is found."
   (let (exhausted)
     (while (not exhausted)
       ;; If the child didn't make progress, try to load up the next child
-      (if-let* ((child-heading (dslide-presentation-forward-child obj)))
+      (if-let* ((child-heading (dslide-deck-forward-child obj)))
           (let* ((child (dslide--make-slide
                          child-heading
                          (oref dslide--deck slide)
@@ -2469,10 +2469,10 @@ Optional ERROR if you want to process `wrong-type-argument'."
 
 (defvar-keymap dslide-mode-map
   :doc "The keymap for `dslide-mode'."
-  "<left>" #'dslide-presentation-backward
-  "<right>" #'dslide-presentation-forward
-  "<up>" #'dslide-presentation-start
-  "<down>" #'dslide-presentation-stop)
+  "<left>" #'dslide-deck-backward
+  "<right>" #'dslide-deck-forward
+  "<up>" #'dslide-deck-start
+  "<down>" #'dslide-deck-stop)
 
 ;;;###autoload
 (define-minor-mode dslide-mode
@@ -2632,7 +2632,7 @@ source buffer."
 ;; * User Commands
 
 ;;;###autoload
-(defun dslide-presentation-stop ()
+(defun dslide-deck-stop ()
   "Stop the presentation.
 It is recommended to not bind this to a controller button unless
 you have five buttons or will use the display button to stop and
@@ -2641,7 +2641,7 @@ can reliably select displays via other means."
   (dslide--stop))
 
 ;;;###autoload
-(defun dslide-presentation-start ()
+(defun dslide-deck-start ()
   "Start presentation or secondary action.
 It is recommended to bind this in the `org-mode-map'.  It starts
 the mode if the mode is inactive.
@@ -2666,7 +2666,7 @@ video or custom actions."
       (dslide-mode 1))))
 
 ;;;###autoload
-(defun dslide-presentation-forward ()
+(defun dslide-deck-forward ()
   "Advance slideshow forward."
   (interactive)
   (dslide--ensure-slide-buffer)
@@ -2676,7 +2676,7 @@ video or custom actions."
     (dslide-forward dslide--deck)))
 
 ;;;###autoload
-(defun dslide-presentation-backward ()
+(defun dslide-deck-backward ()
   "Advance slideshow backward."
   (interactive)
   (dslide--ensure-slide-buffer)

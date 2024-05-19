@@ -8,8 +8,8 @@
 - Extensible for org and beyond
 ** Simple User Interface
 Fully programmable sequences behind a two-button interface:
-- ~dslide-presentation-forward~
-- ~dslide-presentation-backward~
+- ~dslide-deck-forward~
+- ~dslide-deck-backward~
 ** Present Org Documents 🦄
 - Document header generated from keywords
 - Breadcrumbs
@@ -50,21 +50,21 @@ This isn't on a package archive yet.  Subscribe to Positron's [[https://www.yout
    ;; or use manual load-path & require, you brave yak shaver
  #+end_src
 ** Try It Out
-With just defaults, run ~dslide-presentation-start~ on your existing documents.  You can load the examples in the [[./test/demo.org]] file to see a showcase of configuration behavior.
+With just defaults, run ~dslide-deck-start~ on your existing documents.  You can load the examples in the [[./test/demo.org]] file to see a showcase of configuration behavior.
 
-The default keymap uses arrow keys.  Left and right are ~dslide-presentation-forward~ and ~dslide-presentation-backward~.  Up is ~dslide-presentation-start~ and will show the contents.  Down is ~dslide-presentation-stop~ and will stop the slide show.
+The default keymap uses arrow keys.  Left and right are ~dslide-deck-forward~ and ~dslide-deck-backward~.  Up is ~dslide-deck-start~ and will show the contents.  Down is ~dslide-deck-stop~ and will stop the slide show.
 * Features
 ** Contents Navigation
-Call ~dslide-contents~ to show a contents overview.  Calling ~dslide-presentation-forward~ and ~dslide-presentation-backward~ in the contents can quickly move through headings.  Call ~dslide-presentation-start~ again to resume the presentation from that point.
+Call ~dslide-contents~ to show a contents overview.  Calling ~dslide-deck-forward~ and ~dslide-deck-backward~ in the contents can quickly move through headings.  Call ~dslide-deck-start~ again to resume the presentation from that point.
 ** Clean Buffer State
 The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy 💩.
 ** Follow Along
 If you display the slideshow in one window or frame, you can configure the point to follow the slide in the base buffer, enabling you to see the full markup and even edit the presentation while developing your customizations.
 * Glossary
-- *Deck*: an object that is used to relate the display and base buffer and is the root of all sequences
+- *Deck*: an object that is used to relate the display and base buffer and is the root of all sequences.  It's another word for "presentation" or PT.
 - *Slide*: an object that interprets an org heading to hydrate its actions
-- *Action*: an object that responds to ~dslide-presentation-forward~ and ~dslide-presentation-backward~ calls and implements lifecycle methods to initialize and clean up state
-- *Step*: a single call to ~dslide-presentation-foward~ or ~dslide-presentation-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods
+- *Action*: an object that responds to ~dslide-deck-forward~ and ~dslide-deck-backward~ calls and implements lifecycle methods to initialize and clean up state
+- *Step*: a single call to ~dslide-deck-foward~ or ~dslide-deck-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods
 - *Contents*: use org folding to create a view of folded headings to quickly navigate slides
 - *Slide Buffer*: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name.
   + Inderect buffer and =slide-buffer= are used interchangeably
@@ -77,15 +77,15 @@ Many settings can be configured at:
 - document level through keywords
 - slide level through the property drawer
 ** Binding
-You likely want to start the mode via ~dslide-presentation-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~dslide-presentation-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
+You likely want to start the mode via ~dslide-deck-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~dslide-deck-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
 
-All commands begin with ~dslide-presentation~ 💡
+All commands begin with ~dslide-deck~ 💡
 #+begin_src elisp
-  (keymap-set org-mode-map "<f5>" #'dslide-presentation-start)
+  (keymap-set org-mode-map "<f5>" #'dslide-deck-start)
 #+end_src
 Once the global minor mode, ~dslide-mode~ is active, additional bindings in ~dslide-mode-map~ are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
 *** Secondary Commands 🚧
-Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~dslide-presentation-start~ binding within presentations to enter / exit these branches.
+Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~dslide-deck-start~ binding within presentations to enter / exit these branches.
 ** Hooks
 Because slides and actions have a life-cycle and can easily find their own heading, consider making a custom action and setting that action on slides where it's needed.
 
@@ -94,8 +94,8 @@ Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base 
 - ~dslide-start-hook~ Is run in the indirect buffer after it is set it.  This is what you want.
 - ~dslide-stop-hook~ is run in the base buffer because the indirect buffer is already dead.
 - ~dslide-contents-hook~ is run after switching to contents.  It runs in the display buffer.
-- ~dslide-narrow-hook~ is run whenever a ~dslide-presentation-forward~ or ~dslide-presentation-backward~ changes the narrow state.
-- ~dslide-after-last-slide-hook~ is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add ~dslide-presentation-stop~ to exit without feedback.
+- ~dslide-narrow-hook~ is run whenever a ~dslide-deck-forward~ or ~dslide-deck-backward~ changes the narrow state.
+- ~dslide-after-last-slide-hook~ is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add ~dslide-deck-stop~ to exit without feedback.
 
   Another option is to use ~dslide-push-step~ to push a callback that will only run when called going forward.
 #+begin_src elisp
@@ -103,7 +103,7 @@ Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base 
     (mc-push-step (lambda (direction)
                     (when (eq direction 'forward)
                       ;; Be sure to return t or the hook will run again.
-                      (prog1 t (dslide-presentation-stop))))))
+                      (prog1 t (dslide-deck-stop))))))
 
   (setq dslide-after-last-slide-hook #'my-stop-if-forward)
 #+end_src
@@ -223,11 +223,11 @@ The =#+attr_ms:= affiliated keyword is used to configure which methods will run 
 
 - =both= runs either direction.  It will not repeat in place when reversing.  Use seperate =forward= and =backward= blocks for that 💡
 *** Step Callbacks
-See ~dslide-push-step~ for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume ~dslide-presentation-forward~ and ~dslide-presentation-backward~ itself, a callback may be easier.
+See ~dslide-push-step~ for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume ~dslide-deck-forward~ and ~dslide-deck-backward~ itself, a callback may be easier.
 
 Because babel blocks are not actions, using ~dslide-push-step~ may be the only way to optionally add a step callback from a babel block.
 * Package Pairings
-This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~dslide-presentation-forward~ ~dslide-presentation-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
+This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~dslide-deck-forward~ ~dslide-deck-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
 ** Master of Ceremonies
 The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package contains utilities for display & presentation frame setup that are not specific to using DSL IDE.
 - *hide markup*
@@ -250,7 +250,7 @@ This is a description of how the pieces of the program *must* fit together.  For
 
 ⚠️ Even if the current implementation differs, trust this domain model and expect the implementation to approach it.
 
-- The user interface ~dslide-presentation-forward~ and ~dslide-presentation-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
+- The user interface ~dslide-deck-forward~ and ~dslide-deck-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
 - Because Org's basic structure is about trees, we need to nest sequences of steps to represent a tree of sequences.  Not flattening the tree is more flexible and was chosen.
 - The element parser and presentation tends to prefer breadth-first style, working on the section element before the child headings.
 ** Stateful Sequence Class
@@ -272,7 +272,7 @@ Additionally, for teardown there is ~dslide-final~ that is always called last, w
 *** Indexing Via Point
 In order to support contents based navigation, we need to be able to play a slide forward up to the current point.  This may require instantiating some parent slides and playing them forward to a child.  To avoid the need for parents to know about children, the ~dslide-goto~ method was introduced.
 *** Stateful Sequence Interface
-The conclusion of the command pattern, setup & teardown, and indexing via point is the ~dslide-stateful-sequence~ class.  Anything that implements its interface can be controlled by ~dslide-presentation-forward~ and ~dslide-presentation-backward~.  The full interface:
+The conclusion of the command pattern, setup & teardown, and indexing via point is the ~dslide-stateful-sequence~ class.  Anything that implements its interface can be controlled by ~dslide-deck-forward~ and ~dslide-deck-backward~.  The full interface:
 
 - ~dslide-begin~ & ~dslide-end~
 - ~dslide-final~
@@ -283,7 +283,7 @@ The conclusion of the command pattern, setup & teardown, and indexing via point 
 
 + Implementing ~dslide-goto~ is optional as long as ~dslide-begin~ and ~dslide-forward~ can implement ~dslide-end~ and report their furthest extent of progress accurately.
 
-+ Ideally ~dslide-presentation-forward~ & ~dslide-presentation-backward~ along with ~dslide-begin~ & ~dslide-end~ form a closed system, but for the convenience of the implementer, it's fine to use an idempotent ~dslide-begin~ as the ~dslide-presentation-backward~ step if granular backward is difficult or not valuable to implement.
++ Ideally ~dslide-deck-forward~ & ~dslide-deck-backward~ along with ~dslide-begin~ & ~dslide-end~ form a closed system, but for the convenience of the implementer, it's fine to use an idempotent ~dslide-begin~ as the ~dslide-deck-backward~ step if granular backward is difficult or not valuable to implement.
 ** Sequence Composition
 Navigating a tree involves depth.  Descendants may care about what happened in ancestors.  Ancestors may care about what descendants leave behind.  There may be conventions about what happens when descending into a child or returning from one.
 *** Telescoping Calls
@@ -313,7 +313,7 @@ A consequence of this is that there are usually multiple actions alive at once. 
 ** Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
 *** Secondary Commands
-See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-presentation-start~
+See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-deck-start~
 *** ~dslide-goto~, starting from point
 Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
 *** Affiliated Buffers
