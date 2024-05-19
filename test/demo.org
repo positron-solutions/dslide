@@ -52,7 +52,7 @@ Bind the command ~dslide-presentation-start~ in the ~org-mode-map~.  Any key wil
 The babel block below is a custom action supporting both forward, each step making a paragraph red when going forward or removing the red when going backward.
 
 #+attr_dslide: begin end
-#+begin_src elisp
+#+begin_src elisp elisp :results none
 
   (defclass dslide-action-red-paragraphs (dslide-action)
     ((overlays :initform nil))
