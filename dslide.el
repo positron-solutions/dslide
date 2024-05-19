@@ -170,10 +170,22 @@ The current time will be used as a fallback."
   :type 'boolean
   :group 'dslide)
 
-;; TODO make this number and support partial lines
-(defcustom dslide-content-margin-top 2
-  "Specify the margin between the slide header and its content."
-  :type 'integer
+(defcustom dslide-margin-title-above 0.5
+  "Margin between header title and the top of the window.
+Can be a float or integer."
+  :type 'number
+  :group 'dslide)
+
+(defcustom dslide-margin-title-below 0.5
+  "Margin between title and other header info.
+Can be a float or integer."
+  :type 'number
+  :group 'dslide)
+
+(defcustom dslide-margin-content 1.5
+  "Margin between the slide header and its content.
+Can be a float or integer."
+  :type 'number
   :group 'dslide)
 
 (defcustom dslide-slide-in-effect t
@@ -181,10 +193,9 @@ The current time will be used as a fallback."
   :type 'boolean
   :group 'dslide)
 
-;; TODO support partial lines
 (defcustom dslide-slide-in-blank-lines 15
   "Line height of the slide-in effect."
-  :type 'integer
+  :type 'number
   :group 'dslide)
 
 (defcustom dslide-feedback-messages
@@ -2061,8 +2072,7 @@ assumes the buffer is restricted and that there is a first tree."
   (setq dslide--header-overlay
         (make-overlay (point-min) (+ 1 (point-min))))
 
-  (let* ((blank-lines dslide-content-margin-top)
-         (keywords (org-collect-keywords
+  (let* ((keywords (org-collect-keywords
                     '("TITLE" "EMAIL" "AUTHOR" "DATE")))
          (title (or dslide-title
                     (cadr (assoc-string "TITLE" keywords))
@@ -2082,8 +2092,9 @@ assumes the buffer is restricted and that there is a first tree."
     (if dslide-header
         (overlay-put
          dslide--header-overlay 'before-string
-         (concat (propertize title 'face 'org-document-title)
-                 (dslide--info-face "\n")
+         (concat (dslide--margin-lines dslide-margin-title-above)
+                 (propertize title 'face 'org-document-title)
+                 (dslide--margin-lines dslide-margin-title-below)
                  (when (and  dslide-header-date date)
                    (dslide--info-face (concat date "  ")))
                  (when (and  dslide-header-author author)
@@ -2095,17 +2106,19 @@ assumes the buffer is restricted and that there is a first tree."
                    (concat (dslide--info-face "\n")
                            (dslide--get-parents
                             dslide-breadcrumb-separator)))
-                 (dslide--get-blank-lines blank-lines)))
+                 (dslide--margin-lines dslide-margin-content)))
 
       (overlay-put dslide--header-overlay 'before-string
-                   (dslide--get-blank-lines blank-lines)))))
+                   (dslide--margin-lines dslide-margin-content)))))
 
 (defun dslide--info-face (s)
   (propertize s 'face 'org-document-info))
 
-(defun dslide--get-blank-lines (lines)
-  "Return breaks by LINES."
-  (dslide--info-face (make-string lines ?\12))) ; ?\12 is newline char
+(defun dslide--margin-lines (lines)
+  (dslide--info-face
+   (if (display-graphic-p)
+       (propertize "\n" 'line-height (float lines))
+     (make-string (floor lines) ?\n))))
 
 (defun dslide--breadcrumbs-reducer (delim)
   (lambda (previous next)
