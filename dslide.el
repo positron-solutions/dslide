@@ -223,7 +223,7 @@ Turn off by setting to nil.  Plist keys and where they are used:
   :type 'plist
   :group 'dslide)
 
-(defcustom dslide-breadcrumb-face nil
+(defcustom dslide-breadcrumb-face '(t :inherit org-level-8)
   "Face added to the list of faces for breadcrumbs.
 This can be a face name symbol or an anonymous font spec.  It
 will be added to the face list, meaning it the original face's
