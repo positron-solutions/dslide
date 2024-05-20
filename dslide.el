@@ -1538,7 +1538,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (when (eq (buffer-local-value 'major-mode (current-buffer))
               'image-mode)
       (when (oref obj hide-mode-line)
-        (hide-mode-line-mode 1))
+        (when (require 'hide-mode-line nil t)
+          (hide-mode-line-mode 1)))
       (image-transform-fit-to-window)
       (let ((image-buffer (current-buffer)))
         (dslide-push-step
@@ -1561,7 +1562,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (when (eq (buffer-local-value 'major-mode (current-buffer))
               'image-mode)
       (when (oref obj hide-mode-line)
-        (hide-mode-line-mode 1))
+        (when (require 'hide-mode-line nil t)
+          (hide-mode-line-mode 1)))
       (image-transform-fit-to-window)
       (let ((image-buffer (current-buffer)))
         (dslide-push-step
