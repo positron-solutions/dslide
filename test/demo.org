@@ -3,17 +3,17 @@
 #+email:	contact@positron.solutions
 
 * Start
-1. Run =M-x= ~dslide-presentation-start~.
+1. Run =M-x= ~dslide-deck-start~.
 2. Press the right arrow key ➡️
 ** Controls
 :PROPERTIES:
 :DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
 :END:
 See the ~dslide-mode-map~ but basically, arrow keys.
-- right arrow ➡️ ~dslide-presentation-forward~
-- left arrow  ⬅️ ~dslide-presentation-backward~
-- up arrow    ⬆️ ~dslide-presentation-start~ (default secondary action shows contents)
-- down arrow  ⬇️ ~dslide-presentation-stop~
+- right arrow ➡️ ~dslide-deck-forward~
+- left arrow  ⬅️ ~dslide-deck-backward~
+- up arrow    ⬆️ ~dslide-deck-start~ (default secondary action shows contents)
+- down arrow  ⬇️ ~dslide-deck-stop~
 *** Contents View
 :PROPERTIES:
 :DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
@@ -25,100 +25,12 @@ Inside the contents view:
 - down arrow  ⬇️ will quit the presentation
 - left arrow  ⬅️ navigates to previous root heading
 - right arrow ➡️ navigates to the next root heading
-* Customization
-View customize variables by calling =M-x customize-group RET dslide=
-** Slide Actions
-Slide actions are configured using the heading's property drawer.
-** Hiding Markup
-Check out ~mc-hide-markup-mode~ in the [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package.
-** Steezing to Org Markup
-The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
-
-In short, use:
-- ~org-modern~
-- ~org-appear~
-- ~nerd-icons~ for more cheesy (Emacs logo)
-- And set the faces for org headings and document title.
-
-Don't forget built-in ~emoji-search~ and searching ~insert-char~.
-
-Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
-** Bindings
-Bind the command ~dslide-presentation-start~ in the ~org-mode-map~.  Any key will do.
-** Custom Actions
-:PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-babel
-:END:
-The babel block below is a custom action supporting both forward, each step making a paragraph red when going forward or removing the red when going backward.
-
-#+attr_dslide: begin end
-#+begin_src elisp elisp :results none
-
-  (defclass dslide-action-red-paragraphs (dslide-action)
-    ((overlays :initform nil))
-    "Paint the paragraphs red, one by one.")
-
-  ;; Default no-op `dslide-begin' is sufficient
-
-  ;; Default implementation of `dslide-end', which just plays forward to the end,
-  ;; is well-behaved with this class.
-
-  ;; Remove any remaining overlays when calling final.
-  (cl-defmethod dslide-final :after ((obj dslide-action-red-paragraphs))
-    (mapc #'delete-overlay (oref obj overlays)))
-
-  ;; Find the next paragraph and add an overlay if it exists
-  (cl-defmethod dslide-forward ((obj dslide-action-red-paragraphs))
-    (when-let ((paragraph (dslide-section-next obj 'paragraph)))
-      (let* ((beg (org-element-property :begin paragraph))
-             (end (org-element-property :end paragraph))
-             (new-overlay (make-overlay beg end)))
-        (overlay-put new-overlay 'face 'error)
-        (push new-overlay (oref obj overlays))
-        ;; Return non-nil to indicate progress was made.  This also informs the
-        ;; highlight when following the slides in the base buffer.
-        beg)))
-
-  (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
-    (when-let* ((overlay (pop (oref obj overlays))))
-      (delete-overlay overlay)
-    ;; If there is a preceding overlay, move to its beginning else move to the
-    ;; beginning of the heading.
-    (if-let ((overlay (car (oref obj overlays))))
-        (prog1 t
-          (dslide-marker obj (overlay-start overlay)))
-      (dslide-marker obj (org-element-property :begin (dslide-heading obj))))))
-#+end_src
-*** Custom Action Demo
-:PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-red-paragraphs
-:END:
-Massachusetts, in particular, has always been one of the laboratories of democracy. It's where people try things before they're popular. It's where we experiment.
-
-Democracy depends on an informed citizenry and the social cohesion that those citizens can show even when they disagree.
-
-The essence of democracy is the resolve of individuals working together to shape our institutions and our society in ways that allow all of us to flourish.
 * Follow Along
 This presentation is shown in an *indirect buffer*.  See the mode line.  The buffer name should be =deck: demo.org= or something similar.
 
 Split the window =C-x 3= or ~split-window-right~ and switch to the base buffer, =demo.org=
 
-When you advance with ~dslide-presentation-forward~, you can see the presentation's progress point highlighted in the base buffer.  This makes it easier to debug babel blocks and other actions.
-* Breadcrumbs
-This information goes deep
-** Deep
-And it will go deeper still yet
-*** Deeper
-The rabbit hole has only the bounds of your imagination
-**** Deepest?
-Wow, these breadcrumbs are very high-carb
-***** Okay Deep Enough!
-How many levels of headings could there be?
-* No Header Slide
-:PROPERTIES:
-:DSLIDE_SLIDE_ACTION: dslide-action-narrow :header nil
-:END:
-This slide has no header.
+When you advance with ~dslide-deck-forward~, you can see the presentation's progress point highlighted in the base buffer.  This makes it easier to debug babel blocks and other actions.
 * Inline Children
 :PROPERTIES:
 :DSLIDE_CHILD_ACTION: dslide-child-action-inline
@@ -134,6 +46,16 @@ Isn't this animation so cool?
 This is a reason to be alive
 ** Pen 🖊️
 [[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
+* Breadcrumbs
+This information goes deep
+** Deep
+And it will go deeper still yet
+*** Deeper
+The rabbit hole has only the bounds of your imagination
+**** Deepest?
+Wow, these breadcrumbs are very high-carb
+***** Okay Deep Enough!
+How many levels of headings could there be?
 * Flat Slide
 :PROPERTIES:
 :DSLIDE_SLIDE_ACTION: dslide-action-narrow :with-children t
@@ -161,19 +83,27 @@ Positron is deeply committed to bringing you the finest in:
 :PROPERTIES:
 :DSLIDE_SECTION_ACTIONS: dslide-action-image
 :END:
-This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide, so it still responds to the keybindings.
-
+- The action will automatically turn on inline images so you don't have to remember to run ~org-toggle-inline-images~.
+- The image buffer is configured to act as a slide, so it still responds to the keybindings.
+- See more options, such as fullscreen etc by calling ~describe-symbol~ on ~dslide-action-image~
 #+ATTR_HTML: :width 45%
  [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
 #+ATTR_HTML: :width 45%
  [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+* No Header Slide
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-action-narrow :header nil
+:END:
+- The content and heading are still displayed
+- The slide-in effect still works
+- But there is no title or other header information
+- See more options in the ~dslide-action-narrow~ class slots:
+  =M-x describe-symbol dslide-action-narrow=
 * Babel Slide Integration
 :PROPERTIES:
 :DSLIDE_SECTION_ACTIONS: dslide-action-babel
 :END:
-
-Both backwards and forward are supported on this slide.
-
+Go 2-3 steps forwards and then backwards.  This slide also supports starting at the end.  Just go to the next slide and back up.
 #+attr_dslide: begin end
 #+begin_src elisp :results none
   (setq-local overlays nil)
@@ -290,7 +220,95 @@ Our cleanup is always run, after everything
 #+begin_src elisp :results none
   (mc-focus "🖊️🍍🍎🖊️")
   #+end_src
-* Thanks for Watching
-- Publishing after some cleanup refactoring
-- Should show up on MELPA and Non-GNU MELPA
-- Using this in my own videos
+* Babel is every Feature
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:END:
+If a feature seems like it's missing, it can probably be added.  There is a babel block below this paragraph, but if you are viewing this presentation, you won't see it because it has hidden itself with an overlay.  File an issue, but don't be held back.  A quick hunk of [[info:elisp#Top][elisp]] can solve every problem.
+#+attr_dslide: begin end
+#+begin_src elisp :results none
+  (let* ((block (org-element-at-point))
+         (overlay (make-overlay (org-element-property :begin block)
+                                (org-element-property :end block))))
+    (overlay-put overlay 'display "")
+    (push overlay dslide--overlays))
+#+end_src
+* Customization
+View customize variables by calling =M-x customize-group RET dslide=
+** Slide Actions
+Slide actions are configured using the heading's property drawer.
+** Hiding Markup
+Check out ~mc-hide-markup-mode~ in the [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package.
+** Steezing Org
+The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
+
+In short, use:
+- ~org-modern~
+- ~org-appear~
+- ~nerd-icons~ for more cheesy (Emacs logo)
+- And set the faces for org headings and document title.
+
+Don't forget built-in ~emoji-search~ and searching ~insert-char~.
+
+Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
+** Bindings
+Bind the command ~dslide-deck-start~ in the ~org-mode-map~.  Any key will do.
+** Custom Actions
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:END:
+The babel block below is a custom action supporting both forward, each step making a paragraph red when going forward or removing the red when going backward.  Key methods you want to use in your custom actions:
+- ~dslide-section-next~
+- ~dslide-section-previous~
+- ~dslide-section-marker~
+#+attr_dslide: begin end
+#+begin_src elisp elisp :results none
+
+  (defclass dslide-action-red-paragraphs (dslide-action)
+    ((overlays :initform nil))
+    "Paint the paragraphs red, one by one.")
+
+  ;; Default no-op `dslide-begin' is sufficient
+
+  ;; Default implementation of `dslide-end', which just plays forward to the end,
+  ;; is well-behaved with this class.
+
+  ;; Remove any remaining overlays when calling final.
+  (cl-defmethod dslide-final :after ((obj dslide-action-red-paragraphs))
+    (mapc #'delete-overlay (oref obj overlays)))
+
+  ;; Find the next paragraph and add an overlay if it exists
+  (cl-defmethod dslide-forward ((obj dslide-action-red-paragraphs))
+    (when-let ((paragraph (dslide-section-next obj 'paragraph)))
+      (let* ((beg (org-element-property :begin paragraph))
+             (end (org-element-property :end paragraph))
+             (new-overlay (make-overlay beg end)))
+        (overlay-put new-overlay 'face 'error)
+        (push new-overlay (oref obj overlays))
+        ;; Return non-nil to indicate progress was made.  This also informs the
+        ;; highlight when following the slides in the base buffer.
+        beg)))
+
+  (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
+    (when-let* ((overlay (pop (oref obj overlays))))
+      (delete-overlay overlay)
+    ;; If there is a preceding overlay, move to its beginning else move to the
+    ;; beginning of the heading.
+    (if-let ((overlay (car (oref obj overlays))))
+        (prog1 t
+          (dslide-marker obj (overlay-start overlay)))
+      (dslide-marker obj (org-element-property :begin (dslide-heading obj))))))
+#+end_src
+*** Custom Action Demo
+:PROPERTIES:
+:DSLIDE_SECTION_ACTIONS: dslide-action-red-paragraphs
+:END:
+Massachusetts, in particular, has always been one of the laboratories of democracy. It's where people try things before they're popular. It's where we experiment.
+
+Democracy depends on an informed citizenry and the social cohesion that those citizens can show even when they disagree.
+
+The essence of democracy is the resolve of individuals working together to shape our institutions and our society in ways that allow all of us to flourish.
+* Enjoy!
+- This package use used to create videos on Positron's own [[https://www.youtube.com/channel/UCqM0zDcFNdAHj7uQkprLszg/][YouTube ]] channel
+- File issues and request features to give us ideas about usage and need
+- To participate in our effort to accelerate Emacs into this upcoming era of change, become a contributor one of our [[https://github.com/sponsors/positron-solutions][Github Sponsors]].
