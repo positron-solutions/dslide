@@ -2477,7 +2477,7 @@ the caller."
                  'priority 10))
   (when-let ((element (org-element-at-point)))
     (setf (overlay-start dslide--contents-hl-line-overlay)
-          (1+ (org-element-property :begin element)))
+          (org-element-property :begin element))
     (setf (overlay-end dslide--contents-hl-line-overlay)
           (org-element-property :end element))))
 
