@@ -2621,27 +2621,17 @@ source buffer."
   (when-let* ((deck dslide--deck)
               (slide-buffer (oref deck slide-buffer))
               (base-buffer (oref deck base-buffer)))
-
-    ;; TODO possibly finalize in state cleanup.  Slides <-> contents switching
-    ;; may require attention.
     (with-demoted-errors "Deck finalization failed: %s"
       (dslide-final dslide--deck))
-
     ;; Animation timers especially should be stopped
-    ;; TODO ensure cleanup is thorough even if there's a lot of failures.
     (dslide--cleanup-state)
-
-    (setq dslide--deck nil)
-
-    (display-buffer base-buffer dslide--display-actions)
-    (set-buffer base-buffer)
-
     (when slide-buffer
       (kill-buffer slide-buffer))
-
+    (display-buffer base-buffer dslide--display-actions)
+    (set-buffer base-buffer)
+    (setq dslide--deck nil)
     (when dslide-mode
       (dslide-mode -1))
-
     (run-hooks 'dslide-stop-hook)
     (dslide--feedback :stop)))
 
