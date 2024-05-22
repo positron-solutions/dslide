@@ -2235,11 +2235,6 @@ and the value of `point-max' should contain a newline somewhere."
     (cancel-timer dslide--animation-timer))
   (when dslide--animation-overlay
     (delete-overlay dslide--animation-overlay))
-  (when dslide--contents-hl-line-overlay
-    (delete-overlay dslide--contents-hl-line-overlay))
-  (setq dslide--animation-overlay nil
-        dslide--animation-timer nil
-        dslide--contents-hl-line-overlay nil))
 
 ;; * Assorted Implementation Details
 
@@ -2336,7 +2331,10 @@ hooks must occur in the deck's :slide-buffer."
   (while dslide--overlays
     (delete-overlay (pop dslide--overlays)))
   (while dslide--step-overlays
-    (delete-overlay (pop dslide--step-overlays))))
+    (delete-overlay (pop dslide--step-overlays)))
+  (when dslide--contents-hl-line-overlay
+    (delete-overlay dslide--contents-hl-line-overlay))
+  (setq dslide--contents-hl-line-overlay nil))
 
 (defun dslide--ensure-slide-buffer (&optional display)
   "Run in commands that must run in the slide buffer.
