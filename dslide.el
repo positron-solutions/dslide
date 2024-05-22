@@ -2704,9 +2704,15 @@ video or custom actions."
 (defun dslide-deck-forward ()
   "Advance slideshow forward."
   (interactive)
+  ;; TODO this does not display the buffer because we don't have any buffer
+  ;; tracking yet.  Babel integrations with other buffers must take care, as
+  ;; must presenters.
   (dslide--ensure-slide-buffer)
   (if (dslide--showing-contents-p)
-      (org-next-visible-heading 1)
+      (progn (org-next-visible-heading 1)
+             (while dslide--step-overlays
+               (delete-overlay (pop dslide--step-overlays)))
+             (dslide--follow (point)))
     (dslide--ensure-slide-buffer)
     (dslide-forward dslide--deck)))
 
@@ -2714,9 +2720,15 @@ video or custom actions."
 (defun dslide-deck-backward ()
   "Advance slideshow backward."
   (interactive)
+  ;; TODO this does not display the buffer because we don't have any buffer
+  ;; tracking yet.  Babel integrations with other buffers must take care, as
+  ;; must presenters.
   (dslide--ensure-slide-buffer)
   (if (dslide--showing-contents-p)
-      (org-previous-visible-heading 1)
+      (progn (org-previous-visible-heading 1)
+             (while dslide--step-overlays
+               (delete-overlay (pop dslide--step-overlays)))
+             (dslide--follow (point)))
     (dslide--ensure-slide-buffer)
     (dslide-backward dslide--deck)))
 
