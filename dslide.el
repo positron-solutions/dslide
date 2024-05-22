@@ -400,8 +400,7 @@ See `dslide-base-follows-slide'."
 (defvar dslide--debug nil
   "Set to t for logging slides and actions.")
 
-
-(defvar dslide--animation-timer nil)
+(defvar dslide--animation-timers nil)
 (defvar-local dslide--animation-overlays nil)
 
 ;; Tell the compiler that these variables exist
@@ -2197,7 +2196,7 @@ Everything after BEG will be animated.  The region between BEG
 and the value of `point-max' should contain a newline somewhere."
   (dslide--ensure-slide-buffer)
   (dslide--animation-cleanup)
-  (let* ((timer (setq dslide--animation-timer (timer-create)))
+  (let* ((timer (timer-create))
          (goal-time (time-add (current-time)
                               dslide-animation-duration))
          (newline-region (save-match-data
@@ -2213,6 +2212,7 @@ and the value of `point-max' should contain a newline somewhere."
                (text-properties-at (car newline-region))
                'line-height)
               1.0)))
+    (push timer dslide--animation-timers)
     (push overlay dslide--animation-overlays)
     (timer-set-time timer (current-time)
                     dslide-animation-frame-duration)
@@ -2231,11 +2231,10 @@ and the value of `point-max' should contain a newline somewhere."
       (overlay-put overlay 'line-height line-height))))
 
 (defun dslide--animation-cleanup ()
-  (when dslide--animation-timer
-    (cancel-timer dslide--animation-timer))
-  (mapc #'delete-overlay dslide--animation-overlays)
-  (setq dslide--animation-overlays nil
-        dslide--animation-timer nil))
+  (while dslide--animation-timers
+    (cancel-timer (pop dslide--animation-timers)))
+  (while dslide--animation-overlays
+    (delete-overlay (pop dslide--animation-overlays))))
 
 ;; * Assorted Implementation Details
 
