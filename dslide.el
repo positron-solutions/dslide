@@ -402,7 +402,7 @@ See `dslide-base-follows-slide'."
 
 
 (defvar dslide--animation-timer nil)
-(defvar-local dslide--animation-overlay nil)
+(defvar-local dslide--animation-overlays nil)
 
 ;; Tell the compiler that these variables exist
 (defvar dslide-mode)
@@ -2207,13 +2207,13 @@ and the value of `point-max' should contain a newline somewhere."
                                  (list (match-beginning 0)
                                        (match-end 0))
                                (error "No newline in region")))))
-         (overlay (setq dslide--animation-overlay
-                        (apply #'make-overlay newline-region)))
+         (overlay (apply #'make-overlay newline-region))
          (initial-line-height
           (or (plist-get
                (text-properties-at (car newline-region))
                'line-height)
               1.0)))
+    (push overlay dslide--animation-overlays)
     (timer-set-time timer (current-time)
                     dslide-animation-frame-duration)
     (timer-set-function timer #'dslide--animate
@@ -2233,8 +2233,9 @@ and the value of `point-max' should contain a newline somewhere."
 (defun dslide--animation-cleanup ()
   (when dslide--animation-timer
     (cancel-timer dslide--animation-timer))
-  (when dslide--animation-overlay
-    (delete-overlay dslide--animation-overlay))
+  (mapc #'delete-overlay dslide--animation-overlays)
+  (setq dslide--animation-overlays nil
+        dslide--animation-timer nil))
 
 ;; * Assorted Implementation Details
 
