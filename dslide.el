@@ -2342,13 +2342,19 @@ hooks must occur in the deck's :slide-buffer."
   (setq dslide--contents-hl-line-overlay nil))
 
 (defun dslide--ensure-slide-buffer (&optional display)
-  "Run in commands that must run in the slide buffer.
-Unless optional DISPLAY is non-nil, the buffer is only set."
+  "Switch to the slide buffer.
+Use this in functions which must run in the slide buffer but
+could be called from another buffer. Optional DISPLAY will also
+ensure that the slide buffer is visible."
   (unless (dslide-live-p)
     (error "Live deck not found"))
   (if display
-      (display-buffer (oref dslide--deck slide-buffer)
-                      dslide--display-actions)
+      (let ((slide-buffer (oref dslide--deck slide-buffer)))
+        ;; TODO requires further taming if user is using multiple frames, such
+        ;; as displaying some information on a projector and other information
+        ;; on another frame
+        (unless (get-buffer-window slide-buffer)
+          (display-buffer slide-buffer dslide--display-actions)))
     (set-buffer (oref dslide--deck slide-buffer))))
 
 (defun dslide--keyword-value (key)
