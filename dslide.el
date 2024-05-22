@@ -225,7 +225,7 @@ Turn off by setting to nil.  Plist keys and where they are used:
 
 (defcustom dslide-breadcrumb-face '(:inherit org-level-8)
   "Face added to the list of faces for breadcrumbs.
-This can be a face name symbol or an anonymous font spec.  It
+This can be a face name symbol or an anonymous face spec.  It
 will be added to the face list, meaning it the original face's
 properties remain unless shadowed."
   :type 'face
@@ -2185,8 +2185,6 @@ assumes the buffer is restricted and that there is a first tree."
 ;; * Animation
 
 ;; TODO move respect for animation variables into this function
-;; TODO END is a redundant argument unless a virtual newline is introduced.
-;; Test if an overlay can can work via after-string.
 ;; TODO Support non-graphical
 ;; TODO Inline animation fallback, uncover text character by character.
 ;; TODO User-provided animation override function
@@ -2200,6 +2198,7 @@ and the value of `point-max' should contain a newline somewhere."
                               dslide-animation-duration))
          (newline-region (save-match-data
                            (save-excursion
+                             ;; TODO invalid search range (point in wrong place)
                              (goto-char beg)
                              (if (re-search-forward "\n" end t)
                                  (list (match-beginning 0)
@@ -2255,13 +2254,15 @@ and the value of `point-max' should contain a newline somewhere."
                (marker-position (oref slide begin))
                (save-restriction
                  (widen)
-                 (buffer-substring headline-begin (1- headline-end)))))))
+                 (buffer-substring-no-properties
+                  headline-begin (1- headline-end)))))))
 
 (defun dslide--cleanup-state ()
   "Clean up states between contents and slides."
   (dslide--delete-header)
   (dslide--delete-overlays)
   (dslide--animation-cleanup)
+  ;; TODO oref & oset outside of class
   (mapc (lambda (f) (funcall f nil))
         (oref dslide--deck step-callbacks))
   (oset dslide--deck step-callbacks nil)
@@ -2516,7 +2517,6 @@ the caller."
        dslide--deck
        (dslide-deck-live-p dslide--deck)))
 
-;; TODO rename these functions to `switch-to'?
 (defun dslide-display-slides ()
   (dslide--ensure-slide-buffer t)
   (dslide--cleanup-state)
@@ -2557,7 +2557,8 @@ Optional FACE defaults to `dslide-highlight'."
 
 (defun dslide--follow (progress)
   "Set the base buffer window point to PROGRESS.
-PROGRESS must be an integer buffer location, not a marker."
+PROGRESS is a slide object, marker, buffer position, or
+boolean (which will be ingored)."
   (unless (dslide-live-p)
     (error "Live deck not found"))
   (let ((pos (cond ((integerp progress) progress)
