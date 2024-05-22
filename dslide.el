@@ -2531,6 +2531,12 @@ the caller."
   (org-fold-show-all)
   (dslide-begin dslide--deck))
 
+(defun dslide-display-develop ()
+  (dslide-display-slides)
+  (let ((base-buffer (oref dslide--deck base-buffer)))
+    (unless (get-buffer-window base-buffer)
+      (display-buffer base-buffer 'display-buffer-pop-up-window))))
+
 (defun dslide--base-buffer-highlight-region (beg end &optional face)
   "Pulse region between BEG and END in base buffer.
 Optional FACE defaults to `dslide-highlight'."
@@ -2678,6 +2684,21 @@ video or custom actions."
     (let ((dslide-start-function
            #'dslide-display-slides))
       (dslide-mode 1))))
+
+;; TODO
+;;;###autoload
+(defun dslide-deck-develop ()
+  "Show both the base and slide buffer."
+  (interactive)
+  (let ((major-mode (buffer-local-value 'major-mode (current-buffer))))
+    (unless (or (dslide-live-p)
+                (eq 'org-mode major-mode))
+      (user-error "Not an org buffer and no other live presentation"))
+    (if (dslide-live-p)
+        ;;  show the correct buffers
+        (dslide-display-develop)
+      (let ((dslide-start-function #'dslide-display-develop))
+        (dslide-mode 1)))))
 
 ;;;###autoload
 (defun dslide-deck-forward ()
