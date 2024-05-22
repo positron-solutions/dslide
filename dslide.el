@@ -2629,6 +2629,7 @@ source buffer."
       (kill-buffer slide-buffer))
     (display-buffer base-buffer dslide--display-actions)
     (set-buffer base-buffer)
+    (recenter (window-height))
     (setq dslide--deck nil)
     (when dslide-mode
       (dslide-mode -1))
