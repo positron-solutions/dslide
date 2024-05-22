@@ -2195,7 +2195,6 @@ assumes the buffer is restricted and that there is a first tree."
 Everything after BEG will be animated.  The region between BEG
 and the value of `point-max' should contain a newline somewhere."
   (dslide--ensure-slide-buffer)
-  (dslide--animation-cleanup)
   (let* ((timer (timer-create))
          (goal-time (time-add (current-time)
                               dslide-animation-duration))
@@ -2217,12 +2216,17 @@ and the value of `point-max' should contain a newline somewhere."
     (timer-set-time timer (current-time)
                     dslide-animation-frame-duration)
     (timer-set-function timer #'dslide--animate
-                        (list goal-time overlay initial-line-height))
+                        (list timer goal-time overlay initial-line-height))
     (timer-activate timer)))
 
-(defun dslide--animate (goal-time overlay initial-line-height)
+(defun dslide--animate (timer goal-time overlay initial-line-height)
   (if (time-less-p goal-time (current-time))
-      (dslide--animation-cleanup)
+      (progn (cancel-timer timer)
+             (setq dslide--animation-timers
+                   (delq timer dslide--animation-timers))
+             (delete-overlay overlay)
+             (setq dslide--animation-overlays
+                   (delq overlay dslide--animation-overlays)))
     (let* ((diff (time-to-seconds (time-subtract goal-time (current-time))))
            (fraction (expt (/ diff dslide-animation-duration) 5.0))
            (lines dslide-slide-in-blank-lines)
