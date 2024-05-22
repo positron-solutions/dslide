@@ -1417,7 +1417,7 @@ Optional UNNAMED will return unnamed blocks as well."
       (let ((block-begin (org-element-property :begin block-element))
             (block-end (org-element-property :end block-element)))
         (goto-char block-begin)
-        ;; Executing babel seems to widen anxd also creates messages, and this
+        ;; Executing babel seems to widen and also creates messages, and this
         ;; results in flashing.  The downside of just inhibiting re-display until
         ;; after the call is that if re-display is needed, such as if calling
         ;; `sleep-for' in a loop, then no updates will be visible.  However, the
@@ -2195,10 +2195,7 @@ assumes the buffer is restricted and that there is a first tree."
   "Slide in the region from BEG to END.
 Everything after BEG will be animated.  The region between BEG
 and the value of `point-max' should contain a newline somewhere."
-  (unless (dslide-live-p)
-    (error "Slide animation attempted without active deck"))
-  (unless (buffer-base-buffer (current-buffer))
-    (error "Slide animation attempted in wrong buffer"))
+  (dslide--ensure-slide-buffer)
   (dslide--animation-cleanup)
   (let* ((timer (setq dslide--animation-timer (timer-create)))
          (goal-time (time-add (current-time)
@@ -2222,6 +2219,27 @@ and the value of `point-max' should contain a newline somewhere."
     (timer-set-function timer #'dslide--animate
                         (list goal-time overlay initial-line-height))
     (timer-activate timer)))
+
+(defun dslide--animate (goal-time overlay initial-line-height)
+  (if (time-less-p goal-time (current-time))
+      (dslide--animation-cleanup)
+    (let* ((diff (time-to-seconds (time-subtract goal-time (current-time))))
+           (fraction (expt (/ diff dslide-animation-duration) 5.0))
+           (lines dslide-slide-in-blank-lines)
+           (line-height (* (+ initial-line-height lines)
+                           fraction)))
+      (overlay-put overlay 'line-height line-height))))
+
+(defun dslide--animation-cleanup ()
+  (when dslide--animation-timer
+    (cancel-timer dslide--animation-timer))
+  (when dslide--animation-overlay
+    (delete-overlay dslide--animation-overlay))
+  (when dslide--contents-hl-line-overlay
+    (delete-overlay dslide--contents-hl-line-overlay))
+  (setq dslide--animation-overlay nil
+        dslide--animation-timer nil
+        dslide--contents-hl-line-overlay nil))
 
 ;; * Assorted Implementation Details
 
@@ -2319,27 +2337,6 @@ hooks must occur in the deck's :slide-buffer."
     (delete-overlay (pop dslide--overlays)))
   (while dslide--step-overlays
     (delete-overlay (pop dslide--step-overlays))))
-
-(defun dslide--animate (goal-time overlay initial-line-height)
-  (if (time-less-p goal-time (current-time))
-      (dslide--animation-cleanup)
-    (let* ((diff (time-to-seconds (time-subtract goal-time (current-time))))
-           (fraction (expt (/ diff dslide-animation-duration) 5.0))
-           (lines dslide-slide-in-blank-lines)
-           (line-height (* (+ initial-line-height lines)
-                           fraction)))
-      (overlay-put overlay 'line-height line-height))))
-
-(defun dslide--animation-cleanup ()
-  (when dslide--animation-timer
-    (cancel-timer dslide--animation-timer))
-  (when dslide--animation-overlay
-    (delete-overlay dslide--animation-overlay))
-  (when dslide--contents-hl-line-overlay
-    (delete-overlay dslide--contents-hl-line-overlay))
-  (setq dslide--animation-overlay nil
-        dslide--animation-timer nil
-        dslide--contents-hl-line-overlay nil))
 
 (defun dslide--ensure-slide-buffer (&optional display)
   "Run in commands that must run in the slide buffer.
