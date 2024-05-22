@@ -31,6 +31,12 @@ This presentation is shown in an *indirect buffer*.  See the mode line.  The buf
 Split the window =C-x 3= or ~split-window-right~ and switch to the base buffer, =demo.org=
 
 When you advance with ~dslide-deck-forward~, you can see the presentation's progress point highlighted in the base buffer.  This makes it easier to debug babel blocks and other actions.
+** Progress Highlights
+Be sure to customize the faces used for highlighting progress and babel block execution:
+- ~dslide-highlight~
+- ~dslide-babel-sucess-highlight~
+- ~dslide-babel-fail-highlight~
+You probably want to define these in your theme, using ~set-face-attribute~.
 * Inline Children
 :PROPERTIES:
 :DSLIDE_CHILD_ACTION: dslide-child-action-inline
@@ -47,7 +53,7 @@ This is a reason to be alive
 ** Pen 🖊️
 [[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
 * Breadcrumbs
-This information goes deep
+This information goes deep.  To customize breadcrumb appearance, check out ~dslide-breadcrumb-face~.
 ** Deep
 And it will go deeper still yet
 *** Deeper
