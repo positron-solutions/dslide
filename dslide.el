@@ -1718,11 +1718,13 @@ state from being at the first child heading."
         (setq progress (org-element-property :begin child))))
     progress))
 
-(cl-defmethod dslide-end :after ((obj dslide-child-action-slide))
-  (when-let ((child (dslide-deck-backward-child obj)))
+(cl-defmethod dslide-end ((obj dslide-child-action-slide))
+  (dslide-marker obj (org-element-property :end (dslide-heading obj)))
+  (when-let ((child (dslide-child-previous obj)))
     (let ((child (dslide--make-slide child (oref dslide--deck slide))))
-      (prog1 (dslide-end child)
-        (oset obj child child)))))
+      (oset obj child child)
+      (let (dslide-slide-in-effect)
+        (dslide-end child)))))
 
 (cl-defmethod dslide-final :after ((obj dslide-child-action-slide))
   (when-let ((child (oref obj child)))
