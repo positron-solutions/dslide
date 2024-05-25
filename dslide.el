@@ -1607,10 +1607,23 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   "Base class for child actions."
   :abstract t)
 
-(cl-defmethod dslide-deck-forward-child ((obj dslide-action))
-  "Advance OBJ's marker while returning next child heading.
-Marker is moved to the end of OBJ's heading if no matching
-child is found."
+(cl-defmethod dslide-child-next ((obj dslide-action)
+                                 &optional reverse-in-place)
+  "Return the next direct child heading element.
+Only matches headings beginning after the marker stored in the
+action OBJ.  Moves the marker forward to the beginning of the
+matched heading or to the end of heading.
+
+Optional REVERSE-IN-PLACE is used when changing directions should
+return the same heading, meaning your action reverses in-place.
+Hiding and revealing list items works this way.  When non-nil,
+matches can include headings starting at the action's marker, and
+the marker is moved to the end rather than beginning of an
+heading.
+
+The action's marker is moved to the end of the heading if no
+matching heading is found.  This allows a subsequent backwards
+step to process the last heading."
   (if-let* ((marker (dslide-marker obj))
             (heading (dslide-heading obj))
             (target-level (1+ (org-element-property :level heading)))
@@ -1618,18 +1631,31 @@ child is found."
                    heading 'headline
                    (lambda (child)
                      (and (= target-level (org-element-property :level child))
-                          (> (org-element-property :begin child) marker)
+                          (funcall (if reverse-in-place #'>= #'>)
+                           (org-element-property :begin child) marker)
                           child))
                    nil t)))
       (prog1 next
-        (dslide-marker obj (org-element-property :begin next)))
+        (dslide-marker obj (org-element-property
+                            (if reverse-in-place :end :begin) next)))
     (dslide-marker obj (org-element-property :end (dslide-heading obj)))
     nil))
 
-(cl-defmethod dslide-deck-backward-child ((obj dslide-action))
-  "Advance OBJ's marker backward while returning previous child.
-Marker is moved to the beginning of OBJ's heading if no matching
-child is found."
+(cl-defmethod dslide-child-previous ((obj dslide-action)
+                                     &optional reverse-in-place)
+  "Return the previous direct child heading element.
+Only matches child headings beginning before the marker stored in
+the action, OBJ.  Moves the marker backward to the beginning of
+the returned heading or the beginning of OBJ's heading.
+
+Optional REVERSE-IN-PLACE is used when changing directions should
+return the same heading, meaning your action reverses in-place.
+hiding and revealing list items works this way.  When non-nil,
+matches can include headings starting at the action's marker.
+
+Marker is moved to the beginning of the heading if no matching
+heading is found.  This allows actions to differentiate the begin
+state from being at the first child heading."
   (if-let* ((marker (dslide-marker obj))
             (heading (dslide-heading obj))
             (target-level (1+ (org-element-property :level heading)))
@@ -1640,7 +1666,9 @@ child is found."
                      heading 'headline
                      (lambda (child)
                        (and (= target-level (org-element-property :level child))
-                            (< (org-element-property :begin child) marker)
+                            (funcall
+                             (if reverse-in-place #'<= #'<)
+                             (org-element-property :begin child) marker)
                             child)))))))
       (prog1 next
         (dslide-marker obj (org-element-property :begin next)))
@@ -1664,7 +1692,7 @@ child is found."
         (dslide-final child)
         (oset obj child nil)))
     (unless progress
-      (when-let ((child (dslide-deck-forward-child obj)))
+      (when-let ((child (dslide-child-next obj)))
         ;; TODO transitive action customization
         (let ((child (dslide--make-slide child (oref dslide--deck slide))))
           (dslide-begin child)
@@ -1682,7 +1710,7 @@ child is found."
         (dslide-final child)
         (oset obj child nil)))
     (unless progress
-      (when-let ((child (dslide-deck-backward-child obj)))
+      (when-let ((child (dslide-child-previous obj)))
         ;; TODO transitive action customization
         (let ((child (dslide--make-slide child (oref dslide--deck slide))))
           (dslide-end child)
