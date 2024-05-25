@@ -2298,8 +2298,7 @@ and the value of `point-max' should contain a newline somewhere."
     (let* ((diff (time-to-seconds (time-subtract goal-time (current-time))))
            (fraction (expt (/ diff dslide-animation-duration) 5.0))
            (lines dslide-slide-in-blank-lines)
-           (line-height (* (+ initial-line-height lines)
-                           fraction)))
+           (line-height (+ initial-line-height (* lines fraction))))
       (overlay-put overlay 'line-height line-height))))
 
 (defun dslide--animation-cleanup ()
