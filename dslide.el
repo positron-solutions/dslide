@@ -4,7 +4,7 @@
 ;; Copyright (C) 2024 Positron
 ;;
 ;; Author: Positron <contact@positron.solutions>
-;; Version: 0.3.2
+;; Version: 0.4.0
 ;; Package-Requires: ((emacs "29.2"))
 ;; Maintainer: Positron <contact@positron.solutions>
 ;; URL: https://github.com/positron-solutions/dslide
