@@ -2688,9 +2688,9 @@ each slide show from the contents view."
   (dslide--ensure-slide-buffer t)
   (dslide--cleanup-state)
   (oset dslide--deck slide-buffer-state 'contents)
-
   (widen)
   (org-overview)
+  (goto-char (org-element-property :begin (dslide--root-heading-at-point)))
   (recenter)
 
   (when dslide-header
