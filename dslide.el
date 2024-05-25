@@ -1599,7 +1599,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (org-element-property :begin link)))
 
 (cl-defmethod dslide-end ((obj dslide-action-image))
-  (dslide-marker obj (org-element-property :end (dslide-heading obj))))
+  (dslide-marker obj (org-element-property :end (dslide-heading obj)))
+  (dslide-begin obj))
 
 ;; * Child Actions
 (defclass dslide-child-action (dslide-action) ()
