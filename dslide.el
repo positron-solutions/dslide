@@ -1038,7 +1038,8 @@ may be refactored out."
 
            ;; TODO precedences are out of wack.  Heading property should win
            ;; versus child heading, document, or default
-           (slide-action (when slide-action-class
+           (slide-action (when (and slide-action-class
+                                    (not (eq slide-action-class 'none)))
                            (if (consp slide-action-class)
                                (apply (car slide-action-class)
                                       :begin begin
