@@ -22,11 +22,12 @@ Fully programmable sequences behind a two-button interface:
 - Integration with Elisp programs and arbitrary Emacs buffers
 - Custom class support for extending the framework
 ** Status 🛠️
-Version 0.3.2 👷
+Version 0.4.0 👷
 - Stabilizing the API and naming (as in not stable yet)
 - Gathering user feedback & experience
 - Accepting PR's and issue reports
 - Composed children actions coming soon™
+  + This is very close.  I will likely combine the "parent" and "child" actions into new slide classes instead because their behavior is inherently coupled and requires coordination on the slide class.
 
 The user-facing API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
 * Installation
