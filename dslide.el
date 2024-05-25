@@ -1189,36 +1189,57 @@ Errors when asked for a marker before one has been set."
         (marker-position (oset obj marker marker))
       (error "No marker was initialized"))))
 
-(cl-defmethod dslide-section-next ((obj dslide-action) type
-                                   &optional pred info no-recursion)
-  "Advance OBJ's marker by one element of TYPE and return element.
-Optional PRED INFO and NO-RECURSION are the same as for
-`dslide-contents-map'.
 
-Marker is moved to the end of the heading if no matching element
-is found.  This allows actions to differentiate being at the last
-element from having been called one more time after being done
-with the last element."
+(cl-defmethod dslide-section-next ((obj dslide-action) type &optional
+                                   pred reverse-in-place info no-recursion)
+  "Return next element of TYPE.
+Only matches elements beginning after the marker stored in the
+action OBJ.  Moves the marker forward to the beginning of the
+matched element or to the end of heading.
+
+Optional REVERSE-IN-PLACE is used when changing directions should
+return the same element, meaning your action reverses in-place.
+hiding and revealing list items works this way.  When non-nil,
+matches can include elements starting at the action's marker, and
+the marker is moved to the end rather than beginning of an
+element.
+
+The action's marker is moved to the end of the heading if no
+matching element is found.  This allows a subsequent backwards
+step to process the last element.
+
+Optional PRED INFO and NO-RECURSION are the same as for
+`dslide-contents-map'."
   (if-let ((next (dslide--section-next
                   (dslide-heading obj) type (dslide-marker obj)
-                  pred info no-recursion)))
+                  pred reverse-in-place info no-recursion)))
       (prog1 next
-        (dslide-marker obj (org-element-property :begin next)))
+        (dslide-marker obj (org-element-property
+                            (if reverse-in-place :end :begin) next)))
     (dslide-marker obj (org-element-property :end (dslide-heading obj)))
     nil))
 
-(cl-defmethod dslide-section-previous
-  ((obj dslide-action) type &optional pred info no-recursion)
-  "Move OBJ's marker backward by element of TYPE and return element.
-Optional PRED INFO and NO-RECURSION are the same as for
-`dslide-contents-map'.
+(cl-defmethod dslide-section-previous ((obj dslide-action) type &optional
+                                       pred reverse-in-place info no-recursion)
+  "Return previous element of TYPE.
+Only matches elements beginning before the marker stored in the
+action, OBJ.  Moves the marker backward to the beginning of the
+returned element or the beginning of OBJ's heading.
+
+Optional REVERSE-IN-PLACE is used when changing directions should
+return the same element, meaning your action reverses in-place.
+hiding and revealing list items works this way.  When non-nil,
+matches can include elements starting at the action's marker.
 
 Marker is moved to the beginning of the heading if no matching
 element is found.  This allows actions to differentiate the begin
-state from being at the first matching element."
+state from being at the first matching element.
+
+Optional PRED INFO and NO-RECURSION are the same as for
+`dslide-contents-map'."
   (if-let ((previous (dslide--section-previous
                       (dslide-heading obj) type (dslide-marker obj)
-                      pred info no-recursion)))
+                      pred reverse-in-place info no-recursion)))
       (prog1 previous
         (dslide-marker obj (org-element-property :begin previous)))
     (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
@@ -1315,7 +1336,12 @@ restriction, meaning no progress was made."
 (cl-defmethod dslide-end :after ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
-;; ** Reveal items section action
+;; ** Reveal items action
+;; Reveal items has a somewhat fun implementation.  The end state is actually
+;; simpler than the begin state.  Going forward, we must remove overlays and
+;; animate items.  Going backward, we add overlays.  When starting at the end,
+;; there are no overlays, but when starting at the beginning, all items are
+;; concealed by overlays
 (defclass dslide-action-item-reveal (dslide-action)
   ((overlays
     :initform nil))
@@ -1326,40 +1352,39 @@ restriction, meaning no progress was made."
         (dslide-section-map
          obj 'item (lambda (e) (dslide-hide-element e (oref obj inline))))))
 
-;; The default `dslide-end' method is sufficient since this action will
-;; just add overlays starting from the end of items.
+(cl-defmethod dslide-end ((obj dslide-action-item-reveal))
+  (dslide-marker obj (org-element-property :end (dslide-heading obj))))
 
 (cl-defmethod dslide-final :after ((obj dslide-action-item-reveal))
   (when-let ((overlays (oref obj overlays)))
     (mapc #'delete-overlay overlays)))
 
-;; TODO add hide / un-hide methods to the base action
+;; TODO Overlay intersection could be consolidated for use in other actions.
 (cl-defmethod dslide-forward ((obj dslide-action-item-reveal))
-  ;; The implementation has mapped all of the items into overlays, so instead of
-  ;; calling `dslide-section-next', we just use the overlay positions to walk
-  ;; through the items.
-  (when-let* ((overlays (oref obj overlays))
-              (first (car overlays))
-              (end (overlay-end first))
-              (start (overlay-start first)))
-    ;; TODO We can let-bind animations false for child slides.
-    ;; Or handle this via arguments in child actions
+  ;;  Item reveal / hide repeats in place, so we pass non-nil `goto-end' to
+  ;;  `dslide-section-next'.
+  (when-let* ((next-item (dslide-section-next obj 'item nil t)))
+    ;; TODO ensure animation starts immediately
     (when dslide-slide-in-effect
-      (dslide-animation-setup
-       (overlay-start first) (overlay-end first)))
-    (delete-overlay first)
-    (oset obj overlays (cdr overlays))
-    (dslide-marker obj end)
+      (dslide-animation-setup (org-element-property :begin next-item)
+                              (org-element-property :end next-item)))
+    ;; Because the user might add items etc, and to avoid the need for
+    ;; keys matching items to our overlays, we intersect overlays we are
+    ;; managing with overlays found at point, which could include overlays
+    ;; from some other action
+    (mapc #'delete-overlay
+          (seq-intersection (oref obj overlays)
+                            (overlays-at (org-element-property
+                                          :begin next-item))))
     ;; return progress
-    start))
+    (oref obj marker)))
 
 (cl-defmethod dslide-backward ((obj dslide-action-item-reveal))
   (when-let ((previous-item (dslide-section-previous obj 'item)))
-    (oset obj overlays
-          (cons (dslide-hide-element previous-item)
-                (and (slot-boundp obj 'overlays)
-                     (oref obj overlays))))
-    (org-element-property :begin previous-item)))
+    (push (dslide-hide-element previous-item)
+          (oref obj overlays))
+    ;; return progress
+    (oref obj marker)))
 
 ;; ** Babel Action
 
