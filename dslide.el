@@ -2260,32 +2260,33 @@ assumes the buffer is restricted and that there is a first tree."
 Everything after BEG will be animated.  The region between BEG
 and the value of `point-max' should contain a newline somewhere."
   (dslide--ensure-slide-buffer)
-  (let* ((timer (timer-create))
-         (goal-time (time-add (current-time)
-                              dslide-animation-duration))
-         (newline-region (save-match-data
-                           (save-excursion
-                             ;; TODO invalid search range (point in wrong place)
-                             (goto-char beg)
-                             (if (re-search-forward "\n" end t)
-                                 (list (match-beginning 0)
-                                       (match-end 0))
-                               (error "No newline in region")))))
-         (overlay (apply #'make-overlay newline-region))
-         (initial-line-height
-          (or (plist-get
-               (text-properties-at (car newline-region))
-               'line-height)
-              1.0)))
-    (overlay-put overlay 'line-height dslide-slide-in-blank-lines)
-    (overlay-put overlay 'priority 10)
-    (push timer dslide--animation-timers)
-    (push overlay dslide--animation-overlays)
-    (timer-set-time timer (current-time)
-                    dslide-animation-frame-duration)
-    (timer-set-function timer #'dslide--animate
-                        (list timer goal-time overlay initial-line-height))
-    (timer-activate timer)))
+  (without-restriction
+    (let* ((buffer-invisibility-spec nil)
+           (timer (timer-create))
+           (goal-time (time-add (current-time)
+                                dslide-animation-duration))
+           (newline-region (save-match-data
+                             (save-excursion
+                               (goto-char beg)
+                               (if (re-search-forward "\n" end t)
+                                   (list (match-beginning 0)
+                                         (match-end 0))
+                                 (error "No newline in region")))))
+           (overlay (apply #'make-overlay newline-region))
+           (initial-line-height
+            (or (plist-get
+                 (text-properties-at (car newline-region))
+                 'line-height)
+                1.0)))
+      (overlay-put overlay 'line-height dslide-slide-in-blank-lines)
+      (overlay-put overlay 'priority 10)
+      (push timer dslide--animation-timers)
+      (push overlay dslide--animation-overlays)
+      (timer-set-time timer (current-time)
+                      dslide-animation-frame-duration)
+      (timer-set-function timer #'dslide--animate
+                          (list timer goal-time overlay initial-line-height))
+      (timer-activate timer))))
 
 (defun dslide--animate (timer goal-time overlay initial-line-height)
   (if (time-less-p goal-time (current-time))
