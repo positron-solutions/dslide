@@ -31,6 +31,8 @@ This presentation is shown in an *indirect buffer*.  See the mode line.  The buf
 Split the window =C-x 3= or ~split-window-right~ and switch to the base buffer, =demo.org=
 
 When you advance with ~dslide-deck-forward~, you can see the presentation's progress point highlighted in the base buffer.  This makes it easier to debug babel blocks and other actions.
+
+You can start the presentation this way by using ~dslide-deck-develop~ instead.
 ** Progress Highlights
 Be sure to customize the faces used for highlighting progress and babel block execution:
 - ~dslide-highlight~
@@ -270,7 +272,6 @@ The babel block below is a custom action supporting both forward, each step maki
 - ~dslide-section-marker~
 #+attr_dslide: begin end
 #+begin_src elisp elisp :results none
-
   (defclass dslide-action-red-paragraphs (dslide-action)
     ((overlays :initform nil))
     "Paint the paragraphs red, one by one.")
@@ -302,8 +303,7 @@ The babel block below is a custom action supporting both forward, each step maki
     ;; If there is a preceding overlay, move to its beginning else move to the
     ;; beginning of the heading.
     (if-let ((overlay (car (oref obj overlays))))
-        (prog1 t
-          (dslide-marker obj (overlay-start overlay)))
+        (dslide-marker obj (overlay-start overlay))
       (dslide-marker obj (org-element-property :begin (dslide-heading obj))))))
 #+end_src
 *** Custom Action Demo
