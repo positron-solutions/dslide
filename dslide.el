@@ -1740,10 +1740,20 @@ state from being at the first child heading."
 
 ;; TODO override the child's own child action
 (defclass dslide-child-action-inline (dslide-child-action)
-  ((children
+  ((overlays
+    :initform nil)
+   (children
     :initform nil
     :documentation "Children that have been instantiated."))
   "Display children inline with the parent.")
+
+(cl-defmethod dslide-begin ((obj dslide-child-action-inline))
+  (let ((level (1+ (org-element-property :level (dslide-heading obj)))))
+    (oset obj overlays
+          (dslide--contents-map (dslide-heading obj) 'headline
+           (lambda (e)
+             (when (= (org-element-property :level e) level)
+               (dslide-hide-element e)))))))
 
 (cl-defmethod dslide-forward ((obj dslide-child-action-inline))
   (let (progress exhausted)
@@ -1753,16 +1763,23 @@ state from being at the first child heading."
                        (dslide-forward child)))
       ;; If the child didn't make progress, try to load up the next child
       (unless progress
-        (if-let* ((child-heading (dslide-deck-forward-child obj))
+        (if-let* ((child-heading (dslide-child-next obj))
                   (child (dslide--make-slide
                           child-heading
-                          (oref dslide--deck slide)
-                          :slide-action #'dslide-action-narrow
+                          (oref dslide--deck slide) ; TODO hack
+                          :slide-action 'none
                           :inline t
-                          ;; TODO this won't compose at all
-                          :slide-action-args '(:include-restriction t :with-children t)
                           :child-action 'none)))
-            (progn (dslide-begin child)
+            (progn (mapc #'delete-overlay
+                         (seq-intersection (oref obj overlays)
+                                           (overlays-at (org-element-property
+                                                         :begin
+                                                         child-heading))))
+                   (dslide-begin child)
+                   (when dslide-slide-in-effect
+                     (dslide-animation-setup
+                      (org-element-property :begin child-heading)
+                      (org-element-property :end child-heading)))
                    (setq progress child)
                    (push child (oref obj children)))
           (setq exhausted t))))
@@ -1775,32 +1792,28 @@ state from being at the first child heading."
       (setq progress (when-let* ((child (car (oref obj children))))
                        (dslide-backward child)))
 
-      ;; If the child didn't make progress, narrow it away
+      ;; If the child didn't make progress, hide it with an overlay
       (unless progress
         (let* ((finished (pop (oref obj children)))
                (heading (dslide-heading finished)))
-          (dslide-deck-backward-child obj)       ; for marker effects 💡
-          ;; TODO do this with overlays in a nested child ☢️
-          (when heading
-            (narrow-to-region (point-min) (org-element-property :begin heading))
-            (run-hooks 'dslide-narrow-hook))
+          (dslide-child-previous obj) ; for marker effects 💡
+          (push (dslide-hide-element heading) (oref obj overlays))
           (dslide-final finished)
-          (setq progress (car (oref obj children))))))
+          (setq progress (or (car (oref obj children))
+                             (dslide-heading obj))))))
     progress))
 
-(cl-defmethod dslide-end :after ((obj dslide-child-action-inline))
+(cl-defmethod dslide-end ((obj dslide-child-action-inline))
   (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
   (let (exhausted)
     (while (not exhausted)
       ;; If the child didn't make progress, try to load up the next child
-      (if-let* ((child-heading (dslide-deck-forward-child obj)))
+      (if-let* ((child-heading (dslide-child-next obj)))
           (let* ((child (dslide--make-slide
                          child-heading
-                         (oref dslide--deck slide)
+                         (oref dslide--deck slide) ; TODO hack.
+                         :slide-action 'none
                          :inline t
-                         ;; TODO this won't compose at all
-                         :slide-action #'dslide-action-narrow
-                         :slide-action-args '(:include-restriction t :with-children t)
                          :child-action 'none)))
             (let ((dslide-slide-in-effect nil))
               (dslide-end child))
@@ -1808,6 +1821,7 @@ state from being at the first child heading."
         (setq exhausted t)))))
 
 (cl-defmethod dslide-final :after ((obj dslide-child-action-inline))
+  (mapc #'delete-overlay (oref obj overlays))
   (mapc #'dslide-final (oref obj children)))
 
 ;; * Filters
