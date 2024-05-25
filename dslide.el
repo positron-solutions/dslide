@@ -2632,16 +2632,21 @@ Optional FACE defaults to `dslide-highlight'."
         (push overlay dslide--step-overlays)))
     (set-buffer buffer)))
 
+;; TODO use this to implement `dslide-goto'
 (defun dslide--follow (progress)
   "Set the base buffer window point to PROGRESS.
-PROGRESS is a slide object, marker, buffer position, or
-boolean (which will be ingored)."
+PROGRESS is a slide object, marker, buffer position, org element,
+org object or boolean (which will be ignored)."
   (unless (dslide-live-p)
     (error "Live deck not found"))
   (let ((pos (cond ((integerp progress) progress)
                    ((eieio-object-p progress)
                     (marker-position (oref progress begin)))
-                   ((markerp progress) (marker-position progress)))))
+                   ((markerp progress) (marker-position progress))
+                   ((and (listp progress)
+                         (or (member (car progress) org-element-all-elements)
+                             (member (car progress) org-element-all-objects)))
+                    (org-element-property :begin progress)))))
     (when (and (not (booleanp progress)) (null pos))
       (message "Incomprehensible progress reported: %s" progress))
     (when (and pos dslide-base-follows-slide)
