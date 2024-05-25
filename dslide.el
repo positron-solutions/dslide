@@ -1523,7 +1523,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     :initarg :kill-buffer
     :documentation "Kill the buffer.  Default nil just buries it.")
    (include-linked
-    :initform t
+    :initform nil
     :initarg :include-linked
     :documentation "Loads linked images.  See `org-display-inline-images'.")
    (fullscreen
