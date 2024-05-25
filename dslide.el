@@ -108,7 +108,7 @@ This happens whether the buffer is visible or not."
   :type 'boolean
   :group 'dslide)
 
-(defcustom dslide-start-from 'first
+(defcustom dslide-start-from 'point
   "When starting, begin at `point' `first' slide.
 Any other value is equivalent to `first'.
 
