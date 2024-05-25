@@ -1306,15 +1306,14 @@ restriction, meaning no progress was made."
           (setq progress begin))
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
-        ;; TODO overlay-based display
+        (when (and dslide-slide-in-effect
+                   (not (oref obj inline)))
+          (dslide-animation-setup begin end))
         (narrow-to-region begin end)
         (run-hooks 'dslide-narrow-hook)
         (let ((dslide-header (oref obj header)))
           (dslide--make-header (null (oref obj breadcrumbs))))
         (goto-char (point-min))         ; necessary to reset the scroll
-        (when (and dslide-slide-in-effect
-                   (not (oref obj inline)))
-          (dslide-animation-setup begin end))
         (setq progress begin)))
     ;; Return progress to count as step when re-narrowing after a child.
     progress))
