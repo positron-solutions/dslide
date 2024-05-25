@@ -1907,24 +1907,32 @@ and NO-RECURSION are described in `org-element-map'."
                  first-match no-recursion)))
 
 (defun dslide--section-next
-    (heading type after &optional pred info no-recursion)
-  "Return HEADING's next element of TYPE that begins after AFTER.
+    (heading type after &optional pred inclusive info no-recursion)
+  "Return HEADING's next element of TYPE.
+By default, matches only after AFTER but with optional INCLUSIVE,
+also includes matches at AFTER.
+
 PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 `org-element-map'."
-  (let* ((combined-pred (dslide-and
-                         pred
-                         (lambda (e) (> (org-element-property :begin e) after)))))
+  (let* ((combined-pred
+          (dslide-and pred
+                      (lambda (e) (funcall (if inclusive  #'>=  #'>)
+                                      (org-element-property :begin e) after)))))
     (dslide--section-map
      heading type combined-pred info t no-recursion)))
 
 (defun dslide--section-previous
-    (heading type before &optional pred info no-recursion)
-    "Return HEADING's previous element of TYPE before BEFORE.
+    (heading type before &optional pred inclusive info no-recursion)
+  "Return HEADING's previous element of TYPE.
+By default, matches only before BEFORE but with optional
+INCLUSIVE, also includes matches at BEFORE.
+
 PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 `org-element-map'."
   (let* ((combined-pred (dslide-and
                          pred
-                         (lambda (e) (< (org-element-property :begin e) before)))))
+                         (lambda (e) (funcall (if inclusive #'<= #'<)
+                                         (org-element-property :begin e) before)))))
     ;; We can't map in reverse, so just retrieve all matched elements and
     ;; return the last one.
     (car (last (dslide--section-map
