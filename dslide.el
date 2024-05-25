@@ -1324,7 +1324,7 @@ restriction, meaning no progress was made."
 ;; get it right.  The key thing to note is that a parent can't re-display itself
 ;; unless it's going backwards.  It needs to display itself during end even
 ;; though the end of its children may clobber it.  This works, just awkwardly.
-(cl-defmethod dslide-begin :after ((obj dslide-action-narrow))
+(cl-defmethod dslide-begin ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
 (cl-defmethod dslide-forward ((_ dslide-action-narrow)) ; odd
@@ -1333,7 +1333,7 @@ restriction, meaning no progress was made."
 (cl-defmethod dslide-backward ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
-(cl-defmethod dslide-end :after ((obj dslide-action-narrow))
+(cl-defmethod dslide-end ((obj dslide-action-narrow))
   (dslide-narrow obj))
 
 ;; ** Reveal items action
@@ -1541,7 +1541,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     :documentation "Reload images.  See `org-display-inline-images'."))
   "Show images fullscreen in a buffer.")
 
-(cl-defmethod dslide-begin :after ((obj dslide-action-image))
+(cl-defmethod dslide-begin ((obj dslide-action-image))
   (org-display-inline-images
    (oref obj include-linked)
    (oref obj refresh)
