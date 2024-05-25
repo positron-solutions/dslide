@@ -2277,6 +2277,8 @@ and the value of `point-max' should contain a newline somewhere."
                (text-properties-at (car newline-region))
                'line-height)
               1.0)))
+    (overlay-put overlay 'line-height dslide-slide-in-blank-lines)
+    (overlay-put overlay 'priority 10)
     (push timer dslide--animation-timers)
     (push overlay dslide--animation-overlays)
     (timer-set-time timer (current-time)
