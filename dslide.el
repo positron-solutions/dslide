@@ -2697,6 +2697,7 @@ org object or boolean (which will be ignored)."
 This is a valid `dslide-start-function' and will start
 each slide show from the contents view."
   (dslide--ensure-slide-buffer t)
+  (dslide-final dslide--deck)
   (dslide--cleanup-state)
   (oset dslide--deck slide-buffer-state 'contents)
   (widen)
