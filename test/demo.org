@@ -41,8 +41,7 @@ Be sure to customize the faces used for highlighting progress and babel block ex
 You probably want to define these in your theme, using ~set-face-attribute~.
 * Inline Children
 :PROPERTIES:
-:DSLIDE_SLIDE_ACTION: dslide-action-narrow :with-children t
-:DSLIDE_CHILD_ACTION: dslide-child-action-inline
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-inline
 :END:
 - You won't believe these animations
 - This is the world's greatest presentation software
@@ -67,8 +66,7 @@ Wow, these breadcrumbs are very high-carb
 How many levels of headings could there be?
 * Flat Slide
 :PROPERTIES:
-:DSLIDE_SLIDE_ACTION: dslide-action-narrow :with-children t
-:DSLIDE_CHILD_ACTION: nil
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-flat
 :END:
 This slide shows its child headings inline.
 - The slide action shows the entire contents, not just the section

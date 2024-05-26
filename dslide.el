@@ -291,7 +291,7 @@ again.  `dslide-deck-stop' is another good choice."
   :group 'dslide
   :type 'hook)
 
-(defcustom dslide-default-slide-action #'dslide-action-narrow
+(defcustom dslide-default-slide-action #'dslide-slide-action-child
   "Action class with lifecycle around the section actions.
 When stepping forward or backward, it is called before any
 section action.  It's normal purpose is to update the buffer
@@ -320,18 +320,6 @@ You can configure this per-heading by setting the
 DSLIDE_SECTION_ACTIONS keyword.  You can configure it for the
 document default by adding an DSLIDE_SECTION_ACTIONS keyword."
   :type '(list function)
-  :group 'dslide)
-
-(defcustom dslide-default-child-action #'dslide-child-action-slide
-  "Action run after section lifecycle.
-Value is an action class, usually extending
-symbol `dslide-child-action'.  The usual purpose is to manage
-the child headings, which come after the section element.
-
-You can configure this per-heading by setting the
-DSLIDE_CHILD_ACTION keyword.  You can configure it for the
-document default by adding an DSLIDE_CHILD_ACTION keyword."
-  :type 'function
   :group 'dslide)
 
 (defcustom dslide-default-class 'dslide-slide
@@ -572,7 +560,7 @@ return nil at some point or else infinite loops will result.")
 This method can usually be implemented on top of
 `dslide-forward' by advancing until POINT is exceeded.  Return
 nil if POINT was not exceeded.  Return non-nil if the sense of
-progress exceeds POINT.  Usually, child actions will be
+progress exceeds POINT.  Usually, slide actions will be
 responsible for determining if the POINT belongs to this slide or
 one of its child slides, and the slide will just ask the child
 action.")
@@ -781,8 +769,9 @@ Class can be overridden to affect root behaviors.  See
   ;; that when a slide is instantiated, it needs to be sent to its end.  Usually
   ;; the default implementation, which calls forward until progress is
   ;; exhausted, is fine.  Certain actions with side-effects may not like this,
-  ;; and they should implement an actual `dslide-end' method as well as idempotent
-  ;; `dslide-begin' and `dslide-final' if any support for going backwards is desirable.
+  ;; and they should implement an actual `dslide-end' method as well as
+  ;; idempotent `dslide-begin' and `dslide-final' if any support for going
+  ;; backwards is desirable.
 
   (let (progress reached-beginning)
     ;; Burn up a step callback until one returns non-nil
@@ -885,22 +874,19 @@ once, which requires the functions to be removed or return nil."
 (defclass dslide-slide (dslide-parent dslide-stateful-sequence)
   ((slide-action
     :initform nil :initarg :slide-action
-    :documentation "Action run around both section and child actions.
-See `dslide-default-slide-action'.")
+    :documentation "Outermost action that sets up for section actions.
+Typically narrows, shows the header, creates slides from child
+headings etc.  Because narrowing and children are necessarily
+coupled, the slide action controls how children slides are
+created.  See `dslide-default-slide-action'.")
    (section-actions
     :initform nil :initarg :section-actions
     :documentation "Typical actions that work on the section.
 Live within slide action lifecycle.  See
 `dslide-default-section-actions'.")
-   (child-action
-    :initform nil :initarg :child-action
-    :documentation "Action run after section.
-Live within slide action lifecycle. See
-`dslide-default-child-action'.")
    (begin
     :initform nil :initarg :begin
     :documentation "Marker for retrieving this heading's org element."))
-
   "Stores and coordinates the actions of a heading.
 The life-cycles of actions that run for a heading overlap, and
 the slide object coordinates this overlap.  It delegates the
@@ -908,84 +894,55 @@ the slide object coordinates this overlap.  It delegates the
 order.")
 
 (cl-defmethod dslide-begin ((obj dslide-slide))
-  (when-let ((slide-action (oref obj slide-action)))
-    (dslide-begin slide-action))
-  (when-let ((section-actions (oref obj section-actions)))
-    (mapc #'dslide-begin section-actions))
-  (when-let ((child-action (oref obj child-action)))
-    (dslide-begin child-action)))
+  (prog1 (when-let ((slide-action (oref obj slide-action)))
+           (dslide-begin slide-action))
+    (mapc #'dslide-begin (oref obj section-actions))))
 
 (cl-defmethod dslide-end ((obj dslide-slide))
-  (when-let ((slide-action (oref obj slide-action)))
-    (dslide-end slide-action))
-  ;; Fairly certain the ordering of child and section actions doesn't actually
-  ;; matter for `dslide-end', but this ordering matches the situation that would
-  ;; occur if the user just called `dslide-forward' repeatedly, and we want the
-  ;; end state to be as close to "normal" as possible.
-  (when-let ((section-actions (oref obj section-actions)))
-    (mapc #'dslide-end (reverse section-actions)))
-  (when-let ((child-action (oref obj child-action)))
-    (dslide-end child-action)))
+  (prog1 (when-let ((slide-action (oref obj slide-action)))
+           (dslide-end slide-action))
+    ;; Fairly certain the ordering of slide and section actions won't normally
+    ;; matter for `dslide-end', but this ordering matches the situation that would
+    ;; occur if the user just called `dslide-forward' repeatedly, and we want the
+    ;; end state to be as close to "normal" as possible.
+    (mapc #'dslide-end (reverse (oref obj section-actions)))))
 
 (cl-defmethod dslide-final ((obj dslide-slide))
   ;; The order that these are called shouldn't matter.  No use case for coupling
   ;; different finals, but the guarantee is that the lifecycle of the slide
-  ;; actions encompass the contents actions (child and section)
-  (mapc (lambda (action)
-          (dslide-final action))
-        (oref obj section-actions))
-  (when-let ((child-action (oref obj child-action)))
-    (dslide-final child-action))
-  (when-let ((display-action (oref obj slide-action)))
-    (dslide-final display-action))
+  ;; actions encompass the section actions
+  (mapc #'dslide-final (oref obj section-actions))
+  (when-let ((slide-action (oref obj slide-action)))
+    (dslide-final slide-action))
   ;; Clean up heading marker, which is shared by children
   (set-marker (oref obj begin) nil))
 
 (cl-defmethod dslide-forward ((obj dslide-slide))
-  (let ((section-actions (oref obj section-actions))
-        (child-action (oref obj child-action))
-        (slide-action (oref obj slide-action))
-        progress)
-    (unless (or progress (null slide-action))
-      (setq progress (dslide-forward slide-action)))
-    (while (and (not progress) section-actions)
-      (setq progress (dslide-forward (pop section-actions))))
-    (unless (or progress (null child-action))
-      (setq progress (dslide-forward child-action)))
-    progress))
+  (or (seq-find #'dslide-forward (oref obj section-actions))
+      (when-let ((slide-action (oref obj slide-action)))
+        (dslide-forward slide-action))))
 
 (cl-defmethod dslide-backward ((obj dslide-slide))
-  (let ((section-actions (oref obj section-actions))
-        (child-action (oref obj child-action))
-        (slide-action (oref obj slide-action))
-        progress)
-    (unless (null child-action)
-      (setq progress (dslide-backward child-action)))
-    (unless (or progress (null slide-action))
-      (setq progress (dslide-backward slide-action)))
-    (while (and (not progress) section-actions)
-      (setq progress (dslide-backward (pop section-actions))))
-    progress))
+  (or (when-let ((slide-action (oref obj slide-action)))
+        (dslide-backward slide-action))
+      (seq-find #'dslide-backward (oref obj section-actions))))
 
 ;; `dslide--make-slide' is very critical to the user-facing configuration and
 ;; hacker-facing capabilities and API.  Slides are hydrated from org mode
 ;; headings.  We can pretty much divide the likely user needs into either what
 ;; to do with the section and what to do with the child headings.
-
-;; Because the section needs to be narrowed to, and this narrowing must be
-;; performed both forwards and backwards, we also have a slide action that runs
-;; in very particularly ordered points to keep its operation simple and reliable.
 ;;
-;; There is a chance that it will make sense to support nested s-expressions in
-;; the property configuration.  For now, there is only an observed need for
-;; configuring either the section action or just the child action.  A property
-;; configuration API that supports nesting is not expected to look that
-;; different.  It will involve a bit more parsing.
+;; The section needs to be narrowed to, and this narrowing must be performed
+;; both forwards and backwards.  Narrowing and the display of children are
+;; usually coupled, so control over the restriction and the child headings is
+;; combined into one slide action.  This action is run outside of section
+;; actions, enabling
 ;;
-;; Both child actions and user configuration have demonstrated a large benefit
+;; Both slide actions and user configuration have demonstrated a large benefit
 ;; from being able to slightly change the behavior of actions.  This is why
-;; `dslide--make-slide' supports plist arguments when hydrating from org properties
-;; and why child actions that create slides can pass these in via `args'.
+;; `dslide--make-slide' supports plist arguments when hydrating from org
+;; properties and why slide actions that create slides can pass these in via
+;; `args'.
 
 (defun dslide--make-slide (heading parent &rest args)
   "Hydrate a slide object from a HEADING element.
@@ -1000,16 +957,13 @@ may be refactored out."
   ;; Share the beginning marker across all actions.  It's not unique and
   ;; shouldn't move.
   ;; TODO Consolidate explicit nil indication around whatever is standard
+  ;; TODO Haven't needed to specify section actions from the parent yet actions.
   (let* ((begin-position (org-element-property :begin heading))
          (begin (make-marker))
          (inline (plist-get args :inline))
+         ;; slide action class can be `none' for explicit nil
          (slide-action-class (plist-get args :slide-action))
-         (slide-action-args (plist-get args :slide-action-args))
-         ;; TODO Haven't needed to specify section actions from the parent yet
-         ;; actions.
-         ;; Child action class can be `none' for explicit nil
-         (child-action-class (plist-get args :child-action))
-         (child-action-args (plist-get args :child-action-args)))
+         (slide-action-args (plist-get args :slide-action-args)))
 
     (set-marker begin begin-position (current-buffer))
 
@@ -1018,7 +972,6 @@ may be refactored out."
     (let* ((keywords (org-collect-keywords
                       '("DSLIDE_SLIDE_ACTION"
                         "DSLIDE_SECTION_ACTIONS"
-                        "DSLIDE_CHILD_ACTION"
                         "DSLIDE_FILTER"
                         "DSLIDE_CLASS")))
 
@@ -1076,31 +1029,6 @@ may be refactored out."
                                args))))
              section-action-classes))
 
-           ;; TODO Likely some precedence funk here.  Copied from above.
-           (child-action-class
-            (or child-action-class
-                (if-let ((declared
-                          (or (org-element-property :DSLIDE_CHILD_ACTION heading)
-                              (cdr (assoc-string "DSLIDE_CHILD_ACTION"
-                                                 keywords)))))
-                    (dslide--parse-class-with-args declared)
-                  dslide-default-child-action)))
-
-           (child-action (when (and child-action-class
-                                    (not (eq child-action-class 'none)))
-                           (if (consp child-action-class)
-                               (apply (car child-action-class)
-                                      :begin begin
-                                      :marker (copy-marker begin)
-                                      (append args
-                                              child-action-args
-                                              (cdr child-action-class)))
-                             (apply child-action-class
-                                    :begin begin
-                                    :marker (copy-marker begin)
-                                    (append
-                                     args
-                                     child-action-args)))))
            (filter
             (or (dslide--filter
                  (or (org-element-property :DSLIDE_FILTER heading)
@@ -1116,7 +1044,6 @@ may be refactored out."
       (let ((slide (apply (if (consp class) (car class) class)
                           :slide-action slide-action
                           :section-actions section-actions
-                          :child-action child-action
                           :filter filter
                           :parent parent
                           :begin begin
@@ -1143,9 +1070,9 @@ may be refactored out."
 
 ;; Actions are stateful sequences.  They live on a slide.  They usually work on
 ;; either the section or the children, but there is no requirement that they are
-;; exclusive to either.  Child actions should compose with section actions, such
-;; as round-robin children cycling through each child's action's forward and
-;; backward methods. TODO TODO TODO 🚧
+;; exclusive to either.  slide actions should compose with section actions, such
+;; as a round-robin slide action cycling through each child's action's forward
+;; and backward methods. TODO TODO TODO 🚧
 
 ;; ** Base Action
 (defclass dslide-action (dslide-stateful-sequence)
@@ -1188,7 +1115,6 @@ Errors when asked for a marker before one has been set."
     (if (and marker (marker-buffer marker))
         (marker-position (oset obj marker marker))
       (error "No marker was initialized"))))
-
 
 (cl-defmethod dslide-section-next ((obj dslide-action) type &optional
                                    pred reverse-in-place info no-recursion)
@@ -1259,81 +1185,6 @@ for `dslide-contents-map'."
 (cl-defmethod dslide-final ((obj dslide-action))
   (when-let ((marker (oref obj marker)))
     (set-marker marker nil)))
-
-;; ** Default Slide Action
-(defclass dslide-action-narrow (dslide-action)
-  ((include-restriction
-    :initform nil
-    :initarg :include-restriction
-    :documentation "Include the existing restriction.")
-   (breadcrumbs
-    :initform t
-    :initarg :breadcrumbs
-    :documentation "Show breadcrumbs in the header.")
-   (header
-    :initform t
-    :initarg :header
-    :documentation "Show header.")
-   (with-children
-    :initform nil :initarg :with-children
-    :documentation "Narrow should include children.
-The default, nil, narrows to the section only."))
-  "Default slide action.
-
-Most actions need the current slide to be narrowed to.  This
-action is capable of performing such narrowing and informing the
-deck of progress was made.")
-
-(cl-defmethod dslide-narrow ((obj dslide-action-narrow))
-  "Narrow to OBJ's heading.
-This function must return nil when it performs no update to the
-restriction, meaning no progress was made."
-  (let* ((progress)
-         (heading (dslide-heading obj))
-         (begin (oref obj begin))
-         (end (if (oref obj with-children)
-                  (org-element-property :end heading)
-                (dslide--section-end heading))))
-
-    (if (oref obj include-restriction)
-        (unless (and (<= (point-min) begin)
-                     (>= (point-max) end))
-          (narrow-to-region (min (point-min) begin)
-                            (max (point-max) end))
-          (run-hooks 'dslide-narrow-hook)
-          (when dslide-slide-in-effect
-            (dslide-animation-setup begin end))
-          (setq progress begin))
-      (unless (and (<= (point-min) begin)
-                   (>= (point-max) end))
-        (when (and dslide-slide-in-effect
-                   (not (oref obj inline)))
-          (dslide-animation-setup begin end))
-        (narrow-to-region begin end)
-        (run-hooks 'dslide-narrow-hook)
-        (let ((dslide-header (oref obj header)))
-          (dslide--make-header (null (oref obj breadcrumbs))))
-        (goto-char (point-min))         ; necessary to reset the scroll
-        (setq progress begin)))
-    ;; Return progress to count as step when re-narrowing after a child.
-    progress))
-
-;; This code makes little sense.  See the slide's current ordering of calling
-;; the slide action, and the reason will make sense.  A re-write will probably
-;; get it right.  The key thing to note is that a parent can't re-display itself
-;; unless it's going backwards.  It needs to display itself during end even
-;; though the end of its children may clobber it.  This works, just awkwardly.
-(cl-defmethod dslide-begin ((obj dslide-action-narrow))
-  (dslide-narrow obj))
-
-(cl-defmethod dslide-forward ((_ dslide-action-narrow)) ; odd
-  nil)
-
-(cl-defmethod dslide-backward ((obj dslide-action-narrow))
-  (dslide-narrow obj))
-
-(cl-defmethod dslide-end ((obj dslide-action-narrow))
-  (dslide-narrow obj))
 
 ;; ** Reveal items action
 ;; Reveal items has a somewhat fun implementation.  The end state is actually
@@ -1602,12 +1453,57 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   (dslide-marker obj (org-element-property :end (dslide-heading obj)))
   (dslide-begin obj))
 
-;; * Child Actions
-(defclass dslide-child-action (dslide-action) ()
-  "Base class for child actions."
+;; * Slide Actions
+;; A slide action will generally control the restriction, hydrate children, and
+;; pass through `dslide-stateful-sequence' calls to children.  There could be
+;; multiple children.  Children that are displayed in the same restriction as
+;; the parent will be hydrated with a non-nil `inline' slot value, which tells
+;; them not to try to manage the restriction on their own.  This also makes
+;; their section actions inline.
+
+(defclass dslide-slide-action (dslide-action)
+  ((breadcrumbs
+    :initform t
+    :initarg :breadcrumbs
+    :documentation "Show breadcrumbs in the header.")
+   (header
+    :initform t
+    :initarg :header
+    :documentation "Show header."))
+  "Base class for slide actions."
   :abstract t)
 
-(cl-defmethod dslide-child-next ((obj dslide-action)
+(cl-defmethod dslide-narrow ((obj dslide-slide-action)
+                             &optional with-children)
+  "Narrow to OBJ's heading
+Optional WITH-CHILDREN will include the child headings in the
+restriction.
+
+Inline children have their `inline' slot set to non-nil and will
+not attempt to narrow at all.
+
+This function must return nil when it performs no update to the
+restriction, meaning no progress was made."
+  (unless (oref obj inline)
+    (let* ((heading (dslide-heading obj))
+           (begin (oref obj begin))
+           (end (if with-children
+                    (org-element-property :end heading)
+                  (dslide--section-end heading))))
+      (unless (and (<= (point-min) begin)
+                   (>= (point-max) end))
+        (when (and dslide-slide-in-effect
+                   (not (oref obj inline)))
+          (dslide-animation-setup begin end))
+        (narrow-to-region begin end)
+        (run-hooks 'dslide-narrow-hook)
+        (let ((dslide-header (oref obj header)))
+          (dslide--make-header (null (oref obj breadcrumbs))))
+        (goto-char (point-min))         ; necessary to reset the scroll
+        ;; Return progress
+        begin))))
+
+(cl-defmethod dslide-child-next ((obj dslide-slide-action)
                                  &optional reverse-in-place)
   "Return the next direct child heading element.
 Only matches headings beginning after the marker stored in the
@@ -1632,7 +1528,7 @@ step to process the last heading."
                    (lambda (child)
                      (and (= target-level (org-element-property :level child))
                           (funcall (if reverse-in-place #'>= #'>)
-                           (org-element-property :begin child) marker)
+                                   (org-element-property :begin child) marker)
                           child))
                    nil t)))
       (prog1 next
@@ -1641,7 +1537,7 @@ step to process the last heading."
     (dslide-marker obj (org-element-property :end (dslide-heading obj)))
     nil))
 
-(cl-defmethod dslide-child-previous ((obj dslide-action)
+(cl-defmethod dslide-child-previous ((obj dslide-slide-action)
                                      &optional reverse-in-place)
   "Return the previous direct child heading element.
 Only matches child headings beginning before the marker stored in
@@ -1675,72 +1571,80 @@ state from being at the first child heading."
     (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
     nil))
 
-;; ** Default Child Action
-(defclass dslide-child-action-slide (dslide-child-action)
+;; ** Flat Slide Action
+(defclass dslide-slide-action-flat (dslide-slide-action) ()
+  "No child slides are created at all.
+Narrowing defaults to the entire subtree")
+
+(cl-defmethod dslide-begin ((obj dslide-slide-action-flat))
+  (dslide-narrow obj t))
+
+(cl-defmethod dslide-end ((obj dslide-slide-action-flat))
+  (dslide-narrow obj t))
+
+;; ** Default Slide Action
+(defclass dslide-slide-action-child (dslide-slide-action)
   ((child
     :initform nil
     :documentation "Current child."))
-  "Default child action.  Children are independent slides.")
+  "Default slide action.
+Child headings become independent slides.")
 
-(cl-defmethod dslide-forward ((obj dslide-child-action-slide))
+(cl-defmethod dslide-begin ((obj dslide-slide-action-child))
+  (dslide-narrow obj))
+
+(cl-defmethod dslide-forward ((obj dslide-slide-action-child))
   ;; For child slides, we make a slide out of the next child heading and advance
   ;; our progress forward to the end of that child
-  (let (progress)
-    (when-let ((child (oref obj child)))
-      (setq progress (dslide-forward child))
-      (unless progress
+  (or (when-let ((child (oref obj child)))
+      (if-let ((progress (dslide-forward child)))
+          progress
         (dslide-final child)
         (oset obj child nil)))
-    (unless progress
-      (when-let ((child (dslide-child-next obj)))
-        ;; TODO transitive action customization
-        (let ((child (dslide--make-slide child (oref dslide--deck slide))))
-          (dslide-begin child)
-          (oset obj child child))
-        (setq progress (org-element-property :begin child))))
-    progress))
+    (when-let ((child-heading (dslide-child-next obj)))
+      ;; TODO transitive action customization
+      (let ((child (dslide--make-slide
+                    child-heading (oref dslide--deck slide))))
+        (dslide-begin child)
+        (oset obj child child)
+        (oref child begin)))))
 
-(cl-defmethod dslide-backward ((obj dslide-child-action-slide))
+(cl-defmethod dslide-backward ((obj dslide-slide-action-child))
   ;; For child slides, we make a slide out of the previous child heading and
-  ;; advance our progress backward to the beginning of that child
-  (let (progress)
-    (when-let ((child (oref obj child)))
-      (setq progress (dslide-backward child))
-      (unless progress
-        (dslide-final child)
-        (oset obj child nil)))
-    (unless progress
-      (when-let ((child (dslide-child-previous obj)))
-        ;; TODO transitive action customization
-        (let ((child (dslide--make-slide child (oref dslide--deck slide))))
-          (dslide-end child)
-          (oset obj child child))
-        (setq progress (org-element-property :begin child))))
-    progress))
+  ;; advance our progress backward to the beginning of that child.  If there are
+  ;; no more children, we narrow back to OBJ's heading
+  (or (when-let ((child (oref obj child)))
+        (if-let ((progress (dslide-backward child)))
+            progress
+          (dslide-final child)
+          (oset obj child nil)))
+      (if-let ((child-heading (dslide-child-previous obj)))
+          ;; TODO transitive action customization
+          (let ((child (dslide--make-slide
+                        child-heading (oref dslide--deck slide))))
+            (dslide-end child)
+            (oset obj child child)
+            (oref child begin))
+        (dslide-narrow obj))))
 
-(cl-defmethod dslide-end ((obj dslide-child-action-slide))
+(cl-defmethod dslide-end ((obj dslide-slide-action-child))
   (dslide-marker obj (org-element-property :end (dslide-heading obj)))
-  (when-let ((child (dslide-child-previous obj)))
-    (let ((child (dslide--make-slide child (oref dslide--deck slide))))
-      (oset obj child child)
-      (let (dslide-slide-in-effect)
-        (dslide-end child)))))
+  (if-let ((child (dslide-child-previous obj)))
+      (let ((child (dslide--make-slide child (oref dslide--deck slide))))
+        (oset obj child child)
+        (dslide-end child))
+    (dslide-narrow obj)))
 
-(cl-defmethod dslide-final :after ((obj dslide-child-action-slide))
+(cl-defmethod dslide-final :after ((obj dslide-slide-action-child))
   (when-let ((child (oref obj child)))
     (dslide-final child)))
 
-;; ** Inline Child Action
-;; While the basics of making a child out of the next heading are the same, an
-;; action that controls children on its own does not return them to the deck.
-;; It needs to update the buffer restriction as necessary, call lifecycle
-;; functions, and pass through calls to step forward.
+;; ** Inline Slide Action
+;; TODO round-robin slide action
+;; TODO every-slide action
 
-;; TODO round-robin child action
-;; TODO every-child action
-
-;; TODO override the child's own child action
-(defclass dslide-child-action-inline (dslide-child-action)
+;; TODO override the child's own slide action
+(defclass dslide-slide-action-inline (dslide-slide-action)
   ((overlays
     :initform nil)
    (children
@@ -1748,15 +1652,17 @@ state from being at the first child heading."
     :documentation "Children that have been instantiated."))
   "Display children inline with the parent.")
 
-(cl-defmethod dslide-begin ((obj dslide-child-action-inline))
+(cl-defmethod dslide-begin ((obj dslide-slide-action-inline))
+  (dslide-narrow obj t)
   (let ((level (1+ (org-element-property :level (dslide-heading obj)))))
     (oset obj overlays
-          (dslide--contents-map (dslide-heading obj) 'headline
+          (dslide--contents-map
+           (dslide-heading obj) 'headline
            (lambda (e)
              (when (= (org-element-property :level e) level)
                (dslide-hide-element e)))))))
 
-(cl-defmethod dslide-forward ((obj dslide-child-action-inline))
+(cl-defmethod dslide-forward ((obj dslide-slide-action-inline))
   (let (progress exhausted)
     (while (not (or progress exhausted))
       ;; First try the most recently added child
@@ -1768,9 +1674,8 @@ state from being at the first child heading."
                   (child (dslide--make-slide
                           child-heading
                           (oref dslide--deck slide) ; TODO hack
-                          :slide-action 'none
-                          :inline t
-                          :child-action 'none)))
+                          :slide-action 'dslide-slide-action-inline
+                          :inline t)))
             (progn (mapc #'delete-overlay
                          (seq-intersection (oref obj overlays)
                                            (overlays-at (org-element-property
@@ -1786,7 +1691,7 @@ state from being at the first child heading."
           (setq exhausted t))))
     progress))
 
-(cl-defmethod dslide-backward ((obj dslide-child-action-inline))
+(cl-defmethod dslide-backward ((obj dslide-slide-action-inline))
   (let (progress)
     (while (and (oref obj children) (not progress))
       ;; First try the most recently added child
@@ -1804,7 +1709,8 @@ state from being at the first child heading."
                              (dslide-heading obj))))))
     progress))
 
-(cl-defmethod dslide-end ((obj dslide-child-action-inline))
+(cl-defmethod dslide-end ((obj dslide-slide-action-inline))
+  (dslide-narrow obj t)
   (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
   (let (exhausted)
     (while (not exhausted)
@@ -1813,15 +1719,14 @@ state from being at the first child heading."
           (let* ((child (dslide--make-slide
                          child-heading
                          (oref dslide--deck slide) ; TODO hack.
-                         :slide-action 'none
-                         :inline t
-                         :child-action 'none)))
+                         :slide-action 'dslide-slide-action-inline
+                         :inline t)))
             (let ((dslide-slide-in-effect nil))
               (dslide-end child))
             (push child (oref obj children)))
         (setq exhausted t)))))
 
-(cl-defmethod dslide-final :after ((obj dslide-child-action-inline))
+(cl-defmethod dslide-final :after ((obj dslide-slide-action-inline))
   (mapc #'delete-overlay (oref obj overlays))
   (mapc #'dslide-final (oref obj children)))
 

@@ -26,8 +26,7 @@ Version 0.4.0 👷
 - Stabilizing the API and naming (as in not stable yet)
 - Gathering user feedback & experience
 - Accepting PR's and issue reports
-- Composed children actions coming soon™
-  + This is very close.  I will likely combine the "parent" and "child" actions into new slide classes instead because their behavior is inherently coupled and requires coordination on the slide class.
+- Composed slide actions coming soon™
 
 The user-facing API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
 * Installation
@@ -120,9 +119,8 @@ The out-of-the-box experience can be a bit messy due to property drawers, keywor
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
-- =DSLIDE_SLIDE_ACTION=: Usually narrows to the slide.  Lifecycle encloses the section.
+- =DSLIDE_SLIDE_ACTION=: Usually narrows to the slide and creates children from child headings.  Lifecycle encloses the section.
 - =DSLIDE_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
-- =DSLIDE_CHILD_ACTION=: Used to customize if and how child headings become slides
 
 Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 
