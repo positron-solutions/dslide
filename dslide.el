@@ -305,7 +305,7 @@ keyword."
   :group 'dslide)
 
 ;; TODO test the use of plist args
-(defcustom dslide-default-actions '()
+(defcustom dslide-default-actions '(dslide-action-hide-markup)
   "Actions that run within the section display action lifecycle.
 It's value is a list of symbol `dslide-action' sub-classes or (CLASS . ARGS)
 forms where ARGS is a plist.  Each subclass will be instantiated
@@ -1004,10 +1004,10 @@ Many optional ARGS.  See code."
            ;; in an inline child versus an independent slide, even by looking at
            ;; the restriction.
            (section-action-classes
-            (or (dslide--parse-classes-with-args
-                 (or (org-element-property :DSLIDE_ACTIONS heading)
-                     (cdr (assoc-string "DSLIDE_ACTIONS" keywords))))
-                dslide-default-actions))
+            (append (dslide--parse-classes-with-args
+                     (or (org-element-property :DSLIDE_ACTIONS heading)
+                         (cdr (assoc-string "DSLIDE_ACTIONS" keywords))))
+                    dslide-default-actions))
            (section-actions
             (mapcar
              (lambda (c) (when c
@@ -1178,7 +1178,22 @@ for `dslide-contents-map'."
   (when-let ((marker (oref obj marker)))
     (set-marker marker nil)))
 
-;; ** Reveal items action
+;; ** Hide Markup Action
+(defclass dslide-action-hide-markup (dslide-action)
+  ((types
+    :initform '(drawer property-drawer keyword)
+    :initarg :types
+    :description "Either org element or types that should be hidden."))
+  "Hides element based on type.")
+
+(cl-defmethod dslide-begin ((obj dslide-action-hide-markup))
+  (dslide-section-map obj (oref obj types)
+                      (lambda (e) (push (dslide-hide-element e) dslide--overlays))))
+
+(cl-defmethod dslide-end ((obj dslide-action-hide-markup))
+  (dslide-begin obj))
+
+;; ** Item Reveal Action
 ;; Reveal items has a somewhat fun implementation.  The end state is actually
 ;; simpler than the begin state.  Going forward, we must remove overlays and
 ;; animate items.  Going backward, we add overlays.  When starting at the end,
