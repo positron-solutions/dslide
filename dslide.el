@@ -1592,16 +1592,16 @@ Child headings become independent slides.")
   ;; For child slides, we make a slide out of the next child heading and advance
   ;; our progress forward to the end of that child
   (or (when-let ((child (oref obj child)))
-      (if-let ((progress (dslide-forward child)))
-          progress
-        (dslide-final child)
-        (oset obj child nil)))
-    (when-let ((child-heading (dslide-child-next obj)))
-      ;; TODO transitive action customization
-      (let ((child (dslide--make-slide child-heading)))
-        (dslide-begin child)
-        (oset obj child child)
-        (oref child begin)))))
+        (if-let ((progress (dslide-forward child)))
+            progress
+          (dslide-final child)
+          (oset obj child nil)))
+      (when-let ((child-heading (dslide-child-next obj)))
+        ;; TODO transitive action customization
+        (let ((child (dslide--make-slide child-heading)))
+          (dslide-begin child)
+          (oset obj child child)
+          (oref child begin)))))
 
 (cl-defmethod dslide-backward ((obj dslide-slide-action-child))
   ;; For child slides, we make a slide out of the previous child heading and
@@ -1639,8 +1639,7 @@ Child headings become independent slides.")
     (dslide-final child)))
 
 ;; ** Inline Slide Action
-;; TODO round-robin slide action
-;; TODO every-slide action
+;; TODO round-robin
 
 ;; TODO override the child's own slide action
 (defclass dslide-slide-action-inline (dslide-slide-action)
