@@ -64,10 +64,12 @@ If you display the slideshow in one window or frame, you can configure the point
 - *Deck*: an object that is used to relate the display and base buffer and is the root of all sequences.  It's another word for "presentation" or PT.
 - *Slide*: an object that interprets an org heading to hydrate its actions
 - *Action*: an object that responds to ~dslide-deck-forward~ and ~dslide-deck-backward~ calls and implements lifecycle methods to initialize and clean up state
+  + *Slide Action*: an action subclass that handles initial display of the slide and creation of child slides from sub-headings.
+  + *Section Actions*: actions that typically control the display and behavior of a heading's section, the region between the headline and child headings.
 - *Step*: a single call to ~dslide-deck-foward~ or ~dslide-deck-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods
-- *Contents*: use org folding to create a view of folded headings to quickly navigate slides
+- *Contents*: A view of the folded root headings that is used for quickly navigating between headings during a presentation.
 - *Slide Buffer*: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name.
-  + Inderect buffer and =slide-buffer= are used interchangeably
+  + Indirect buffer and =slide-buffer= are used interchangeably
   + Base buffer or =base-buffer= is used pretty exclusively
 * Configuring
 Be sure to check =M-x= ~customize-group~ =dslide= to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
@@ -120,7 +122,7 @@ The out-of-the-box experience can be a bit messy due to property drawers, keywor
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
 - =DSLIDE_SLIDE_ACTION=: Usually narrows to the slide and creates children from child headings.  Lifecycle encloses the section.
-- =DSLIDE_SECTION_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+- =DSLIDE_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
 
 Some actions must be fully enclosed by the lifecycle of a surrounding action, such as narrowing to the headline and section before displaying a contained list item-by-item.
 
@@ -141,14 +143,14 @@ Many actions understand arguments, allowing tuning of similar behaviors from the
 Configuring the slot is done by adding plist-style properties after the class name:
 #+begin_src org
   :PROPERTIES:
-  :DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal :inline t
+  :DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
   :END:
 #+end_src
 You can also use "property+" syntax to add to a property, and these accept plist arguments too:
 #+begin_src org
   :PROPERTIES:
-  :DSLIDE_SECTION_ACTIONS: dslide-action-babel
-  :DSLIDE_SECTION_ACTIONS+: dslide-action-images :fullscreen t
+  :DSLIDE_ACTIONS: dslide-action-babel
+  :DSLIDE_ACTIONS+: dslide-action-images :fullscreen t
   :END:
 #+end_src
 * Customizing
@@ -310,7 +312,7 @@ A consequence of this is that there are usually multiple actions alive at once. 
 ** Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
 *** Secondary Commands
-See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-deck-start~
+See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-deck-start~.  I think this command will turn into ~dslide-deck-secondary~ in the ~dslide-mode-map~.
 *** ~dslide-goto~, starting from point
 Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
 *** Affiliated Buffers

@@ -7,7 +7,7 @@
 2. Press the right arrow key ➡️
 ** Controls
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
+:DSLIDE_ACTIONS: dslide-action-item-reveal
 :END:
 See the ~dslide-mode-map~ but basically, arrow keys.
 - right arrow ➡️ ~dslide-deck-forward~
@@ -16,7 +16,7 @@ See the ~dslide-mode-map~ but basically, arrow keys.
 - down arrow  ⬇️ ~dslide-deck-stop~
 *** Contents View
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
+:DSLIDE_ACTIONS: dslide-action-item-reveal
 :END:
 After a presentation is started, up arrow ⬆️ goes to the contents view.
 
@@ -79,7 +79,7 @@ This slide shows its child headings inline.
 - Failure is an option
 * Reveal Items
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-item-reveal
+:DSLIDE_ACTIONS: dslide-action-item-reveal
 :END:
 Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
@@ -88,7 +88,7 @@ Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
 * Image Slides
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-image
+:DSLIDE_ACTIONS: dslide-action-image
 :END:
 - The action will automatically turn on inline images so you don't have to remember to run ~org-toggle-inline-images~.
 - The image buffer is configured to act as a slide, so it still responds to the keybindings.
@@ -99,7 +99,7 @@ Positron is deeply committed to bringing you the finest in:
  [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * No Header Slide
 :PROPERTIES:
-:DSLIDE_SLIDE_ACTION: dslide-action-narrow :header nil
+:DSLIDE_ACTION: dslide-action-narrow :header nil
 :END:
 - The content and heading are still displayed
 - The slide-in effect still works
@@ -108,7 +108,7 @@ Positron is deeply committed to bringing you the finest in:
   =M-x describe-symbol dslide-action-narrow=
 * Babel Slide Integration
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:DSLIDE_ACTIONS: dslide-action-babel
 :END:
 Go 2-3 steps forwards and then backwards.  This slide also supports starting at the end.  Just go to the next slide and back up.
 #+attr_dslide: begin end
@@ -153,7 +153,7 @@ Can has display?
 ** No Display!  Only Execute!
 :PROPERTIES:
 :DSLIDE_SLIDE_ACTION: nil
-:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:DSLIDE_ACTIONS: dslide-action-babel
 :END:
 These four org blocks will not be displayed since this slide has no slide action.  They will however execute when navigating forward and backward.  Note these features:
 
@@ -195,7 +195,7 @@ Our cleanup is always run, after everything
 #+end_src
 * Package Integration
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:DSLIDE_ACTIONS: dslide-action-babel
 :END:
 - You need the ~master-of-ceremonies~ package installed to complete this slide.
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
@@ -229,7 +229,7 @@ Our cleanup is always run, after everything
   #+end_src
 * Babel is every Feature
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:DSLIDE_ACTIONS: dslide-action-babel
 :END:
 If a feature seems like it's missing, it can probably be added.  There is a babel block below this paragraph, but if you are viewing this presentation, you won't see it because it has hidden itself with an overlay.  File an issue, but don't be held back.  A quick hunk of [[info:elisp#Top][elisp]] can solve every problem.
 #+attr_dslide: begin end
@@ -262,7 +262,7 @@ Positron is cheating and also apply custom line-spacing and line-height.  While 
 Bind the command ~dslide-deck-start~ in the ~org-mode-map~.  Any key will do.
 ** Custom Actions
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-babel
+:DSLIDE_ACTIONS: dslide-action-babel
 :END:
 The babel block below is a custom action supporting both forward, each step making a paragraph red when going forward or removing the red when going backward.  Key methods you want to use in your custom actions:
 - ~dslide-section-next~
@@ -306,7 +306,7 @@ The babel block below is a custom action supporting both forward, each step maki
 #+end_src
 *** Custom Action Demo
 :PROPERTIES:
-:DSLIDE_SECTION_ACTIONS: dslide-action-red-paragraphs
+:DSLIDE_ACTIONS: dslide-action-red-paragraphs
 :END:
 Massachusetts, in particular, has always been one of the laboratories of democracy. It's where people try things before they're popular. It's where we experiment.
 

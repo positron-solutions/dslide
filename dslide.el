@@ -295,7 +295,7 @@ again.  `dslide-deck-stop' is another good choice."
   "Action class with lifecycle around the section actions.
 When stepping forward or backward, it is called before any
 section action.  It's normal purpose is to update the buffer
-restriction before section-actions are run.
+restriction before section actions are run.
 
 You can configure this per-heading by setting the
 SLIDE_ACTION keyword.  You can configure it for
@@ -305,7 +305,7 @@ keyword."
   :group 'dslide)
 
 ;; TODO test the use of plist args
-(defcustom dslide-default-section-actions '()
+(defcustom dslide-default-actions '()
   "Actions that run within the section display action lifecycle.
 It's value is a list of symbol `dslide-action' sub-classes or (CLASS . ARGS)
 forms where ARGS is a plist.  Each subclass will be instantiated
@@ -316,9 +316,9 @@ Many section actions are no-op whenever the content doesn't
 contain any elements they act on.  You can add classes to this
 list in order to have default behaviors for some org elements.
 
-You can configure this per-heading by setting the
-DSLIDE_SECTION_ACTIONS keyword.  You can configure it for the
-document default by adding an DSLIDE_SECTION_ACTIONS keyword."
+You can configure this per-heading by setting the DSLIDE_ACTIONS
+keyword.  You can configure it for the document default by adding
+an DSLIDE_ACTIONS keyword."
   :type '(list function)
   :group 'dslide)
 
@@ -883,7 +883,7 @@ created.  See `dslide-default-slide-action'.")
     :initform nil :initarg :section-actions
     :documentation "Typical actions that work on the section.
 Live within slide action lifecycle.  See
-`dslide-default-section-actions'.")
+`dslide-default-actions'.")
    (begin
     :initform nil :initarg :begin
     :documentation "Marker for retrieving this heading's org element."))
@@ -971,7 +971,7 @@ may be refactored out."
     ;; instantiate them all.
     (let* ((keywords (org-collect-keywords
                       '("DSLIDE_SLIDE_ACTION"
-                        "DSLIDE_SECTION_ACTIONS"
+                        "DSLIDE_ACTIONS"
                         "DSLIDE_FILTER"
                         "DSLIDE_CLASS")))
 
@@ -1012,9 +1012,9 @@ may be refactored out."
            ;; the restriction.
            (section-action-classes
             (or (dslide--parse-classes-with-args
-                 (or (org-element-property :DSLIDE_SECTION_ACTIONS heading)
-                     (cdr (assoc-string "DSLIDE_SECTION_ACTIONS" keywords))))
-                dslide-default-section-actions))
+                 (or (org-element-property :DSLIDE_ACTIONS heading)
+                     (cdr (assoc-string "DSLIDE_ACTIONS" keywords))))
+                dslide-default-actions))
            (section-actions
             (mapcar
              (lambda (c) (when c
