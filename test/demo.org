@@ -118,7 +118,7 @@ Positron is deeply committed to bringing you the finest in:
  [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * No Header Slide
 :PROPERTIES:
-:DSLIDE_ACTION: dslide-action-narrow :header nil
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-child :header nil
 :END:
 - The content and heading are still displayed
 - The slide-in effect still works
