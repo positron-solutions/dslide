@@ -263,8 +263,6 @@ If a feature seems like it's missing, it can probably be added.  There is a babe
 View customize variables by calling =M-x customize-group RET dslide=
 ** Slide Actions
 Slide actions are configured using the heading's property drawer.
-** Hiding Markup
-Check out ~mc-hide-markup-mode~ in the [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package.
 ** Steezing Org
 The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
 

@@ -1181,14 +1181,25 @@ for `dslide-contents-map'."
 ;; ** Hide Markup Action
 (defclass dslide-action-hide-markup (dslide-action)
   ((types
-    :initform '(drawer property-drawer keyword)
+    :initform '(drawer property-drawer)
     :initarg :types
     :description "Either org element or types that should be hidden."))
   "Hides element based on type.")
 
 (cl-defmethod dslide-begin ((obj dslide-action-hide-markup))
   (dslide-section-map obj (oref obj types)
-                      (lambda (e) (push (dslide-hide-element e) dslide--overlays))))
+                      (lambda (e) (push (dslide-hide-element e) dslide--overlays)))
+  ;; Ooooh! right, yeah, the element parser doesn't give you affiliated keywords
+  ;; when you ask for keywords.  As much sense as that would make, the only
+  ;; technique I've found for this is falling back to regex.
+  (save-excursion
+    (let ((bound (org-element-property :end (dslide-heading obj))))
+      (goto-char (oref obj begin))
+      (while (re-search-forward org-keyword-regexp bound t)
+        (let ((overlay (make-overlay (match-beginning 0)
+                                     (1+ (match-end 0)))))
+          (overlay-put overlay 'invisible t)
+          (push dslide--overlays overlay))))))
 
 (cl-defmethod dslide-end ((obj dslide-action-hide-markup))
   (dslide-begin obj))
