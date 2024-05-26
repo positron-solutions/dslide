@@ -22,13 +22,13 @@ Fully programmable sequences behind a two-button interface:
 - Integration with Elisp programs and arbitrary Emacs buffers
 - Custom class support for extending the framework
 ** Status 🛠️
-Version 0.5.0 👷
-- Stabilizing the API and naming (as in not stable yet)
-- Gathering user feedback & experience
+Version 0.5.1 👷
+- Stabilizing the API and naming (as in *not completely* stable yet)
+- Gathering user feedback & experience to pinpoint actual use patterns
 - Accepting PR's and issue reports
-- Composed slide actions coming soon™
+- Some behaviors may be advertised as working already when they are only 90% implemented.  *File issues*.
 
-The user-facing API will look pretty similar to what is already there today, but if any keys change, I'll call ~warn~ on the old keys.
+The user-facing configuration API has been pretty unstable, but now that nested slide actions are supported, it is likely to remain roughly like it is now.
 * Installation
 This isn't on a package archive yet.  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates.
  #+begin_src elisp
@@ -59,7 +59,11 @@ Call ~dslide-contents~ to show a contents overview.  Calling ~dslide-deck-forwar
 ** Clean Buffer State
 The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy 💩.
 ** Follow Along
-If you display the slideshow in one window or frame, you can configure the point to follow the slide in the base buffer, enabling you to see the full markup and even edit the presentation while developing your customizations.
+Check out ~dslide-deck-develop~.  You can see the markup and the returned approximate progress indications.  Babel actions will highlight blocks as they execute.
+** Hides Markup
+By default, the ~dslide-action-hide-markup~ action is configured in ~dslide-default-actions~.  Looks clean out of the box.
+
+🚧 The current element hiding is implemented with overlays.  I can be done with font-locking, but this is easier done in a minor mode like how ~org-modern~ works.
 * Glossary
 - *Deck*: an object that is used to relate the display and base buffer and is the root of all sequences.  It's another word for "presentation" or PT.
 - *Slide*: an object that interprets an org heading to hydrate its actions
@@ -113,11 +117,9 @@ Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base 
 The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
 #+begin_src elisp
   ;; Something like this should work
-  (add-hook 'dslide-start-hook mc-hide-markup-mode)
-  (add-hook 'dslide-narrow-hook #'mc-hide-refresh)
   (add-hook 'dslide-start-hook mc-hide-cursor-mode)
 #+end_src
-🚧 I implemented ~mc~'s hiding with overlays, but I might switch to font-locking.  Overlays were easier to clean up, but since switching to using an indirect buffer for the presentation, this is no longer a problem.
+
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
@@ -247,11 +249,11 @@ Never worry about turning on pretty links for a presentation.  Edit them by just
 * Domain Model
 This is a description of how the pieces of the program *must* fit together.  For any deep customization or hacking, the section is essential reading.  At the least, it will *greatly improve your success*.
 
-⚠️ Even if the current implementation differs, trust this domain model and expect the implementation to approach it.
+⚠️ +Even if the current implementation differs, trust this domain model and expect the implementation to approach it.+  *This section is pretty accurate as of 0.5.0*
 
 - The user interface ~dslide-deck-forward~ and ~dslide-deck-backward~ is a concrete requirement that drives most of the rest of the implementation and feature design.
-- Because Org's basic structure is about trees, we need to nest sequences of steps to represent a tree of sequences.  Not flattening the tree is more flexible and was chosen.
-- The element parser and presentation tends to prefer breadth-first style, working on the section element before the child headings.
+- Because Org's basic structure is about trees, we need to nest these sequences.  Flattening the tree was more limiting and not chosen.
+- There is a little bit of action composition because the slide action always runs outside the life cycle of the other actions.  This allows it to control the buffer restriction or switch to a child in the appropriate order.
 ** Stateful Sequence Class
 This class is the heart of providing the common user interface and convenient implementation interface for extending the package.
 *** Command Pattern
@@ -288,18 +290,14 @@ Navigating a tree involves depth.  Descendants may care about what happened in a
 *** Telescoping Calls
 At one time, slides were to be mostly independent and not running at the same time.  While this simplified some things, it was limited.
 
-Nesting slide actions might require updating several children concurrently.  This was impossible to implement without pulling logic down into the parent slide's actions.  Thus, the implementation calls through parents into children usually.
-*** Child, Section, and Slide
-It is extremely natural that a slide action will fill one of three roles:
-- Narrow to the contents its actions work on
-- Perform some steps on the heading's section
-- Perform steps on the heading's children, including instantiating slides and calling their methods, which may narrow to them
-**** Multiple Slide Property Keys
-The three natural roles for actions are why there are more than one heading property for configuring actions.  Each action is easier to implement if they only fill one role.  It is easier for the user to configure a slide if they only have to declare one action.  By breaking up the slide's typical actions, we can configure with enough granularity to usually only touch one heading property.  The only drawback is that hydration has to do a little bit of extra work.
-**** Actions are Concurrent
-(mostly).  Each slide is holding onto several actions.  The lifetime of the slide action encompasses the section and child.  There are some remaining quirks that are likely more to do with badly implemented children 🚧
+Nesting slides and calling their actions might require updating several children concurrently.  This was impossible to implement without pulling logic down into the parent slide's actions.  Thus, the implementation calls through parents into children, sometimes calling several children.
+*** Slide Actions
+The reason slide actions are distinct from other actions:
+1. They need to encompass the lifecycle of the "section" actions
+2. Narrowing and handling the display of inline child slides are a coupled problem.
+The lifetime of the slide action encompasses the section actions.  It narrows or switches to a childe before the section actions attempt to work on the contents.
 *** Trees & Lifetime
-If something depends on something else existing or having been set up, its lifetime must be fully encompassed by that other thing.  Especially since we are going forward & backward, cleanups must happen on both ends of a sequence.
+If something depends on something else existing or having been set up, its lifetime must be fully encompassed by that other thing.  Especially since we are going forward & backward, setup & cleanup must happen on both ends of a sequence.
 
 It is natural that a parent heading out-lives its child.  User can take advantage of this by using the document or higher level headings to store state that needs to be shared by children.  The ~final~ calls for those things can call cleanup.
 *** Slides & Action Lifetime
@@ -311,6 +309,13 @@ A consequence of this is that there are usually multiple actions alive at once. 
 - If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
 ** Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
+
+*** Slide Action Precedence
+When a slide is created in ~dslide-make-slide~, it can obtain them from several places:
+- passed in arguments, as slide actions do to prevent children from trying to display themselves
+- properties, how slides are usually configured
+- customize variables that set the default actions.
+The order of precedence and capability to override options is still pretty immature.
 *** Secondary Commands
 See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-deck-start~.  I think this command will turn into ~dslide-deck-secondary~ in the ~dslide-mode-map~.
 *** ~dslide-goto~, starting from point
