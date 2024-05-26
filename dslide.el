@@ -2606,7 +2606,9 @@ the caller."
   (dslide-begin dslide--deck))
 
 (defun dslide-display-develop ()
-  (dslide-display-slides)
+  (let ((slide-buffer (oref dslide--deck slide-buffer)))
+    (unless (get-buffer-window slide-buffer))
+     (display-buffer slide-buffer 'display-buffer-same-window))
   (let ((base-buffer (oref dslide--deck base-buffer)))
     (unless (get-buffer-window base-buffer)
       (display-buffer base-buffer 'display-buffer-pop-up-window))))
@@ -2754,12 +2756,15 @@ TODO Add support for arbitrary secondary tasks like playing a
 video or custom actions."
   (interactive)
   (if (dslide-live-p)
-      (progn (dslide--ensure-slide-buffer)
-             (if (dslide--showing-slides-p)
-                 ;; TODO check for secondary task here
-                 (dslide-display-contents)
-               (dslide--choose-slide dslide--deck 'contents)
-               (dslide-display-slides)))
+      (if (get-buffer-window (oref dslide--deck slide-buffer))
+          (progn
+            (dslide--ensure-slide-buffer)
+            (if (dslide--showing-slides-p)
+                ;; TODO check for secondary task here
+                (dslide-display-contents)
+              (dslide--choose-slide dslide--deck 'contents)
+              (dslide-display-slides)))
+        (dslide--ensure-slide-buffer t))
     (let ((dslide-start-function
            #'dslide-display-slides))
       (dslide-mode 1))))
