@@ -1205,7 +1205,8 @@ for `dslide-contents-map'."
 (cl-defmethod dslide-forward ((obj dslide-action-item-reveal))
   ;;  Item reveal / hide repeats in place, so we pass a final t to
   ;;  `dslide-section-next'.
-  (when-let* ((next-item (dslide-section-next obj 'item nil t)))
+  (when-let* ((next-item (dslide-section-next obj 'item nil t))
+              (progress (org-element-property :begin next-item)))
     (let ((item-overlays (seq-intersection (oref obj overlays)
                                            (overlays-at (org-element-property
                                                          :begin next-item)))))
@@ -1222,14 +1223,15 @@ for `dslide-contents-map'."
           ;; from some other action
           (mapc #'delete-overlay item-overlays))))
     ;; return progress
-    (oref obj marker)))
+    progress))
 
 (cl-defmethod dslide-backward ((obj dslide-action-item-reveal))
-  (when-let ((previous-item (dslide-section-previous obj 'item)))
+  (when-let ((previous-item (dslide-section-previous obj 'item))
+             (progress (org-element-property :begin previous-item)))
     (push (dslide-hide-element previous-item (oref obj inline))
           (oref obj overlays))
     ;; return progress
-    (oref obj marker)))
+    progress))
 
 ;; ** Babel Action
 
