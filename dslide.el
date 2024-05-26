@@ -911,14 +911,21 @@ order.")
   (set-marker (oref obj begin) nil))
 
 (cl-defmethod dslide-forward ((obj dslide-slide))
-  (or (seq-find #'dslide-forward (oref obj section-actions))
+  (or (dslide--map-find #'dslide-forward (oref obj section-actions))
       (when-let ((slide-action (oref obj slide-action)))
         (dslide-forward slide-action))))
 
 (cl-defmethod dslide-backward ((obj dslide-slide))
   (or (when-let ((slide-action (oref obj slide-action)))
         (dslide-backward slide-action))
-      (seq-find #'dslide-backward (oref obj section-actions))))
+      (dslide--map-find #'dslide-backward (oref obj section-actions))))
+
+(cl-defgeneric dslide--map-find (pred sequence)
+  "Find first non-nil return value from mapping PRED over SEQUENCE."
+  (let (found)
+    (while (and sequence (not found))
+      (setq found (funcall pred (pop sequence))))
+    found))
 
 ;; `dslide--make-slide' is very critical to the user-facing configuration and
 ;; hacker-facing capabilities and API.  Slides are hydrated from org mode
