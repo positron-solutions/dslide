@@ -1203,27 +1203,30 @@ for `dslide-contents-map'."
 
 ;; TODO Overlay intersection could be consolidated for use in other actions.
 (cl-defmethod dslide-forward ((obj dslide-action-item-reveal))
-  ;;  Item reveal / hide repeats in place, so we pass non-nil `goto-end' to
+  ;;  Item reveal / hide repeats in place, so we pass a final t to
   ;;  `dslide-section-next'.
   (when-let* ((next-item (dslide-section-next obj 'item nil t)))
-    ;; TODO ensure animation starts immediately
-    (when dslide-slide-in-effect
-      (dslide-animation-setup (org-element-property :begin next-item)
-                              (org-element-property :end next-item)))
-    ;; Because the user might add items etc, and to avoid the need for
-    ;; keys matching items to our overlays, we intersect overlays we are
-    ;; managing with overlays found at point, which could include overlays
-    ;; from some other action
-    (mapc #'delete-overlay
-          (seq-intersection (oref obj overlays)
-                            (overlays-at (org-element-property
-                                          :begin next-item))))
+    (let ((item-overlays (seq-intersection (oref obj overlays)
+                                           (overlays-at (org-element-property
+                                                         :begin next-item)))))
+      (oset obj overlays (seq-difference (oref obj overlays)
+                                         item-overlays))
+      (when dslide-slide-in-effect
+        (if (oref obj inline)
+            (mapc #'dslide-animation-peel item-overlays)
+          (dslide-animation-setup (org-element-property :begin next-item)
+                                  (org-element-property :end next-item))
+          ;; Because the user might add items etc, and to avoid the need for
+          ;; keys matching items to our overlays, we intersect overlays we are
+          ;; managing with overlays found at point, which could include overlays
+          ;; from some other action
+          (mapc #'delete-overlay item-overlays))))
     ;; return progress
     (oref obj marker)))
 
 (cl-defmethod dslide-backward ((obj dslide-action-item-reveal))
   (when-let ((previous-item (dslide-section-previous obj 'item)))
-    (push (dslide-hide-element previous-item)
+    (push (dslide-hide-element previous-item (oref obj inline))
           (oref obj overlays))
     ;; return progress
     (oref obj marker)))
@@ -2164,9 +2167,21 @@ assumes the buffer is restricted and that there is a first tree."
 
 ;; * Animation
 
+(defun dslide-animation-peel (overlay)
+  "Peel away and delete OVERLAY."
+  (let ((timer (timer-create))
+        (peel-rate (/ dslide-animation-duration
+                      (max 1 (- (overlay-end overlay)
+                                (overlay-start overlay))))))
+    (push timer dslide--animation-timers)
+    (push overlay dslide--animation-overlays)
+    (timer-set-time timer (current-time) peel-rate)
+    (timer-set-function timer #'dslide--animate-peel
+                        (list timer overlay))
+    (timer-activate timer)))
+
 ;; TODO move respect for animation variables into this function
 ;; TODO Support non-graphical
-;; TODO Inline animation fallback, uncover text character by character.
 ;; TODO User-provided animation override function
 (defun dslide-animation-setup (beg end)
   "Slide in the region from BEG to END.
@@ -2214,6 +2229,19 @@ and the value of `point-max' should contain a newline somewhere."
            (lines dslide-slide-in-blank-lines)
            (line-height (+ initial-line-height (* lines fraction))))
       (overlay-put overlay 'line-height line-height))))
+
+(defun dslide--animate-peel (timer overlay)
+  (let ((start (overlay-start overlay))
+        (end (overlay-end overlay)))
+    (setf (overlay-start overlay) (1+ start))
+    (when (= (1+ start) end)
+      (cancel-timer timer)
+      (setq dslide--animation-timers
+            (delq timer dslide--animation-timers))
+      ;; TODO evaporation?
+      (delete-overlay overlay)
+      (setq dslide--animation-overlays
+            (delq overlay dslide--animation-overlays)))))
 
 (defun dslide--animation-cleanup ()
   (while dslide--animation-timers
