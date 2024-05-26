@@ -566,13 +566,7 @@ one of its child slides, and the slide will just ask the child
 action.")
 
 ;; ** Stateful Sequence
-(defclass dslide-stateful-sequence ()
-  ;; TODO parent slot is possibly vestigial
-  ((parent
-    :initval nil
-    :initarg :parent
-    :documentation "Parent or root sequence."))
-
+(defclass dslide-stateful-sequence () ()
   "An interface definition for linear sequences of steps.
 This is an abstract class.
 
@@ -820,11 +814,10 @@ Class can be overridden to affect root behaviors.  See
   ;; TODO apply filter when choosing starting slide
   (cond ((eq how 'first)
          (oset obj slide (dslide--make-slide
-                          (dslide--document-first-heading) obj)))
+                          (dslide--document-first-heading))))
         ((eq how 'contents)
          (oset obj slide (dslide--make-slide
-                          (dslide--root-heading-at-point (point))
-                          obj)))
+                          (dslide--root-heading-at-point (point)))))
         ((eq how 'point)
          (let ((base-point (with-current-buffer (oref obj base-buffer)
                              (point))))
@@ -832,7 +825,7 @@ Class can be overridden to affect root behaviors.  See
            ;; the child with a point argument.
            (oset obj slide
                  (dslide--make-slide
-                  (dslide--root-heading-at-point base-point) obj))))))
+                  (dslide--root-heading-at-point base-point)))))))
 
 (cl-defmethod dslide-deck-live-p ((obj dslide-deck))
   "Check if all of OBJ's buffers are alive or can be recovered."
@@ -944,16 +937,9 @@ order.")
 ;; properties and why slide actions that create slides can pass these in via
 ;; `args'.
 
-(defun dslide--make-slide (heading parent &rest args)
+(defun dslide--make-slide (heading &rest args)
   "Hydrate a slide object from a HEADING element.
-Many optional ARGS.  See code.  PARENT is possibly redundant and
-may be refactored out."
-  ;; function doesn't error but results in nil begin marker if we don't fail
-  (unless heading
-    (error "No heading provided"))
-  (unless parent
-    (error "No parent provided"))
-
+Many optional ARGS.  See code."
   ;; Share the beginning marker across all actions.  It's not unique and
   ;; shouldn't move.
   ;; TODO Consolidate explicit nil indication around whatever is standard
@@ -1045,7 +1031,6 @@ may be refactored out."
                           :slide-action slide-action
                           :section-actions section-actions
                           :filter filter
-                          :parent parent
                           :begin begin
                           (when (consp class)
                             (cdr class)))))
@@ -1054,12 +1039,12 @@ may be refactored out."
 (cl-defmethod dslide-next-sibling ((obj dslide-slide) filter)
   (when-let* ((heading (dslide-heading obj))
               (next-heading (dslide--next-sibling heading filter)))
-    (dslide--make-slide next-heading (oref obj parent))))
+    (dslide--make-slide next-heading)))
 
 (cl-defmethod dslide-previous-sibling ((obj dslide-slide) filter)
   (when-let* ((heading (dslide-heading obj))
               (previous-heading (dslide--previous-sibling heading filter)))
-    (dslide--make-slide previous-heading (oref obj parent))))
+    (dslide--make-slide previous-heading)))
 
 (cl-defmethod dslide-heading ((obj dslide-slide))
   "Return the OBJ's heading element."
@@ -1603,8 +1588,7 @@ Child headings become independent slides.")
         (oset obj child nil)))
     (when-let ((child-heading (dslide-child-next obj)))
       ;; TODO transitive action customization
-      (let ((child (dslide--make-slide
-                    child-heading (oref dslide--deck slide))))
+      (let ((child (dslide--make-slide child-heading)))
         (dslide-begin child)
         (oset obj child child)
         (oref child begin)))))
@@ -1620,8 +1604,7 @@ Child headings become independent slides.")
           (oset obj child nil)))
       (if-let ((child-heading (dslide-child-previous obj)))
           ;; TODO transitive action customization
-          (let ((child (dslide--make-slide
-                        child-heading (oref dslide--deck slide))))
+          (let ((child (dslide--make-slide child-heading)))
             (dslide-end child)
             (oset obj child child)
             (oref child begin))
@@ -1633,7 +1616,7 @@ Child headings become independent slides.")
         (point-max (point-max)))
     ;; TODO existing hidden babel kind of a hack
     (if-let ((child (dslide-child-previous obj)))
-        (let ((child (dslide--make-slide child (oref dslide--deck slide))))
+        (let ((child (dslide--make-slide child)))
           (oset obj child child)
           (dslide-end child)
           (when (and (= point-min (point-min))
@@ -1679,7 +1662,6 @@ Child headings become independent slides.")
         (if-let* ((child-heading (dslide-child-next obj))
                   (child (dslide--make-slide
                           child-heading
-                          (oref dslide--deck slide) ; TODO hack
                           :slide-action 'dslide-slide-action-inline
                           :inline t)))
             (progn (mapc #'delete-overlay
@@ -1724,7 +1706,6 @@ Child headings become independent slides.")
       (if-let* ((child-heading (dslide-child-next obj)))
           (let* ((child (dslide--make-slide
                          child-heading
-                         (oref dslide--deck slide) ; TODO hack.
                          :slide-action 'dslide-slide-action-inline
                          :inline t)))
             (let ((dslide-slide-in-effect nil))
