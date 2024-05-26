@@ -1727,6 +1727,71 @@ Child headings become independent slides.")
   (mapc #'delete-overlay (oref obj overlays))
   (mapc #'dslide-final (oref obj children)))
 
+;; ** Every Child Action
+(defclass dslide-slide-action-every-child (dslide-slide-action)
+  ((overlay
+    :initform nil)
+   (children
+    :initform nil
+    :documentation "Children that have been instantiated."))
+  "Display children inline and step every child at once.")
+
+(cl-defmethod dslide-begin ((obj dslide-slide-action-every-child))
+  (dslide-narrow obj t)
+  (oset obj overlay (dslide-hide-children (dslide-heading obj))))
+
+;; TODO multi-progress, like babel blocks
+(cl-defmethod dslide-forward ((obj dslide-slide-action-every-child))
+  (let ((progress))
+    (while-let ((child-heading (dslide-child-next obj))
+                (child (dslide--make-slide
+                        child-heading
+                        :slide-action 'dslide-slide-action-every-child
+                        :inline t)))
+      (dslide-begin child)
+      ;; TODO inline animate in
+      (setq progress child)
+      (push child (oref obj children)))
+    (when progress
+      (delete-overlay (oref obj overlay))
+      (oset obj overlay nil))
+    (unless progress
+      (let ((progresses (mapcar #'dslide-forward
+                                (oref obj children))))
+        (setq progress (seq-first progresses))))
+    progress))
+
+(cl-defmethod dslide-backward ((obj dslide-slide-action-every-child))
+  (let (progress)
+    (let ((progresses (mapcar #'dslide-backward
+                              (oref obj children))))
+      (setq progress (seq-first progresses)))
+    (unless progress
+      (oset obj overlay (dslide-hide-children (dslide-heading obj)))
+      (mapc #'dslide-final (oref obj children))
+      (oset obj children nil)
+      ;; TODO just noticed that the marker method could store a marker that is
+      ;; shared, which could result in actions clobbering each other's sense of
+      ;; progress. ☢️
+      (set-marker (oref obj marker) nil)
+      (dslide-marker obj (copy-marker (oref obj begin))))
+    progress))
+
+(cl-defmethod dslide-end ((obj dslide-slide-action-every-child))
+  (dslide-narrow obj t)
+  (while-let ((child-heading (dslide-child-next obj)))
+    (push (dslide--make-slide
+           child-heading
+           :slide-action 'dslide-slide-action-every-child
+           :inline t)
+          (oref obj children)))
+  (mapc #'dslide-end (oref obj children)))
+
+(cl-defmethod dslide-final :after ((obj dslide-slide-action-every-child))
+  (when-let ((overlay (oref obj overlay)))
+    (delete-overlay overlay))
+  (mapc #'dslide-final (oref obj children)))
+
 ;; * Filters
 
 (defun dslide-built-in-filter (heading)

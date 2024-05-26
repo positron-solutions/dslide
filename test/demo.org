@@ -77,6 +77,25 @@ This slide shows its child headings inline.
 ** Red Team
 - Uses some metasploit and calls it a day
 - Failure is an option
+* Every Child
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-every-child
+:END:
+This is not a test, but a testament to excellence.  Note that the item reveal in the child slides is configured with =:inline t= automatically.
+** Pen-Pineapple 🖊️🍍
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-item-reveal
+:END:
+- Pen 🖊 is an office utensil used to sign documents
+- Pineapple is an office utensil used to enhance the water cooler
+- Long-pen 🖊🖊 is an office utensil that connects fruit
+** Apple-Pen 🍎🖊️
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-item-reveal
+:END:
+- Apple is a fruit that grows on a tree
+- Pen 🖊 is a fruit that grows on paper
+- Apple-pineapple is a fruit grows on a tree made out of paper
 * Reveal Items
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-item-reveal
