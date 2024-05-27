@@ -1316,6 +1316,17 @@ steps.")
   (dslide-section-map obj 'src-block
                       #'dslide--remove-babel-results))
 
+(cl-defmethod dslide--hide-non-exports ((obj dslide-action-babel))
+  (dslide-section-map
+   obj 'src-block
+   (lambda (e)
+     (save-excursion
+       (goto-char (org-element-property :begin e))
+       (let ((args (org-babel-parse-header-arguments
+                    (org-element-property :parameters e))))
+         (when (member (cdr (assq :exports args))
+                       '("none" "results"))
+           (push (dslide-hide-element e) dslide--overlays)))))))
 
 (defun dslide--method-block-pred (method-names &optional unnamed)
   "Return a predicate to match the METHOD-NAMES.
@@ -1403,12 +1414,14 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 (cl-defmethod dslide-begin ((obj dslide-action-babel))
   (when (oref obj remove-results)
     (dslide--clear-all-results obj))
+  (dslide--hide-non-exports obj)
   (when-let ((block-elements (dslide--get-blocks obj "begin")))
     (mapc #'dslide--block-execute block-elements)))
 
 (cl-defmethod dslide-end ((obj dslide-action-babel))
   ;; Do not use the default implementation because it will play all blocks
   ;; forward.
+  (dslide--hide-non-exports obj)
   (dslide-marker obj (org-element-property :end (dslide-heading obj)))
   (when-let ((block-elements (dslide--get-blocks obj "end")))
     (mapc #'dslide--block-execute block-elements)))
