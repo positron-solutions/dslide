@@ -2640,8 +2640,8 @@ the caller."
 
 (defun dslide-display-develop ()
   (let ((slide-buffer (oref dslide--deck slide-buffer)))
-    (unless (get-buffer-window slide-buffer))
-     (display-buffer slide-buffer 'display-buffer-same-window))
+    (unless (get-buffer-window slide-buffer)
+      (display-buffer slide-buffer 'display-buffer-same-window)))
   (let ((base-buffer (oref dslide--deck base-buffer)))
     (unless (get-buffer-window base-buffer)
       (display-buffer base-buffer 'display-buffer-pop-up-window))))
