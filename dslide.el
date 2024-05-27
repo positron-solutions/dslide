@@ -1266,12 +1266,19 @@ for `dslide-contents-map'."
 
 ;; ** Babel Action
 
-;; TODO automatically map the blocks during begin and remove results
-;; TODO configure results removal behavior with an argument
 ;; TODO enable aborting after a failure.  Right now there is a behavior to ask
 ;; to visit a block
 (defclass dslide-action-babel (dslide-action)
-  () "Execute source blocks as steps.
+  ((remove-results
+    ;; TODO parsing list arguments from org properties
+    :initform t
+    :initarg :remove-results
+    :description "Remove results when starting slides 🚧.
+Experimental.  File an issue.  There's a lot of behaviors that could potentially
+react to this option.  Currently only blocks with results set to replace are
+removed.  Other options seem to suggest results should not be removed or will
+never be written to the buffer anyway."))
+  "Execute source blocks as steps.
 By default blocks execute one by one with forward.  You can mark a block to
 be special with the keyword:
 
@@ -1293,14 +1300,22 @@ sequence class.  Blocks with method begin, end, and final are all
 executed during the corresponding method and do not count as
 steps.")
 
-(cl-defmethod dslide--clear-results ((obj dslide-action-babel))
-  (without-restriction
-    (dslide-section-map
-     obj 'src-block
-     (lambda (e)
-       (save-excursion
-         (goto-char (org-element-property :begin e))
-         (org-babel-remove-result-one-or-many nil))))))
+
+(defun dslide--remove-babel-results (src-block)
+  "Remove results if block is configured not to persist them."
+  (save-excursion
+    (goto-char (org-element-property :begin src-block))
+    (let ((args (org-babel-parse-header-arguments
+                 (org-element-property :parameters src-block))))
+      ;; TODO Add any other values that need results removal.
+      (when (member (cdr (assq :results args))
+                    '("replace" nil))
+        (org-babel-remove-result)))))
+
+(cl-defmethod dslide--clear-all-results ((obj dslide-action-babel))
+  (dslide-section-map obj 'src-block
+                      #'dslide--remove-babel-results))
+
 
 (defun dslide--method-block-pred (method-names &optional unnamed)
   "Return a predicate to match the METHOD-NAMES.
@@ -1373,6 +1388,12 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (org-element-property :begin next)))
 
 (cl-defmethod dslide-backward ((obj dslide-action-babel))
+  ;; going backwards, if the marker is on the beginning of a block, it means we
+  ;; are leaving it and want to clean up its results
+  (let ((element (org-element-at-point (oref obj marker))))
+    (when (= (marker-position (oref obj marker))
+             (org-element-property :begin element))
+      (dslide--remove-babel-results element)))
   (when-let* ((predicate (dslide--method-block-pred
                           '("backward" "both")))
               (prev (dslide-section-previous obj 'src-block predicate)))
@@ -1380,6 +1401,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (org-element-property :begin prev)))
 
 (cl-defmethod dslide-begin ((obj dslide-action-babel))
+  (when (oref obj remove-results)
+    (dslide--clear-all-results obj))
   (when-let ((block-elements (dslide--get-blocks obj "begin")))
     (mapc #'dslide--block-execute block-elements)))
 

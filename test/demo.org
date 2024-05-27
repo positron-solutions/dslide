@@ -165,6 +165,45 @@ Go 2-3 steps forwards and then backwards.  This slide also supports starting at 
   (mapc #'delete-overlay overlays)
   (makunbound 'overlays)
 #+end_src
+* Babel Exports & Results Clearing
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-babel
+:END:
+#+attr_dslide: begin
+#+begin_src elisp :results replace
+  (message "off to a good start")
+#+end_src
+
+#+attr_dslide: backward
+#+begin_src elisp :results replace
+  (message "I am ignored when going forward: %s" (random 100))
+#+end_src
+
+#+attr_dslide: forward
+#+begin_src elisp :results replace
+  (message "I am ignored when going backwards: %s" (random 100))
+#+end_src
+
+#+attr_dslide: both
+#+begin_src elisp :results replace
+  (message "replace my results: %s" (random 100))
+#+end_src
+
+#+attr_dslide: both
+#+begin_src elisp :exports none
+  (message "exports set to none.  should be invisible")
+#+end_src
+
+#+attr_dslide: both
+#+begin_src elisp
+  (message "No options set.  Nothing cared about.")
+#+end_src
+
+#+attr_dslide: both
+#+begin_src elisp :exports results
+  (message "I am exporting my results")
+#+end_src
+
 * Hidden Babel Slide
 This slide has a child, but it will not be displayed.  It will only run the babel block within, which finds and updates the text below:
 
