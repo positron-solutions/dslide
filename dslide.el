@@ -2330,7 +2330,7 @@ and the value of `point-max' should contain a newline somewhere."
 (defun dslide--animate-peel (timer overlay)
   (let ((start (overlay-start overlay))
         (end (overlay-end overlay)))
-    (setf (overlay-start overlay) (1+ start))
+    (move-overlay overlay (1+ start) end)
     (when (= (1+ start) end)
       (cancel-timer timer)
       (setq dslide--animation-timers
