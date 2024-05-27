@@ -63,8 +63,8 @@
 ;; 1. Class interface definitions for stateful sequence, deck (root sequence),
 ;; slide, and actions (sequences that run within slides).
 ;;
-;; 2. Element mapping implementations that are private but exposed publicly on
-;; slide actions and elsewhere because they are super useful.
+;; 2. Org element mapping implementations that are private but exposed publicly
+;; on slide actions and elsewhere because they are super useful.
 ;;
 ;; 3. Miscellaneous implementation details of parsing arguments, debug printing,
 ;; header, animation etc.
@@ -80,8 +80,8 @@
 ;;
 ;; For hackers wishing to extend the code, in addition, you will want to check
 ;; `dslide--make-slide' if you want your slides to hydrate actions differently.
-;; Also pay very close attention to `dslide-stateful-sequence' and how sequences and
-;; steps can be pushed.
+;; Also pay very close attention to `dslide-stateful-sequence' and how sequences
+;; and steps can be pushed.
 ;;
 ;; This package is a fork and mostly complete re-write of org-tree-slide by
 ;; Takaaki ISHIKAWA.  Thanks to everyone who worked on org-tree-slide over the
@@ -417,13 +417,17 @@ coordinate with it.")
   "Configure `display-buffer-alist' to override.")
 
 ;; * Classes
-;; - `dslide-deck': is the first thing called into by
-;;   `dslide-deck-forward' and `dslide-deck-backward'.
+;; - `dslide-deck': is the first thing called into by `dslide-deck-forward' and
+;;   `dslide-deck-backward'.  It chooses root headings to hydrate as slides and forwards
+;;   these commands into the slides.
 ;;
-;; - `dslide-slide': interprets an org heading into some actions, which
+;; - `dslide-slide': interprets an org heading into some actions and coordinates
+;;   forwarding calls into actions in the correct order.  Through their actions,
+;;   slides may forward calls into other slides.
 ;;
 ;; - `dslide-action': does most of the actual work of narrowing, hiding,
-;;   animating, executing babel etc.
+;;   animating, executing babel etc.  Actions with `slide-action' in their name
+;;   likely hydrate child slides and forward calls into them.
 
 ;; The generic functions below are the most important interfaces for all hacking
 ;; of this package.
@@ -500,10 +504,10 @@ inappropriate, it should be overridden.
 In cases where you don't need a real backward implementation or
 progressing backwards would have no sensible behavior, you can
 delegate this to `dslide-begin' and possibly delegate
-`dslide-deck-backward' to `dslide-deck-forward',
-resulting in a sequence that always starts at the beginning and
-always proceeds to the end.  For a single step sequence that has
-identical effect in both directions, this is appropriate.
+`dslide-deck-backward' to `dslide-deck-forward', resulting in a
+sequence that always starts at the beginning and always proceeds
+to the end.  For a single step sequence that has identical effect
+in both directions, this is appropriate.
 
 This method should work together with `dslide-end' and
 `dslide-final' to ensure consistently valid state for
@@ -578,9 +582,10 @@ perform necessary teardown, the stateful sequence provides `begin'
 `end' and `final' methods.
 
 It can also be indexed by high-level navigation commands.  The
-implementation of `dslide-goto' Sequences can run as sub-sequences,
-where one sequence calls into another.  🚧 This capability is largely
-unimplemented, but compatible with existing work.
+implementation of `dslide-goto' Sequences can run as
+sub-sequences, where one sequence calls into another.  🚧 This
+capability is largely unimplemented, but compatible with existing
+work.
 
 Classes that wish to implement the stateful sequence interface
 just need to support a few methods and then rely on the generic
@@ -932,8 +937,8 @@ order.")
 ;; headings.  We can pretty much divide the likely user needs into either what
 ;; to do with the section and what to do with the child headings.
 ;;
-;; The section needs to be narrowed to, and this narrowing must be performed
-;; both forwards and backwards.  Narrowing and the display of children are
+;; The contents needs to be narrowed to, and this narrowing must be performed
+;; both forwards and backwards.  Narrowing and the handling of children are
 ;; usually coupled, so control over the restriction and the child headings is
 ;; combined into one slide action.  This action is run outside of section
 ;; actions, enabling
@@ -1261,10 +1266,10 @@ for `dslide-contents-map'."
 
 ;; ** Babel Action
 
-;; TODO automatically map the blocks during begin and remove results... this is
-;; kind of implemented but seems to inconsistently work.
+;; TODO automatically map the blocks during begin and remove results
 ;; TODO configure results removal behavior with an argument
-;; TODO integrate with skipping with begin and end.
+;; TODO enable aborting after a failure.  Right now there is a behavior to ask
+;; to visit a block
 (defclass dslide-action-babel (dslide-action)
   () "Execute source blocks as steps.
 By default blocks execute one by one with forward.  You can mark a block to

@@ -162,14 +162,6 @@ Beware of using the normal `dslide-mode-hook` 😱 because it runs **in the base
     (setq dslide-after-last-slide-hook #'my-stop-if-forward)
 
 
-## Recommended MC Settings
-
-The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [Master of Ceremonies](https://github.com/positron-solutions/master-of-ceremonies) contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
-
-    ;; Something like this should work
-    (add-hook 'dslide-start-hook mc-hide-cursor-mode)
-
-
 ## Heading Properties
 
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
@@ -233,6 +225,8 @@ The `dslide-section-next`  and `dslide-section-previous` method documentation ar
 -   declare a class
 -   override a few methods
 -   now you too can paint the paragraphs red
+
+You can view the effect of this example in the demo.
 
     (defclass dslide-action-red-paragraphs (dslide-action)
       ((overlays :initform nil))
@@ -309,11 +303,12 @@ This package is focused on creating a linear presentation sequence. For function
 
 The [master-of-ceremonies](https://github.com/positron-solutions/master-of-ceremonies) package contains utilities for display & presentation frame setup that are not specific to using DSL IDE.
 
--   **hide markup**
--   display a region full-screen
+-   display a region full-screen using `mc-focus`.  Check the full commands by pressing `h` during focus.  You can highlight a region, save an expression to playback a code snippet without the buffer open etc.
 -   silence messages during presentation
 -   hide the cursor or make it very subtle
--   extract notes and display them in a separate frame
+
+    ;; Also check `mc-subtle-cursor-mode'
+    (add-hook 'dslide-start-hook mc-hide-cursor-mode)
 
 
 ## Open Broadcaster Software

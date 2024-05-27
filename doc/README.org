@@ -117,13 +117,6 @@ Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base 
 
   (setq dslide-after-last-slide-hook #'my-stop-if-forward)
 #+end_src
-** Recommended MC Settings
-The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [[https://github.com/positron-solutions/master-of-ceremonies][Master of Ceremonies]] contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
-#+begin_src elisp
-  ;; Something like this should work
-  (add-hook 'dslide-start-hook mc-hide-cursor-mode)
-#+end_src
-
 ** Heading Properties
 Headings are treated as slides.  Slides have actions.  Actions are configured in the property drawer.
 
@@ -174,6 +167,8 @@ The ~dslide-section-next~  and ~dslide-section-previous~ method documentation ar
 - declare a class
 - override a few methods
 - now you too can paint the paragraphs red
+
+You can view the effect of this example in the demo.
 #+begin_src elisp
   (defclass dslide-action-red-paragraphs (dslide-action)
     ((overlays :initform nil))
@@ -235,11 +230,13 @@ Because babel blocks are not actions, using ~dslide-push-step~ may be the only w
 This package is focused on creating a linear presentation sequence. For functionality not related to integrations into the ~dslide-deck-forward~ ~dslide-deck-backward~ interface, it is better to maintain separate packages and use hooks and babel scripting.
 ** Master of Ceremonies
 The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package contains utilities for display & presentation frame setup that are not specific to using DSL IDE.
-- *hide markup*
-- display a region full-screen
+- display a region full-screen using ~mc-focus~.  Check the full commands by pressing =h= during focus.  You can highlight a region, save an expression to playback a code snippet without the buffer open etc.
 - silence messages during presentation
 - hide the cursor or make it very subtle
-- extract notes and display them in a separate frame
+#+begin_src elisp
+  ;; Also check `mc-subtle-cursor-mode'
+  (add-hook 'dslide-start-hook mc-hide-cursor-mode)
+#+end_src
 ** Open Broadcaster Software
 Sacha Chua has written an OBS plugin integration helpful for video integration [[https://github.com/sachac/obs-websocket-el][obs-websocket-el]].
 ** Orgit
