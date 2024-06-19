@@ -355,6 +355,17 @@ an DSLIDE_FILTER keyword."
   :type 'function
   :group 'dslide)
 
+;; TODO can also probably be objects.  Use case?
+(defcustom dslide-hide-markup-types '(comment
+                                      comment-block
+                                      drawer
+                                      property-drawer
+                                      keyword)
+  "Default types to be hidden by `dslide-action-hide-markup'.
+Can be any element in `org-element-all-elements'."
+  :type '(list symbol)
+  :group 'dslide)
+
 (defcustom dslide-contents-selection-highlight t
   "Show a highlight on the selected headline.
 This is useful if you have some subtle cursor feature enabled for
@@ -1184,27 +1195,26 @@ for `dslide-contents-map'."
     (set-marker marker nil)))
 
 ;; ** Hide Markup Action
-(defclass dslide-action-hide-markup (dslide-action)
-  ((types
-    :initform '(drawer property-drawer)
-    :initarg :types
-    :description "Either org element or types that should be hidden."))
+;; TODO allow configuration via plist args
+;; TODO precedence order of default actions
+(defclass dslide-action-hide-markup (dslide-action) ()
   "Hides element based on type.")
 
 (cl-defmethod dslide-begin ((obj dslide-action-hide-markup))
-  (dslide-section-map obj (oref obj types)
+  (dslide-section-map obj dslide-hide-markup-types
                       (lambda (e) (push (dslide-hide-element e) dslide--overlays)))
   ;; Ooooh! right, yeah, the element parser doesn't give you affiliated keywords
   ;; when you ask for keywords.  As much sense as that would make, the only
   ;; technique I've found for this is falling back to regex.
-  (save-excursion
-    (let ((bound (org-element-property :end (dslide-heading obj))))
-      (goto-char (oref obj begin))
-      (while (re-search-forward org-keyword-regexp bound t)
-        (let ((overlay (make-overlay (match-beginning 0)
-                                     (1+ (match-end 0)))))
-          (overlay-put overlay 'invisible t)
-          (push dslide--overlays overlay))))))
+  (when (member 'keyword dslide-hide-markup-types)
+    (save-excursion
+      (let ((bound (org-element-property :end (dslide-heading obj))))
+        (goto-char (oref obj begin))
+        (while (re-search-forward org-keyword-regexp bound t)
+          (let ((overlay (make-overlay (match-beginning 0)
+                                       (1+ (match-end 0)))))
+            (overlay-put overlay 'invisible t)
+            (push dslide--overlays overlay)))))))
 
 (cl-defmethod dslide-end ((obj dslide-action-hide-markup))
   (dslide-begin obj))

@@ -125,6 +125,12 @@ Positron is deeply committed to bringing you the finest in:
 - But there is no title or other header information
 - See more options in the ~dslide-action-narrow~ class slots:
   =M-x describe-symbol dslide-action-narrow=
+* Markup Hiding
+#+begin_comment
+You can't see this during the presentation.  Convenient for reminding yourself to say something but not including it in the presentation.
+#+end_comment
+See ~dslide-hide-markup-types~.  By default, property drawers and keywords are hidden with overlays.  Comment blocks are also hidden.  There is a comment block above this paragraph.
+# There is a comment after this paragraph too.
 * Babel Slide Integration
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-babel
