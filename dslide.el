@@ -2754,7 +2754,7 @@ org object or boolean (which will be ignored)."
       (org-fold-show-context)
       (org-fold-show-entry)
       (org-fold-show-subtree)
-      (when-let ((windows (get-buffer-window-list (current-buffer))))
+      (when-let ((windows (get-buffer-window-list (current-buffer) nil t)))
         (mapc (lambda (w) (set-window-point w pos)) windows))
       (set-buffer (oref dslide--deck slide-buffer)))))
 
