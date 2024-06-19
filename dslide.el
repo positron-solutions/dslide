@@ -722,6 +722,7 @@ Class can be overridden to affect root behaviors.  See
     (error "No slide selected"))
 
   (let ((inhibit-redisplay t)
+        (old-point-min (point-min))
         progress
         reached-end)
     (while dslide--step-overlays
@@ -762,7 +763,7 @@ Class can be overridden to affect root behaviors.  See
     ;; message.
     (when progress
       (dslide--feedback :forward)
-      (dslide--follow progress))
+      (dslide--follow progress (not (= old-point-min (point-min)))))
 
     (when reached-end
       (dslide--feedback :after-last-slide)
@@ -783,6 +784,7 @@ Class can be overridden to affect root behaviors.  See
   ;; backwards is desirable.
 
   (let ((inhibit-redisplay t)
+        (old-point-min (point-min))
         progress
         reached-beginning)
     (while dslide--step-overlays
@@ -825,7 +827,7 @@ Class can be overridden to affect root behaviors.  See
     ;; message.
     (cond (progress
            (dslide--feedback :backward)
-           (dslide--follow progress))
+           (dslide--follow progress (not (= old-point-min (point-min)))))
           (reached-beginning
            (user-error "No more previous slides!")))))
 
@@ -2728,10 +2730,11 @@ Optional FACE defaults to `dslide-highlight'."
     (set-buffer buffer)))
 
 ;; TODO use this to implement `dslide-goto'
-(defun dslide--follow (progress)
+(defun dslide--follow (progress &optional scroll)
   "Set the base buffer window point to PROGRESS.
 PROGRESS is a slide object, marker, buffer position, org element,
-org object or boolean (which will be ignored)."
+org object or boolean (which will be ignored).  Optional scroll
+will advance the windows to the current buffer restriction"
   (unless (dslide-live-p)
     (error "Live deck not found"))
   (let ((pos (cond ((integerp progress) progress)
@@ -2745,6 +2748,8 @@ org object or boolean (which will be ignored)."
     (when (and (not (booleanp progress)) (null pos))
       (message "Incomprehensible progress reported: %s" progress))
     (when (and pos dslide-base-follows-slide)
+      (set-buffer (oref dslide--deck slide-buffer))
+      (setq slide-buffer-point-min (point-min))
       (set-buffer (oref dslide--deck base-buffer))
       (unless (and (>= pos (point-min))
                    (<= pos (point-max)))
@@ -2756,7 +2761,14 @@ org object or boolean (which will be ignored)."
       (org-fold-show-entry)
       (org-fold-show-subtree)
       (when-let ((windows (get-buffer-window-list (current-buffer) nil t)))
-        (mapc (lambda (w) (set-window-point w pos)) windows))
+        (mapc (lambda (w)
+                (set-window-point w pos)
+                (when scroll
+                  (with-selected-window w
+                    (goto-char slide-buffer-point-min)
+                    ;; TODO 10 is completely arbitrary
+                    (recenter 10))))
+              windows))
       (set-buffer (oref dslide--deck slide-buffer)))))
 
 (defun dslide-display-contents ()
