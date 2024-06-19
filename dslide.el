@@ -721,10 +721,12 @@ Class can be overridden to affect root behaviors.  See
     ;; already
     (error "No slide selected"))
 
-  (while dslide--step-overlays
-    (delete-overlay (pop dslide--step-overlays)))
+  (let ((inhibit-redisplay t)
+        progress
+        reached-end)
+    (while dslide--step-overlays
+      (delete-overlay (pop dslide--step-overlays)))
 
-  (let (progress reached-end)
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (oref obj step-callbacks)))
       (while (and (not progress)
@@ -772,9 +774,6 @@ Class can be overridden to affect root behaviors.  See
     ;; already
     (error "No slide selected"))
 
-  (while dslide--step-overlays
-    (delete-overlay (pop dslide--step-overlays)))
-
   ;; Going backward is almost the same as going forward.  The big difference is
   ;; that when a slide is instantiated, it needs to be sent to its end.  Usually
   ;; the default implementation, which calls forward until progress is
@@ -783,7 +782,12 @@ Class can be overridden to affect root behaviors.  See
   ;; idempotent `dslide-begin' and `dslide-final' if any support for going
   ;; backwards is desirable.
 
-  (let (progress reached-beginning)
+  (let ((inhibit-redisplay t)
+        progress
+        reached-beginning)
+    (while dslide--step-overlays
+      (delete-overlay (pop dslide--step-overlays)))
+
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (and (slot-boundp obj 'step-callbacks)
                            (oref obj step-callbacks))))
@@ -1357,15 +1361,15 @@ Optional UNNAMED will return unnamed blocks as well."
             (block-end (org-element-property :end block-element)))
         (goto-char block-begin)
         ;; Executing babel seems to widen and also creates messages, and this
-        ;; results in flashing.  The downside of just inhibiting re-display until
-        ;; after the call is that if re-display is needed, such as if calling
-        ;; `sleep-for' in a loop, then no updates will be visible.  However, the
-        ;; user should really handle this with a timer or process output and
-        ;; process sentinel etc.
+        ;; would result in flashing.  Re-display is inhibited at the deck level
+        ;; to prevent these unpleasantries.  The downside of just inhibiting
+        ;; re-display until after the call is that if re-display is needed, such
+        ;; as if calling `sleep-for' in a loop, then no updates will be visible.
+        ;; However, the user should really handle this with a timer or process
+        ;; output and process sentinel etc.
         (condition-case user-wrote-flaky-babel
             ;; t for don't cache.  We likely want effects
-            (progn (let ((inhibit-redisplay t))
-                     (org-babel-execute-src-block t))
+            (progn (org-babel-execute-src-block t)
                    (dslide--base-buffer-highlight-region
                     block-begin block-end 'dslide-babel-success-highlight))
           ((debug error)
