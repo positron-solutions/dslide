@@ -1342,7 +1342,11 @@ steps.")
                     (org-element-property :parameters e))))
          (when (member (cdr (assq :exports args))
                        '("none" "results"))
-           (push (dslide-hide-element e) dslide--overlays)))))))
+           (let ((overlay (dslide-hide-element e)))
+             (overlay-put overlay 'dslide-babel-export-control t)
+             ;; src-block elements do not appear to contain their results, so it
+             ;; seems we do not need to un-hide the results.
+             (push overlay dslide--overlays))))))))
 
 (defun dslide--method-block-pred (method-names &optional unnamed)
   "Return a predicate to match the METHOD-NAMES.
@@ -1363,16 +1367,34 @@ Optional UNNAMED will return unnamed blocks as well."
 ;; loop, then no updates will be visible.  However, the user should really
 ;; handle this with a timer or process output and process sentinel etc.
 (defun dslide--block-execute (block-element)
-  (without-restriction
+  (let* ((block-begin (org-element-property :begin block-element))
+         (block-end (org-element-property :end block-element))
+         (block-marker (copy-marker block-begin))
+         (args (org-babel-parse-header-arguments
+                (org-element-property :parameters block-element)))
+         (export-overlays (seq-filter
+                           (lambda (o) (overlay-get o
+                                               'dslide-babel-export-control))
+                           (overlays-in block-begin block-end))))
     (save-excursion
-      (let ((block-begin (org-element-property :begin block-element))
-            (block-end (org-element-property :end block-element)))
+      (without-restriction
         (goto-char block-begin)
         (condition-case user-wrote-flaky-babel
             ;; t for don't cache.  We likely want effects
-            (progn (org-babel-execute-src-block t)
-                   (dslide--base-buffer-highlight-region
-                    block-begin block-end 'dslide-babel-success-highlight))
+            (progn
+              (org-babel-execute-src-block t)
+              ;; block location could be updated
+              (setq block-element (org-element-at-point block-marker))
+              (setq block-begin
+                    (org-element-property :begin block-element))
+              (setq block-end (org-element-property :end block-element))
+              (dslide--base-buffer-highlight-region
+               block-begin block-end 'dslide-babel-success-highlight)
+              ;; updated hiding overlays to not obscure results
+              (when (string= (cdr (assq :exports args)) "results")
+                (mapc (lambda (overlay)
+                        (move-overlay overlay block-begin block-end))
+                      export-overlays)))
           ((debug error)
            (dslide--base-buffer-highlight-region
             block-begin block-end 'dslide-babel-error-highlight)
