@@ -1437,12 +1437,6 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (org-element-property :begin next)))
 
 (cl-defmethod dslide-backward ((obj dslide-action-babel))
-  ;; going backwards, if the marker is on the beginning of a block, it means we
-  ;; are leaving it and want to clean up its results
-  (let ((element (org-element-at-point (oref obj marker))))
-    (when (= (marker-position (oref obj marker))
-             (org-element-property :begin element))
-      (dslide--remove-babel-results element)))
   (when-let* ((predicate (dslide--method-block-pred
                           '("backward" "both")))
               (prev (dslide-section-previous obj 'src-block predicate)))
