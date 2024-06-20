@@ -1437,6 +1437,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 (cl-defmethod dslide-end ((obj dslide-action-babel))
   ;; Do not use the default implementation because it will play all blocks
   ;; forward.
+  (when (oref obj remove-results)
+    (dslide--clear-all-results obj))
   (dslide--hide-non-exports obj)
   (dslide-marker obj (org-element-property :end (dslide-heading obj)))
   (when-let ((block-elements (dslide--get-blocks obj "end")))
@@ -1444,7 +1446,9 @@ stateful-sequence class methods.  METHOD-NAME is a string."
 
 (cl-defmethod dslide-final :after ((obj dslide-action-babel))
   (when-let ((block-elements (dslide--get-blocks obj "final")))
-    (mapc #'dslide--block-execute block-elements)))
+    (mapc #'dslide--block-execute block-elements))
+  (when (oref obj remove-results)
+    (dslide--clear-all-results obj)))
 
 ;; ** Image Action
 
