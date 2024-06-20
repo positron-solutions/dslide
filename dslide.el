@@ -1245,8 +1245,7 @@ for `dslide-contents-map'."
   (dslide-marker obj (org-element-property :end (dslide-heading obj))))
 
 (cl-defmethod dslide-final :after ((obj dslide-action-item-reveal))
-  (when-let ((overlays (oref obj overlays)))
-    (mapc #'delete-overlay overlays)))
+  (mapc #'delete-overlay (oref obj overlays)))
 
 ;; TODO Overlay intersection could be consolidated for use in other actions.
 (cl-defmethod dslide-forward ((obj dslide-action-item-reveal))
@@ -1286,14 +1285,15 @@ for `dslide-contents-map'."
 ;; to visit a block
 (defclass dslide-action-babel (dslide-action)
   ((remove-results
-    ;; TODO parsing list arguments from org properties
     :initform t
     :initarg :remove-results
-    :description "Remove results when starting slides 🚧.
-Experimental.  File an issue.  There's a lot of behaviors that could potentially
-react to this option.  Currently only blocks with results set to replace are
-removed.  Other options seem to suggest results should not be removed or will
-never be written to the buffer anyway."))
+    :description "Remove results when entering slides 🚧.
+Experimental.  File an issue if you see something weird.  There's
+a lot of behaviors that could potentially react to this option.
+Currently only blocks with results set to replace are removed and
+only when entering a slide.  Other options seem to suggest
+results should not be removed or will never be written to the
+buffer anyway."))
   "Execute source blocks as steps.
 By default blocks execute one by one with forward.  You can mark a block to
 be special with the keyword:
@@ -1356,19 +1356,18 @@ Optional UNNAMED will return unnamed blocks as well."
       (when unnamed
         block))))
 
+;; Executing babel seems to widen and also creates messages, and this would
+;; result in flashing.  Re-display is inhibited at the deck level to prevent
+;; these unpleasantries.  The downside of just inhibiting re-display until after
+;; the call is that if re-display is needed, such as if calling `sleep-for' in a
+;; loop, then no updates will be visible.  However, the user should really
+;; handle this with a timer or process output and process sentinel etc.
 (defun dslide--block-execute (block-element)
   (without-restriction
     (save-excursion
       (let ((block-begin (org-element-property :begin block-element))
             (block-end (org-element-property :end block-element)))
         (goto-char block-begin)
-        ;; Executing babel seems to widen and also creates messages, and this
-        ;; would result in flashing.  Re-display is inhibited at the deck level
-        ;; to prevent these unpleasantries.  The downside of just inhibiting
-        ;; re-display until after the call is that if re-display is needed, such
-        ;; as if calling `sleep-for' in a loop, then no updates will be visible.
-        ;; However, the user should really handle this with a timer or process
-        ;; output and process sentinel etc.
         (condition-case user-wrote-flaky-babel
             ;; t for don't cache.  We likely want effects
             (progn (org-babel-execute-src-block t)
@@ -1378,6 +1377,7 @@ Optional UNNAMED will return unnamed blocks as well."
            (dslide--base-buffer-highlight-region
             block-begin block-end 'dslide-babel-error-highlight)
            ;; TODO consolidate moving the point & window points in base buffer
+           ;; XXX out of step with other buffer movement
            (set-buffer (oref dslide--deck base-buffer))
            (goto-char block-begin)
            (if-let ((windows (get-buffer-window-list)))
@@ -1572,10 +1572,10 @@ restriction, meaning no progress was made."
                   (dslide--section-end heading))))
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
+        (narrow-to-region begin end)
         (when (and dslide-slide-in-effect
                    (not (oref obj inline)))
           (dslide-animation-setup begin end))
-        (narrow-to-region begin end)
         (run-hooks 'dslide-narrow-hook)
         (let ((dslide-header (oref obj header)))
           (dslide--make-header (null (oref obj breadcrumbs))))
@@ -1758,18 +1758,19 @@ Child headings become independent slides.")
                           child-heading
                           :slide-action 'dslide-slide-action-inline
                           :inline t)))
-            (progn (mapc #'delete-overlay
-                         (seq-intersection (oref obj overlays)
-                                           (overlays-at (org-element-property
-                                                         :begin
-                                                         child-heading))))
-                   (dslide-begin child)
-                   (when dslide-slide-in-effect
-                     (dslide-animation-setup
-                      (org-element-property :begin child-heading)
-                      (org-element-property :end child-heading)))
-                   (setq progress child)
-                   (push child (oref obj children)))
+            (progn
+              (mapc #'delete-overlay
+                    (seq-intersection (oref obj overlays)
+                                      (overlays-at (org-element-property
+                                                    :begin
+                                                    child-heading))))
+              (dslide-begin child)
+              (when dslide-slide-in-effect
+                (dslide-animation-setup
+                 (org-element-property :begin child-heading)
+                 (org-element-property :end child-heading)))
+              (setq progress child)
+              (push child (oref obj children)))
           (setq exhausted t))))
     progress))
 
@@ -2329,7 +2330,8 @@ assumes the buffer is restricted and that there is a first tree."
                         (list timer overlay))
     (timer-activate timer)))
 
-;; TODO move respect for animation variables into this function
+;; TODO move respect for animation variables into this function.  Create a
+;; sensible integration between sliding and peeling animation.  Add a customize interface.
 ;; TODO Support non-graphical
 ;; TODO User-provided animation override function
 (defun dslide-animation-setup (beg end)
@@ -2392,6 +2394,9 @@ and the value of `point-max' should contain a newline somewhere."
       (setq dslide--animation-overlays
             (delq overlay dslide--animation-overlays)))))
 
+;; If you want to make a custom animation, just make sure that it is cleaned up
+;; by this function.  Timers go in `dslide--animation-timers'.  Overlays go in
+;; `dslide--animation-overlays'.
 (defun dslide--animation-cleanup ()
   (while dslide--animation-timers
     (cancel-timer (pop dslide--animation-timers)))

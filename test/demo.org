@@ -126,10 +126,12 @@ Positron is deeply committed to bringing you the finest in:
 - See more options in the ~dslide-action-narrow~ class slots:
   =M-x describe-symbol dslide-action-narrow=
 * Markup Hiding
+See ~dslide-hide-markup-types~.  By default, property drawers, comments, comment blocks, and keywords are hidden with overlays.
+
 #+begin_comment
 You can't see this during the presentation.  Convenient for reminding yourself to say something but not including it in the presentation.
 #+end_comment
-See ~dslide-hide-markup-types~.  By default, property drawers and keywords are hidden with overlays.  Comment blocks are also hidden.  There is a comment block above this paragraph.
+There is a comment block above this paragraph.  There is a comment below this paragraph.  Neither are visible when using the defaults.
 # There is a comment after this paragraph too.
 * Babel Slide Integration
 :PROPERTIES:
@@ -261,7 +263,7 @@ Our cleanup is always run, after everything
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-babel
 :END:
-- You need the ~master-of-ceremonies~ package installed to complete this slide.
+- You need the ~master-of-ceremonies~ package installed to complete this slide.  Use the contents navigation to skip this slide if you didn't install it.
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
 - Run babel against other buffers 😈.
 
