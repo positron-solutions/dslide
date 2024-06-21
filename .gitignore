@@ -2,4 +2,5 @@ README.html
 index.html
 *.elc
 .DS_Store
-trash
+dslide-pkg.el
+dslide-autoloads.el

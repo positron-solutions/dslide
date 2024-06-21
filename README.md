@@ -34,7 +34,7 @@ Fully programmable sequences behind a two-button interface:
 
 ## Status 🛠️
 
-Version 0.5.1 👷
+Version 0.5.2 👷
 
 -   Stabilizing the API and naming (as in **not completely** stable yet)
 -   Gathering user feedback & experience to pinpoint actual use patterns
@@ -209,7 +209,7 @@ You can also use "property+" syntax to add to a property, and these accept plist
 
 ## Sub-classing
 
-The deck and slide class as well as actions can all be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.  See the [eieio#Top](eieio#Top) manual for explanation of OOP in Elisp.
+The deck and slide class as well as actions can all be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.  See the [eieio#Top](info:eieio#Top) manual for explanation of OOP in Elisp.
 
 -   **Action**:  Creating new action subclasses are an efficient way to perform similar operations on typical kinds of org data.
 -   **Slide:**  Slides can be configured extensively by changing their actions.  However, for more vertical cooperation between slides or cooperation among actions, extended slides could be useful.

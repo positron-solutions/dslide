@@ -26,7 +26,7 @@ Fully programmable sequences behind a two-button interface:
 - Integration with Elisp programs and arbitrary Emacs buffers
 - Custom class support for extending the framework
 ** Status 🛠️
-Version 0.5.1 👷
+Version 0.5.2 👷
 - Stabilizing the API and naming (as in *not completely* stable yet)
 - Gathering user feedback & experience to pinpoint actual use patterns
 - Accepting PR's and issue reports
