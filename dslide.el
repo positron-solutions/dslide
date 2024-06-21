@@ -35,13 +35,14 @@
 
 ;;; Commentary:
 
-;; DSL IDE is a highly programmable presentation framework that first displays
-;; Org files as presentations but also can integrate your presentation with any
-;; Emacs buffer and also with Org Babel.  By integrating arbitrary Emacs Lisp
-;; into the simple forward-backward user interface, you can make anything Emacs
-;; does easy to present.
+;; DSL IDE builds presentations on top of org mode documents.  It integrates
+;; with arbitrary buffers and org babel, making anything Emacs can do easy to
+;; incorporate into a presentation.  Headers are configured with extensible
+;; actions.  Custom steps can be scripted with babel blocks or made into
+;; reusable custom actions.  DSL IDE achieves a good result with no preparation
+;; but can achieve anything Emacs can display if you need it to.
 ;;
-;; See the README and manual M-x info-display-manual RET dslide RET.
+;; See the README for more detailed instructions.
 ;;
 ;; There are examples of using the features within the test directory.
 ;;
@@ -105,8 +106,7 @@
 (defcustom dslide-base-follows-slide t
   "Non-nil moves the base buffer point to the current slide.
 This happens whether the buffer is visible or not."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-start-from 'point
   "When starting, begin at `point' `first' slide.
@@ -126,8 +126,7 @@ If you just want to navigate slides with the point, you should
 use the contents mode by calling `dslide-deck-start' in a
 presentation that is already started."
   :type '(choice (const :tag "First slide" first)
-                 (const :tag "Slide at point" point))
-  :group 'dslide)
+                 (const :tag "Slide at point" point)))
 
 (defcustom dslide-start-function #'dslide-display-slides
   "When starting the mode, this is the default starting function.
@@ -135,76 +134,65 @@ It should usually call `dslide-display-slides' or
 `dslide-display-contents'.  You can build commands that
 use `let' binding to temporarily set this variable in order to
 start with a specific starting function."
-  :type 'function
-  :group 'dslide)
+  :type 'function)
 
 (defcustom dslide-header t
   "The status of displaying the slide header."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-header t
   "Display header in contents buffer.
 When this is disabled, the keywords for title etc will remain
 visible, albeit scrolled away because of how `org-overview'
 works."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-header-author t
   "Show the email in the header.
 If there is a #+author: keyword, it will be used."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-header-email t
   "Show the email in the header.
 If there is a #+email: keyword, it will be used."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-header-date t
   "Show the date in the header.
 If there is a #+date: keyword, it will be used.
 The current time will be used as a fallback."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-margin-title-above 0.5
   "Margin between header title and the top of the window.
 Can be a float or integer."
-  :type 'number
-  :group 'dslide)
+  :type 'number)
 
 (defcustom dslide-margin-title-below 0.5
   "Margin between title and other header info.
 Can be a float or integer."
-  :type 'number
-  :group 'dslide)
+  :type 'number)
 
 (defcustom dslide-margin-content 1.5
   "Margin between the slide header and its content.
 Can be a float or integer."
-  :type 'number
-  :group 'dslide)
+  :type 'number)
 
 (defcustom dslide-slide-in-effect t
   "Using a visual effect of slide-in for displaying trees."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-slide-in-blank-lines 15
   "Line height of the slide-in effect."
-  :type 'number
-  :group 'dslide)
+  :type 'number)
 
 (defcustom dslide-feedback-messages
   '(:start "Start! ▶"
-           :forward "Forward ➡"
-           :backward "⬅ Backward"
-           :contents "Contents ☰"
-           :stop "Stop ■"
-           :after-last-slide "No more slides!")
+    :forward "Forward ➡"
+    :backward "⬅ Backward"
+    :contents "Contents ☰"
+    :stop "Stop ■"
+    :after-last-slide "No more slides!")
   "Feedback messages for slide controls.
 Turn off by setting to nil.  Plist keys and where they are used:
 
@@ -219,53 +207,49 @@ Turn off by setting to nil.  Plist keys and where they are used:
 - :stop `dslide-deck-stop'
 
 - :after-last-slide: see `after-last-slide-hook'"
-
   :type 'plist
-  :group 'dslide)
+  :options '((:start string)
+             (:forward string)
+             (:backward string)
+             (:contents string)
+             (:stop string)
+             (:after-last-slide string)))
 
 (defcustom dslide-breadcrumb-face '(:inherit org-level-8)
   "Face added to the list of faces for breadcrumbs.
 This can be a face name symbol or an anonymous face spec.  It
 will be added to the face list, meaning it the original face's
 properties remain unless shadowed."
-  :type 'face
-  :group 'dslide)
+  :type 'face)
 
 (defface dslide-header-overlay-face '((t :inherit default))
-  "Face for `dslide--header-overlay'."
-  :group 'dslide)
+  "Face for `dslide--header-overlay'.")
 
 (defcustom dslide-breadcrumb-separator " 🢒 "
   "Delimiter for breadcrumbs or nil to turn off breadcrumbs."
   :type '(choice (const :tag "Don't display breadcrumbs" nil)
-                 (string :tag "Delimiter"))
-  :group 'dslide)
+                 (string :tag "Delimiter")))
 
 (defcustom dslide-breadcrumbs-hide-todo-state t
   "If non-nil, hide TODO states in the breadcrumbs."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defcustom dslide-animation-duration 1.0
   "How long slide in takes."
-  :type 'number
-  :group 'dslide)
+  :type 'number)
 
 (defcustom dslide-animation-frame-duration (/ 1.0 60.0)
   "Length between updates.
 Increase if your so-called machine has trouble drawing."
-  :type 'number
-  :group 'dslide)
+  :type 'number)
 
 (defcustom dslide-start-hook nil
   "Runs after the slide buffer is created but before first slide.
 Buffer is widened and fully visible."
-  :group 'dslide
   :type 'hook)
 
 (defcustom dslide-stop-hook nil
   "Runs in the base buffer after stopping."
-  :group 'dslide
   :type 'hook)
 
 (defcustom dslide-narrow-hook nil
@@ -273,12 +257,10 @@ Buffer is widened and fully visible."
 Use this hook for behaviors that affect the displayed region.
 Slides and sequences that do not display themselves or only
 affect display in another buffer will not trigger this hook."
-  :group 'dslide
   :type 'hook)
 
 (defcustom dslide-contents-hook nil
   "Runs last after switching to contents."
-  :group 'dslide
   :type 'hook)
 
 (defcustom dslide-after-last-slide-hook '()
@@ -288,7 +270,6 @@ Consider using `dslide-push-step' and writing a callback that
 only reacts to the `forward' state.  This callback will then only
 run if the user immediately calls `dslide-deck-forward'
 again.  `dslide-deck-stop' is another good choice."
-  :group 'dslide
   :type 'hook)
 
 (defcustom dslide-default-slide-action #'dslide-slide-action-child
@@ -301,8 +282,7 @@ You can configure this per-heading by setting the
 SLIDE_ACTION keyword.  You can configure it for
 the document default by adding an SLIDE_ACTION
 keyword."
-  :type 'function
-  :group 'dslide)
+  :type 'function)
 
 ;; TODO test the use of plist args
 (defcustom dslide-default-actions '(dslide-action-hide-markup)
@@ -319,8 +299,7 @@ list in order to have default behaviors for some org elements.
 You can configure this per-heading by setting the DSLIDE_ACTIONS
 keyword.  You can configure it for the document default by adding
 an DSLIDE_ACTIONS keyword."
-  :type '(list function)
-  :group 'dslide)
+  :type '(list function))
 
 (defcustom dslide-default-class 'dslide-slide
   "A class to more deeply modify slide behavior.
@@ -331,8 +310,7 @@ Consider upstreaming changes.
 You can configure this per heading by setting the DSLIDE_CLASS
 property.  You can configure it for the document default by
 adding an DSLIDE_CLASS keyword."
-  :type 'symbol
-  :group 'dslide)
+  :type 'symbol)
 
 (defcustom dslide-default-deck-class 'dslide-deck
   "A class to more deeply modify overall deck behavior.
@@ -340,8 +318,7 @@ Value should be a custom class extending symbol `dslide-deck'.
 Use this to modify the root-level behaviors, including switching
 to children and finding siblings.  You can configure this for the
 document by adding the DSLIDE_ROOT_CLASS keyword."
-  :type 'symbol
-  :group 'dslide)
+  :type 'symbol)
 
 (defcustom dslide-default-filter #'dslide-built-in-filter
   "A function used to call next on children.
@@ -352,8 +329,7 @@ return nil if it should be skipped.
 You can configure this per heading by setting the DSLIDE_FILTER
 keyword.  You can configure it for the document default by adding
 an DSLIDE_FILTER keyword."
-  :type 'function
-  :group 'dslide)
+  :type 'function)
 
 ;; TODO can also probably be objects.  Use case?
 (defcustom dslide-hide-markup-types '(comment
@@ -363,8 +339,7 @@ an DSLIDE_FILTER keyword."
                                       keyword)
   "Default types to be hidden by `dslide-action-hide-markup'.
 Can be any element in `org-element-all-elements'."
-  :type '(list symbol)
-  :group 'dslide)
+  :type '(repeat symbol))
 
 (defcustom dslide-contents-selection-highlight t
   "Show a highlight on the selected headline.
@@ -372,29 +347,24 @@ This is useful if you have some subtle cursor feature enabled for
 your presentation and wouldn't otherwise know what line you are
 on in the contents view.  The default is also just a way more
 obvious display style."
-  :type 'boolean
-  :group 'dslide)
+  :type 'boolean)
 
 (defface dslide-contents-selection-face
   '((t :inherit org-level-1 :inverse-video t :extend t))
-  "Face for highlighting the current slide root."
-  :group 'dslide)
+  "Face for highlighting the current slide root.")
 
 (defface dslide-highlight
   '((t :inherit hl-line))
   "Face used in base buffer to highlight progress.
-See `dslide-base-follows-slide'."
-  :group 'dslide)
+See `dslide-base-follows-slide'.")
 
 (defface dslide-babel-success-highlight
   '((t :inherit hl-line))
-  "Temporarily highlight babel blocks that succeeded."
-  :group 'dslide)
+  "Temporarily highlight babel blocks that succeeded.")
 
 (defface dslide-babel-error-highlight
   '((t :inherit error))
-  "Temporarily highlight babel blocks that failed."
-  :group 'dslide)
+  "Temporarily highlight babel blocks that failed.")
 
 (defvar dslide--debug nil
   "Set to t for logging slides and actions.")
@@ -834,20 +804,19 @@ Class can be overridden to affect root behaviors.  See
 (cl-defmethod dslide--choose-slide ((obj dslide-deck) how)
   "Set the current slide of OBJ, according to HOW."
   ;; TODO apply filter when choosing starting slide
-  (cond ((eq how 'first)
-         (oset obj slide (dslide--make-slide
-                          (dslide--document-first-heading))))
-        ((eq how 'contents)
-         (oset obj slide (dslide--make-slide
-                          (dslide--root-heading-at-point (point)))))
-        ((eq how 'point)
-         (let ((base-point (with-current-buffer (oref obj base-buffer)
-                             (point))))
-           ;; TODO implement looking inside the slides using `goto' and recover
-           ;; the child with a point argument.
-           (oset obj slide
-                 (dslide--make-slide
-                  (dslide--root-heading-at-point base-point)))))))
+  (pcase how
+    ('first (oset obj slide (dslide--make-slide
+                             (dslide--document-first-heading))))
+    ('contents (oset obj slide (dslide--make-slide
+                                (dslide--root-heading-at-point (point)))))
+    ('point
+     (let ((base-point (with-current-buffer (oref obj base-buffer)
+                         (point))))
+       ;; TODO implement looking inside the slides using `goto' and recover
+       ;; the child with a point argument.
+       (oset obj slide
+             (dslide--make-slide
+              (dslide--root-heading-at-point base-point)))))))
 
 (cl-defmethod dslide-deck-live-p ((obj dslide-deck))
   "Check if all of OBJ's buffers are alive or can be recovered."
@@ -865,8 +834,7 @@ Optional STEP argument will decide if the callback counts as a step or will
 return nil so that it is only run for effects."
   (let ((window-config (current-window-configuration)))
     (dslide-push-step
-     (lambda (_) (prog1 step
-              (set-window-configuration window-config))))))
+     (lambda (_) (prog1 step (set-window-configuration window-config))))))
 
 (defun dslide-push-step (fun)
   "Run FUN as next step.
@@ -1032,16 +1000,10 @@ Many optional ARGS.  See code."
                     dslide-default-actions))
            (section-actions
             (mapcar
-             (lambda (c) (when c
-                      (if (consp c)
-                          (apply (car c)
-                                 :begin begin
-                                 :marker (copy-marker begin)
-                                 (append args (cdr c)))
-                        (apply c
-                               :begin begin
-                               :marker (copy-marker begin)
-                               args))))
+             (lambda (c) (and c (apply (if (consp c) (car c) c)
+                                  :begin begin
+                                  :marker (copy-marker begin)
+                                  (append args (cdr-safe c)))))
              section-action-classes))
 
            (filter
@@ -2122,11 +2084,7 @@ PREDICATE should accept an ELEMENT argument and return non-nil."
         found))))
 
 (defun dslide--list-item-contains (item loc)
-  (when item
-    (let ((beg (car item))
-          (end (car (last item))))
-      (and  (>= loc beg)
-            (< loc end)))))
+  (and item (<= (car item) loc (car (last item)))))
 
 (defun dslide-type-p (element-or-type type)
   "Check element TYPE.
@@ -2206,9 +2164,9 @@ Each predicate should take one argument, an org element."
   (lambda (element)
     (seq-reduce
      (lambda (begin pred)
-       (when (or (not pred)
-                 (and begin (funcall pred begin)))
-         begin))
+       (and (or (not pred)
+                (and begin (funcall pred begin)))
+            begin))
      predicates element)))
 
 ;; * Slide Header
@@ -2545,7 +2503,7 @@ ensure that the slide buffer is visible."
 
 (defun dslide--keyword-value (key)
   "Get values like #+KEY from document keywords."
-  (cadr (assoc-string key (org-collect-keywords `(,key)))))
+  (cadr (assoc-string key (org-collect-keywords (list key)))))
 
 (defun dslide--feedback (key)
   "Show feedback message for KEY.
@@ -2578,8 +2536,7 @@ for commands without visible side effects."
 
 (defun dslide--filter (filter-name)
   "FILTER-NAME is a string that might contain a filter name."
-  (when-let ((symbol (or (when (symbolp filter-name)
-                           filter-name)
+  (when-let ((symbol (or (and (symbolp filter-name) filter-name)
                          (intern-soft filter-name))))
     (if (functionp symbol)
         symbol
@@ -2685,10 +2642,7 @@ the caller."
 ;;;###autoload
 (define-minor-mode dslide-mode
   "A presentation tool for Org Mode."
-  :init-value nil
   :interactive nil
-  :keymap dslide-mode-map
-  :group 'dslide
   :global t
   (unless (eq 'org-mode (buffer-local-value
                          'major-mode (current-buffer)))
@@ -2890,8 +2844,7 @@ video or custom actions."
               (dslide--choose-slide dslide--deck 'contents)
               (dslide-display-slides)))
         (dslide--ensure-slide-buffer t))
-    (let ((dslide-start-function
-           #'dslide-display-slides))
+    (let ((dslide-start-function #'dslide-display-slides))
       (dslide-mode 1))))
 
 ;; TODO
@@ -2900,8 +2853,7 @@ video or custom actions."
   "Show both the base and slide buffer."
   (interactive)
   (let ((major-mode (buffer-local-value 'major-mode (current-buffer))))
-    (unless (or (dslide-live-p)
-                (eq 'org-mode major-mode))
+    (unless (or (dslide-live-p) (derived-mode-p '(org-mode)))
       (user-error "Not an org buffer and no other live presentation"))
     (if (dslide-live-p)
         ;;  show the correct buffers
@@ -2944,3 +2896,7 @@ video or custom actions."
 (provide 'dslide)
 
 ;;; dslide.el ends here
+
++;; Local Variables:
++;; outline-regexp: ";; \\(*+\\)"
++;; End:
