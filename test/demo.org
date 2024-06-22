@@ -12,7 +12,7 @@
 See the ~dslide-mode-map~ but basically, arrow keys.
 - right arrow ➡️ ~dslide-deck-forward~
 - left arrow  ⬅️ ~dslide-deck-backward~
-- up arrow    ⬆️ ~dslide-deck-start~ (default secondary action shows contents)
+- up arrow    ⬆️ ~dslide-deck-start~ (contents)
 - down arrow  ⬇️ ~dslide-deck-stop~
 *** Contents View
 :PROPERTIES:
@@ -145,13 +145,14 @@ To make your blocks interactive, set the =:DSLIDE_ACTIONS:= property to =dslide-
 #+end_src
 
 ** Forwards & Backwards
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 - Blocks can be marked with the =#+attr_dslide:= affiliated keyword to execute in a certain order.  (unmarked default is forward)
 - Blocks can be marked =forward=, =backward=, or =both= to run via ~dslide-deck-forward~ or ~dslide-deck-backward~.
 - The markup keywords are hidden during presentation by default.  Use ~dslide-deck-develop~ to see both markup and presentation simultaneously. (Executed blocks are highlighted! 💡)
 - Note, if there is no =backward= block, when entering the slide going backward, the slide will begin as if going forward because there is no backward step.
+*** Example
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-babel
+:END:
 #+attr_dslide: backward
 #+begin_src elisp
   ;; Called when going backward
@@ -177,13 +178,13 @@ To make your blocks interactive, set the =:DSLIDE_ACTIONS:= property to =dslide-
 #+end_src
 
 ** Begin, End, and Final
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 If you need to initialize some code, the =begin= and =end= methods can be used.  To clean up, use a =final= block.
 
 Enter this slide going backwards to observe the "end" behavior.
-
+*** Example
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-babel
+:END:
 #+attr_dslide: begin
 #+begin_src elisp
   (setq-local my-dslide-var 'beginning)
@@ -205,12 +206,13 @@ Enter this slide going backwards to observe the "end" behavior.
 #+end_src
 
 ** Reusing Blocks
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 Multiple blocks can have the =begin=, =end=, and =final= method.  They are always executed top to bottom.  These blocks can be shared among blocks marked =forward=, =backward=, and =both=.  This allows better code re-use.
 
 Go 2-3 steps forwards and then backwards.  This slide also supports starting at the end.  Just go to the next slide and back up.
+*** Example
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-babel
+:END:
 #+attr_dslide: begin end
 #+begin_src elisp :results none
   (setq-local overlays nil)
@@ -267,7 +269,12 @@ Try forwards and backwards.  There are several hidden steps.
     (error "Ouchie, the document changed!"))
 #+end_src
 
-#+attr_dslide: begin backward
+#+attr_dslide: backward
+#+begin_src elisp :exports none :results none
+  (overlay-put dslide-can-has-overlay 'after-string nil)
+#+end_src
+
+#+attr_dslide: both
 #+begin_src elisp :exports none :results none
   (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
@@ -315,14 +322,7 @@ For blocks you want to be visible but are only running for effects, you can use 
     (delete-overlay dslide--example-overlay)
     (makunbound 'dslide--example-overlay))
 #+end_src
-** Retaining Results
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel :remove-results nil
-:END:
-By default, blocks will clear results on entry, either forward or backward.  To retain them, set the action argument =:retain-results t=.  This might be useful if you have a figure that is not dynamic.
-#+begin_src elisp
-  `(this result will not be removed when entering the slide ,(random 100))
-#+end_src
+** Package Integration
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-babel
 :END:
