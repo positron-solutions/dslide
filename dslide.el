@@ -1046,9 +1046,15 @@ Many optional ARGS.  See code."
 
 ;; Actions are stateful sequences.  They live on a slide.  They usually work on
 ;; either the section or the children, but there is no requirement that they are
-;; exclusive to either.  slide actions should compose with section actions, such
+;; exclusive to either.
+;;
+;; The marker slot, `dslide-marker' method, and `dslide-section-next' and
+;; `dslide-section-previous' are of particular utility for "mapping" over
+;; elements as the user calls `dslide-deck-forward'.
+;;
+;; Slide actions should compose with section actions, such
 ;; as a round-robin slide action cycling through each child's action's forward
-;; and backward methods. TODO TODO TODO 🚧
+;; and backward methods.
 
 ;; ** Base Action
 (defclass dslide-action (dslide-stateful-sequence)
@@ -1063,9 +1069,9 @@ re-hydrate the org element for use in mapping over the section etc.")
     :documentation "Marker used to track progress.
 It is initialized to the same value as the `begin' slot.")
    (inline
-     :initform nil
-     :initarg :inline
-     :docuemntation "Draw as if surrounded by other contents.
+    :initform nil
+    :initarg :inline
+    :documentation "Draw as if surrounded by other contents.
 This option allows actions that perform some animation to degrade
 to some technique that works with contents above and below."))
   "Base class for most slide actions that work on a heading's contents."
@@ -1710,7 +1716,6 @@ Child headings become independent slides.")
 ;; ** Inline Slide Action
 ;; TODO round-robin
 
-;; TODO override the child's own slide action
 (defclass dslide-slide-action-inline (dslide-slide-action)
   ((overlays
     :initform nil)
@@ -1862,7 +1867,6 @@ Child headings become independent slides.")
   (mapc #'dslide-final (oref obj children)))
 
 ;; * Filters
-
 (defun dslide-built-in-filter (heading)
   "HEADING is an org element.
 Return the heading unless it's filtered."
@@ -2082,9 +2086,6 @@ PREDICATE should accept an ELEMENT argument and return non-nil."
                        (funcall predicate element))
               (setq found element))))
         found))))
-
-(defun dslide--list-item-contains (item loc)
-  (and item (<= (car item) loc (car (last item)))))
 
 (defun dslide-type-p (element-or-type type)
   "Check element TYPE.
