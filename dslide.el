@@ -2876,7 +2876,7 @@ video or custom actions."
   "Show both the base and slide buffer."
   (interactive)
   (let ((major-mode (buffer-local-value 'major-mode (current-buffer))))
-    (unless (or (dslide-live-p) (derived-mode-p '(org-mode)))
+    (unless (or (dslide-live-p) (derived-mode-p 'org-mode))
       (user-error "Not an org buffer and no other live presentation"))
     (if (dslide-live-p)
         ;;  show the correct buffers
