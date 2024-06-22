@@ -2920,6 +2920,6 @@ video or custom actions."
 
 ;;; dslide.el ends here
 
-+;; Local Variables:
-+;; outline-regexp: ";; \\(*+\\)"
-+;; End:
+;; Local Variables:
+;; outline-regexp: ";; \\(*+\\)"
+;; End:
