@@ -1,4 +1,5 @@
-[![Video](https://img.youtube.com/vi/8vkymxjSrK0/maxresdefault.jpg)](https://www.youtube.com/watch?v=8vkymxjSrK0)
+
+https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-968f-5f5b1989a868
 
 # A Presentation Framework
 
