@@ -1587,7 +1587,9 @@ restriction, meaning no progress was made.")
         (run-hooks 'dslide-narrow-hook)
         (let ((dslide-header (oref obj header)))
           (dslide--make-header (null (oref obj breadcrumbs))))
-        (goto-char (point-min))         ; necessary to reset the scroll
+        (mapc
+         (lambda (w) (set-window-point wb (point-min))) ; reset the scroll
+         (get-buffer-window-list (current-buffer) nil t))
         ;; Return progress
         begin))))
 
