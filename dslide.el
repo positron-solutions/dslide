@@ -1588,7 +1588,7 @@ restriction, meaning no progress was made.")
         (let ((dslide-header (oref obj header)))
           (dslide--make-header (null (oref obj breadcrumbs))))
         (mapc
-         (lambda (w) (set-window-point wb (point-min))) ; reset the scroll
+         (lambda (w) (set-window-point w (point-min))) ; reset the scroll
          (get-buffer-window-list (current-buffer) nil t))
         ;; Return progress
         begin))))
