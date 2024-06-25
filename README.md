@@ -1,5 +1,7 @@
-
 https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-968f-5f5b1989a868
+
+<a href="https://melpa.org/#/dslide"><img src="https://melpa.org/packages/dslide-badge.svg" alt="melpa package"></a> <a href="https://stable.melpa.org/#/dslide"><img src="https://stable.melpa.org/packages/dslide-badge.svg" alt="melpa stable package"></a>
+
 
 # A Presentation Framework
 
@@ -35,20 +37,21 @@ Fully programmable sequences behind a two-button interface:
 
 ## Status 🛠️
 
-Version 0.5.2 👷
+Version 0.5.2 👷  Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
 
--   Stabilizing the API and naming (as in **not completely** stable yet)
+-   Stabilizing the API and naming (as in **not totally completely** stable yet)
 -   Gathering user feedback & experience to pinpoint actual use patterns
 -   Accepting PR's and issue reports
--   Some behaviors may be advertised as working already when they are only 90% implemented.  **File issues**.
+-   Some behaviors may be advertised as working already when they are only 90% implemented.  I have no idea what you want.  **File issues**.
 
 The user-facing configuration API has been pretty unstable, but now that nested slide actions are supported, it is likely to remain roughly like it is now.
 
 
 # Installation
 
-This isn't on a package archive yet.  Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates.
-
+    ;; From MELPA
+    (use-package dslide)
+    
     ;; package-vc
     (package-vc-install
      '(dslide
@@ -56,13 +59,13 @@ This isn't on a package archive yet.  Subscribe to Positron's [YouTube](https://
     
     ;; using elpaca's with explicit recipe
     (use-package dslide
-      :elpaca (dslide :host github
-                            :repo "positron-solutions/dslide"))
+        :elpaca (dslide :host github
+                        :repo "positron-solutions/dslide"))
     
     ;; straight with explicit recipe
     (use-package dslide
-      :straight (dslide :type git :host github
-                              :repo "positron-solutions/dslide"))
+        :straight (dslide :type git :host github
+                          :repo "positron-solutions/dslide"))
     
     ;; or use manual load-path & require, you brave yak shaver
 
@@ -96,7 +99,7 @@ Check out `dslide-deck-develop`.  You can see the markup and the returned approx
 
 By default, the `dslide-action-hide-markup` action is configured in `dslide-default-actions`.  Looks clean out of the box.
 
-🚧 The current element hiding is implemented with overlays.  I can be done with font-locking, but this is easier done in a minor mode like how `org-modern` works.
+🚧 The current element hiding is implemented with overlays.  I can be done with font-locking, but font-locking is better for less dynamic use cases.
 
 
 # Glossary
@@ -227,8 +230,6 @@ The `dslide-section-next`  and `dslide-section-previous` method documentation ar
 -   override a few methods
 -   now you too can paint the paragraphs red
 
-You can view the effect of this example in the demo.
-
     (defclass dslide-action-red-paragraphs (dslide-action)
       ((overlays :initform nil))
       "Paint the paragraphs red, one by one.")
@@ -311,7 +312,6 @@ The [master-of-ceremonies](https://github.com/positron-solutions/master-of-cerem
     ;; Also check `mc-subtle-cursor-mode'
     (add-hook 'dslide-start-hook mc-hide-cursor-mode)
 
-
 ## Open Broadcaster Software
 
 Sacha Chua has written an OBS plugin integration helpful for video integration [obs-websocket-el](https://github.com/sachac/obs-websocket-el).
@@ -389,7 +389,7 @@ The conclusion of the command pattern, setup & teardown, and indexing via point 
 -   `dslide-forward` & `dslide-backward`
 -   `dslide-goto`
 
--   Re-Using Implementations
+####  Re-Using Implementations
 
     -   The default implementation of `dslide-end` is achieved by just walking forward from `dslide-begin`, calling `dslide-forward` until it returns `nil`.
     
