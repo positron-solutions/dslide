@@ -2794,14 +2794,15 @@ each slide show from the contents view."
   (goto-char (org-element-property :begin (dslide--root-heading-at-point)))
   (recenter)
 
+  (if-let ((first (dslide--document-first-heading)))
+      (narrow-to-region (org-element-property :begin first)
+                        (point-max))
+    ;; No first heading.  Just header.  Empty contents.
+    (narrow-to-region (point-max)
+                      (point-max)))
+  (run-hooks 'dslide-narrow-hook)
+
   (when dslide-header
-    (if-let ((first (dslide--document-first-heading)))
-        (narrow-to-region (org-element-property :begin first)
-                          (point-max))
-      ;; No first heading.  Just header.  Empty contents.
-      (narrow-to-region (point-max)
-                        (point-max)))
-    (run-hooks 'dslide-narrow-hook)
     (dslide--make-header t))
 
   (when dslide-contents-selection-highlight
