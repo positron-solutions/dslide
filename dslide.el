@@ -1585,8 +1585,11 @@ restriction, meaning no progress was made.")
                    (not (oref obj inline)))
           (dslide-animation-setup begin end))
         (run-hooks 'dslide-narrow-hook)
-        (let ((dslide-header (oref obj header)))
-          (dslide--make-header (null (oref obj breadcrumbs))))
+        ;; TODO option precedence.  Actions will need to initialize to the
+        ;; global value and then refine with explicit per-slide options.
+        (when dslide-header
+          (let ((dslide-header (oref obj header)))
+            (dslide--make-header (null (oref obj breadcrumbs)))))
         (mapc
          (lambda (w) (set-window-point w (point-min))) ; reset the scroll
          (get-buffer-window-list (current-buffer) nil t))
