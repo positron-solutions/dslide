@@ -222,9 +222,6 @@ will be added to the face list, meaning it the original face's
 properties remain unless shadowed."
   :type 'face)
 
-(defface dslide-header-overlay-face '((t :inherit default))
-  "Face for `dslide--header-overlay'.")
-
 (defcustom dslide-breadcrumb-separator " 🢒 "
   "Delimiter for breadcrumbs or nil to turn off breadcrumbs."
   :type '(choice (const :tag "Don't display breadcrumbs" nil)
@@ -2259,7 +2256,7 @@ assumes the buffer is restricted and that there is a first tree."
         (overlay-put
          dslide--header-overlay 'before-string
          (concat (dslide--margin-lines dslide-margin-title-above)
-                 (propertize title 'face 'org-document-title)
+                 (propertize title 'face '(org-document-title default))
                  (dslide--margin-lines dslide-margin-title-below)
                  (when (and  dslide-header-date date)
                    (dslide--info-face (concat date "  ")))
@@ -2278,7 +2275,7 @@ assumes the buffer is restricted and that there is a first tree."
                    (dslide--margin-lines dslide-margin-content)))))
 
 (defun dslide--info-face (s)
-  (propertize s 'face 'org-document-info))
+  (propertize s 'face '(org-document-info default)))
 
 (defun dslide--margin-lines (lines)
   (dslide--info-face
@@ -2876,7 +2873,6 @@ video or custom actions."
     (let ((dslide-start-function #'dslide-display-slides))
       (dslide-mode 1))))
 
-;; TODO
 ;;;###autoload
 (defun dslide-deck-develop ()
   "Show both the base and slide buffer."
