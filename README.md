@@ -37,7 +37,7 @@ Fully programmable sequences behind a two-button interface:
 
 ## Status 🛠️
 
-Version 0.5.2 👷  Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
+Version 0.5.3 👷  Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
 
 -   Stabilizing the API and naming (as in **not totally completely** stable yet)
 -   Gathering user feedback & experience to pinpoint actual use patterns
