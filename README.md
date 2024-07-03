@@ -72,7 +72,7 @@ The user-facing configuration API has been pretty unstable, but now that nested 
 
 ## Try It Out
 
-With just defaults, run `dslide-deck-start` on your existing documents.  You can load the examples in the <./test/demo.md> file to see a showcase of configuration behavior.
+With just defaults, run `dslide-deck-start` on your existing documents.  You can load the examples in [./test/demo.md](./test/demo.md) file to see a showcase of configuration behavior.
 
 The default keymap uses arrow keys.  Left and right are `dslide-deck-forward` and `dslide-deck-backward`.  Up is `dslide-deck-start` and will show the contents.  Down is `dslide-deck-stop` and will stop the slide show.
 
@@ -229,6 +229,8 @@ The `dslide-section-next`  and `dslide-section-previous` method documentation ar
 -   declare a class
 -   override a few methods
 -   now you too can paint the paragraphs red
+
+Example code:
 
     (defclass dslide-action-red-paragraphs (dslide-action)
       ((overlays :initform nil))
