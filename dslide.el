@@ -396,7 +396,7 @@ See `dslide-base-follows-slide'.")
 This is global.  If a presentation is active, you can look at this variable to
 coordinate with it.")
 
-(defvar dslide--overlays nil
+(defvar dslide-overlays nil
   "Overlays used to hide or change contents display.")
 
 (defvar dslide--step-overlays nil
@@ -1208,7 +1208,7 @@ for `dslide-contents-map'.")
 
 (cl-defmethod dslide-begin ((obj dslide-action-hide-markup))
   (dslide-section-map obj dslide-hide-markup-types
-                      (lambda (e) (push (dslide-hide-element e) dslide--overlays)))
+                      (lambda (e) (push (dslide-hide-element e) dslide-overlays)))
   ;; Ooooh! right, yeah, the element parser doesn't give you affiliated keywords
   ;; when you ask for keywords.  As much sense as that would make, the only
   ;; technique I've found for this is falling back to regex.
@@ -1220,7 +1220,7 @@ for `dslide-contents-map'.")
           (let ((overlay (make-overlay (match-beginning 0)
                                        (1+ (match-end 0)))))
             (overlay-put overlay 'invisible t)
-            (push dslide--overlays overlay)))))))
+            (push dslide-overlays overlay)))))))
 
 (cl-defmethod dslide-end ((obj dslide-action-hide-markup))
   (dslide-begin obj))
@@ -1346,7 +1346,7 @@ steps.")
              (overlay-put overlay 'dslide-babel-export-control t)
              ;; src-block elements do not appear to contain their results, so it
              ;; seems we do not need to un-hide the results.
-             (push overlay dslide--overlays))))))))
+             (push overlay dslide-overlays))))))))
 
 (defun dslide--method-block-pred (method-names &optional unnamed)
   "Return a predicate to match the METHOD-NAMES.
@@ -2525,8 +2525,8 @@ hooks must occur in the deck's :slide-buffer."
 
 (defun dslide--delete-overlays ()
   "Delete content overlays."
-  (while dslide--overlays
-    (delete-overlay (pop dslide--overlays)))
+  (while dslide-overlays
+    (delete-overlay (pop dslide-overlays)))
   (while dslide--step-overlays
     (delete-overlay (pop dslide--step-overlays)))
   (when dslide--contents-hl-line-overlay
