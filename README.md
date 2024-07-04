@@ -72,7 +72,7 @@ The user-facing configuration API has been pretty unstable, but now that nested 
 
 ## Try It Out
 
-With just defaults, run `dslide-deck-start` on your existing documents.  You can load the examples in [./test/demo.md](./test/demo.md) file to see a showcase of configuration behavior.
+With just defaults, run `dslide-deck-start` on your existing documents.  You can load the examples in [./test/demo.org](./test/demo.org) file to see a showcase of configuration behavior.
 
 The default keymap uses arrow keys.  Left and right are `dslide-deck-forward` and `dslide-deck-backward`.  Up is `dslide-deck-start` and will show the contents.  Down is `dslide-deck-stop` and will stop the slide show.
 
@@ -155,7 +155,7 @@ Beware of using the normal `dslide-mode-hook` 😱 because it runs **in the base
 -   `dslide-narrow-hook` is run whenever a `dslide-deck-forward` or `dslide-deck-backward` changes the narrow state.
 -   `dslide-after-last-slide-hook` is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add `dslide-deck-stop` to exit without feedback.
     
-    Another option is to use `dslide-push-step` to push a callback that will only run when called going forward.
+Another option is to use `dslide-push-step` to push a callback that will only run when called going forward.
 
     (defun my-stop-if-forward ()
       (mc-push-step (lambda (direction)
