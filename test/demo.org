@@ -369,6 +369,24 @@ If a feature seems like it's missing, it can probably be added.  There is a babe
     (overlay-put overlay 'display "")
     (push overlay dslide-overlays))
 #+end_src
+** Babel to Call Processes
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-babel
+:END:
+Not everything can be displayed within Emacs.  However, Emacs launches processes with ease.  Let's use babel to take advantage of this.
+
+The babel block below, which is not visible during the presentation, will call VLC to show the video.  VLC supports some options that make it convenient to integrate into our slideshow without interacting with its window, but if you are using EXWM or the application exposes a local interface such as DBus or a network socket, you can control it that way.
+#+attr_dslide: forward
+#+begin_src elisp :results none
+  (if-let ((vlc (executable-find "vlc"))
+           (output (generate-new-buffer "*VLC Output*")))
+      (progn
+        (shell-command "vlc --no-video-title-show --fullscreen\
+           ./video/prizeforge-animated-logo.mp4 --play-and-exit --video-on-top"
+                       output)
+        (kill-buffer output))
+      (error "VLC is not installed.  How have you surived this long?"))
+#+end_src
 * Customization
 View customize variables by calling =M-x customize-group RET dslide=
 ** Slide Actions
