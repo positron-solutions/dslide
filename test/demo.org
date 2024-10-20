@@ -367,7 +367,7 @@ If a feature seems like it's missing, it can probably be added.  There is a babe
          (overlay (make-overlay (org-element-property :begin block)
                                 (org-element-property :end block))))
     (overlay-put overlay 'display "")
-    (push overlay dslide--overlays))
+    (push overlay dslide-overlays))
 #+end_src
 * Customization
 View customize variables by calling =M-x customize-group RET dslide=
