@@ -145,8 +145,6 @@ Because you might want to play a video or take a branch in the presentation and 
 
 ## Hooks
 
-Because slides and actions have a life-cycle and can easily find their own heading, consider making a custom action and setting that action on slides where it's needed.
-
 Beware of using the normal `dslide-mode-hook` 😱 because it runs **in the base buffer** ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use `dslide-start-hook`. 💡
 
 -   `dslide-start-hook` Is run in the indirect buffer after it is set it.  This is what you want.
@@ -155,15 +153,28 @@ Beware of using the normal `dslide-mode-hook` 😱 because it runs **in the base
 -   `dslide-narrow-hook` is run whenever a `dslide-deck-forward` or `dslide-deck-backward` changes the narrow state.
 -   `dslide-after-last-slide-hook` is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add `dslide-deck-stop` to exit without feedback.
     
-Another option is to use `dslide-push-step` to push a callback that will only run when called going forward.
+    Another option is to use `dslide-push-step` to push a callback that will only run when called going forward.
 
     (defun my-stop-if-forward ()
-      (mc-push-step (lambda (direction)
+      (dslide-push-step (lambda (direction)
                       (when (eq direction 'forward)
                         ;; Be sure to return t or the hook will run again.
                         (prog1 t (dslide-deck-stop))))))
     
     (setq dslide-after-last-slide-hook #'my-stop-if-forward)
+
+
+### Per-Slide Actions
+
+💡 Before you use hooks, if you want to do something on each slide or specific slides, consider using actions instead of a hook.  See the `dslide-action-hide-markup` which is by default added to `dslide-default-actions` and hids markup on every slide.  The lifecycle of actions and their methods for obtaining the current slide's heading make them very good for per-slide behavior.
+
+
+## Recommended MC Settings
+
+The out-of-the-box experience can be a bit messy due to property drawers, keywords, and babel blocks that you might include.  You probably want to hide these elements.  [Master of Ceremonies](https://github.com/positron-solutions/master-of-ceremonies) contains some flexible hiding that can be updated with each slide and turned on and off only when the slideshow is active.
+
+    ;; Something like this should work
+    (add-hook 'dslide-start-hook mc-hide-cursor-mode)
 
 
 ## Heading Properties
@@ -293,9 +304,7 @@ The `#+attr_dslide:` affiliated keyword is used to configure which methods will 
 
 ### Step Callbacks
 
-See `dslide-push-step` for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume `dslide-deck-forward` and `dslide-deck-backward` itself, a callback may be easier.
-
-Because babel blocks are not actions, using `dslide-push-step` may be the only way to optionally add a step callback from a babel block.
+See `dslide-push-step` for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume `dslide-deck-forward` and `dslide-deck-backward` itself, a callback may be easier.  Using `dslide-push-step` is also one way to optionally add a step callback from a babel block.
 
 
 # Package Pairings
@@ -313,6 +322,7 @@ The [master-of-ceremonies](https://github.com/positron-solutions/master-of-cerem
 
     ;; Also check `mc-subtle-cursor-mode'
     (add-hook 'dslide-start-hook mc-hide-cursor-mode)
+
 
 ## Open Broadcaster Software
 
@@ -346,7 +356,7 @@ This is a description of how the pieces of the program **must** fit together.  F
 ⚠️ <del>Even if the current implementation differs, trust this domain model and expect the implementation to approach it.</del>  **This section is pretty accurate as of 0.5.0**
 
 -   The user interface `dslide-deck-forward` and `dslide-deck-backward` is a concrete requirement that drives most of the rest of the implementation and feature design.
--   Because Org's basic structure is about trees, we need to nest these sequences.  Flattening the tree was more limiting and not chosen.
+-   Because Org's basic structure is about trees, but our navigation is linear, we can either traverse the tree or flatten it.  Traversal allows parent slide lifecycles to encompass their children's lifecycles.  Flattening the tree was more limiting and not chosen.
 -   There is a little bit of action composition because the slide action always runs outside the life cycle of the other actions.  This allows it to control the buffer restriction or switch to a child in the appropriate order.
 
 
@@ -391,14 +401,13 @@ The conclusion of the command pattern, setup & teardown, and indexing via point 
 -   `dslide-forward` & `dslide-backward`
 -   `dslide-goto`
 
-####  Re-Using Implementations
+#### Re-Using Implementations
 
     -   The default implementation of `dslide-end` is achieved by just walking forward from `dslide-begin`, calling `dslide-forward` until it returns `nil`.
     
     -   Implementing `dslide-goto` is optional as long as `dslide-begin` and `dslide-forward` can implement `dslide-end` and report their furthest extent of progress accurately.
     
     -   Ideally `dslide-deck-forward` & `dslide-deck-backward` along with `dslide-begin` & `dslide-end` form a closed system, but for the convenience of the implementer, it's fine to use an idempotent `dslide-begin` as the `dslide-deck-backward` step if granular backward is difficult or not valuable to implement.
-
 
 ## Sequence Composition
 
@@ -407,7 +416,7 @@ Navigating a tree involves depth.  Descendants may care about what happened in a
 
 ### Telescoping Calls
 
-At one time, slides were to be mostly independent and not running at the same time.  While this simplified some things, it was limited.
+At one time, slides were to be mostly independent and not running at the same time.  While this flattened tree simplified some things, it was limited.
 
 Nesting slides and calling their actions might require updating several children concurrently.  This was impossible to implement without pulling logic down into the parent slide's actions.  Thus, the implementation calls through parents into children, sometimes calling several children.
 
