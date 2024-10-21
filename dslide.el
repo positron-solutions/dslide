@@ -259,7 +259,7 @@ properties remain unless shadowed."
 Increase if your so-called machine has trouble drawing."
   :type 'number)
 
-(defcustom dslide-start-hook nil
+(defcustom dslide-start-hook '(dslide-cursor-hide)
   "Runs after the slide buffer is created but before first slide.
 Buffer is widened and fully visible."
   :type 'hook)
@@ -2856,6 +2856,20 @@ source buffer."
       (dslide-mode -1))
     (run-hooks 'dslide-stop-hook)
     (dslide--feedback :stop)))
+
+(defun dslide-cursor-hide ()
+  "Hide the cursor completely.
+Call `dslide-cursor-restore' to revert."
+  (interactive)
+  (setq-local blink-cursor-alist '((nil . nil)))
+  (setq-local cursor-type nil))
+
+(defun dslide-cursor-restore ()
+  "Hide the cursor completely.
+Call `dslide-cursor-restore' to revert."
+  (interactive)
+  (setq-local blink-cursor-alist (default-value 'blink-cursor-alist))
+  (setq-local cursor-type (default-value 'cursor-type)))
 
 ;; * User Commands
 
