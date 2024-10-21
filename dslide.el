@@ -2937,7 +2937,13 @@ video or custom actions."
                (delete-overlay (pop dslide--step-overlays)))
              (dslide--follow (point)))
     (dslide--ensure-slide-buffer)
-    (dslide-forward dslide--deck)))
+    (if (eq (oref dslide--deck base-buffer)
+            (window-buffer (selected-window)))
+        (if-let ((window (get-buffer-window
+                          (oref dslide--deck slide-buffer))))
+            (with-selected-window window
+              (dslide-forward dslide--deck)))
+      (dslide-forward dslide--deck))))
 
 ;;;###autoload
 (defun dslide-deck-backward ()
