@@ -2272,40 +2272,48 @@ from existing state cleanup."
                      (format-time-string "%Y-%m-%d")))
            (email (when-let ((email (or dslide-email
                                         (cadr (assoc-string "EMAIL" keywords)))))
-                    (concat "<" email ">"))))
+                    (concat "<" email ">")))
+           (info-line (concat
+                       (when (and  dslide-header-date date)
+                         (dslide--info-face (concat date "  ")))
+                       (when (and  dslide-header-author author)
+                         (dslide--info-face (concat author "  ")))
+                       (when (and  dslide-header-email email)
+                         (dslide--info-face (concat email "  ")))))
+           (info-line (when info-line
+                        (concat info-line (dslide--info-face "\n")))))
 
-      ;;  The calls to `propertize' make up for the fact that these values may be
-      ;;  strings, set from elsewhere, but we want to display these strings as if
-      ;;  they were fontified within the buffer.
+      ;;  The calls to `propertize' are needed in case the strings are
+      ;;  specified without properties they normally would have when gathered
+      ;;  from the fontified buffer text.
       (if dslide-header
           (overlay-put
            dslide--header-overlay 'before-string
            (concat (dslide--margin-lines dslide-margin-title-above)
                    (propertize title 'face '(org-document-title default))
                    (dslide--margin-lines dslide-margin-title-below)
-                   (when (and  dslide-header-date date)
-                     (dslide--info-face (concat date "  ")))
-                   (when (and  dslide-header-author author)
-                     (dslide--info-face (concat author "  ")))
-                   (when (and  dslide-header-email email)
-                     (dslide--info-face (concat email "  ")))
+                   info-line
                    (when (and breadcrumbs
                               dslide-breadcrumb-separator)
-                     (concat (dslide--info-face "\n")
-                             (dslide--get-parents
+                     (concat (dslide--get-parents
                               dslide-breadcrumb-separator)))
+                   (dslide--info-face "\n")
                    (dslide--margin-lines dslide-margin-content)))
 
         (overlay-put dslide--header-overlay 'before-string
                      (dslide--margin-lines dslide-margin-content))))))
 
 (defun dslide--info-face (s)
-  (propertize s 'face '(org-document-info default)))
+  (prog1 s (add-face-text-property
+            0 (length s) '(org-document-info default) t s)))
 
 (defun dslide--margin-lines (lines)
   (dslide--info-face
    (if (display-graphic-p)
-       (propertize "\n" 'line-height (float lines))
+       (propertize "\n"
+                   'line-height (float lines)
+                   'face (when (< lines 1.0)
+                           (list :height lines)))
      (make-string (floor lines) ?\n))))
 
 (defun dslide--breadcrumbs-reducer (delim)
