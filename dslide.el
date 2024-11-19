@@ -901,18 +901,22 @@ the slide object coordinates this overlap.  It delegates the
 order.")
 
 (cl-defmethod dslide-begin ((obj dslide-slide))
-  (prog1 (when-let ((slide-action (oref obj slide-action)))
-           (dslide-begin slide-action))
-    (mapc #'dslide-begin (oref obj section-actions))))
+  (let* ((slide-action (oref obj slide-action))
+         (progress (when slide-action (dslide-begin slide-action))))
+    (mapc #'dslide-begin (oref obj section-actions))
+    (if slide-action progress
+      (dslide-forward obj))))
 
 (cl-defmethod dslide-end ((obj dslide-slide))
-  (prog1 (when-let ((slide-action (oref obj slide-action)))
-           (dslide-end slide-action))
+  (let* ((slide-action (oref obj slide-action))
+         (progress (dslide-end slide-action)))
     ;; Fairly certain the ordering of slide and section actions won't normally
     ;; matter for `dslide-end', but this ordering matches the situation that would
     ;; occur if the user just called `dslide-forward' repeatedly, and we want the
     ;; end state to be as close to "normal" as possible.
-    (mapc #'dslide-end (reverse (oref obj section-actions)))))
+    (mapc #'dslide-end (oref obj section-actions))
+    (if slide-action progress
+      (dslide-backward obj))))
 
 (cl-defmethod dslide-final ((obj dslide-slide))
   ;; The order that these are called shouldn't matter.  No use case for coupling
