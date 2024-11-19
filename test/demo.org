@@ -113,9 +113,9 @@ Positron is deeply committed to bringing you the finest in:
 - The image buffer is configured to act as a slide, so it still responds to the keybindings.
 - See more options, such as fullscreen etc by calling ~describe-symbol~ on ~dslide-action-image~
 #+ATTR_HTML: :width 45%
- [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
+[[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
 #+ATTR_HTML: :width 45%
- [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+[[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 * No Header Slide
 :PROPERTIES:
 :DSLIDE_SLIDE_ACTION: dslide-slide-action-child :header nil
