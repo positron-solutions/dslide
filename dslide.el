@@ -250,6 +250,14 @@ properties remain unless shadowed."
   "If non-nil, hide TODO states in the breadcrumbs."
   :type 'boolean)
 
+(defcustom dslide-hide-todo nil
+  "If non-nil, hide TODO states in headings."
+  :type 'boolean)
+
+(defcustom dslide-hide-tags nil
+  "If non-nil, hide tags in headings."
+  :type 'boolean)
+
 (defcustom dslide-animation-duration 1.0
   "How long slide in takes."
   :type 'number)
@@ -1209,6 +1217,23 @@ for `dslide-contents-map'.")
 (cl-defmethod dslide-begin ((obj dslide-action-hide-markup))
   (dslide-section-map obj dslide-hide-markup-types
                       (lambda (e) (push (dslide-hide-element e) dslide-overlays)))
+
+  ;; Hide tags and todo keywords
+  (when (or dslide-hide-tags dslide-hide-todo)
+    (save-excursion
+      (goto-char (org-element-property :begin (dslide-heading obj)))
+      (org-heading-components)))
+  (when dslide-hide-todo
+    (when-let* ((todo-beg (match-beginning 2))
+                (overlay (make-overlay (1- todo-beg) (match-end 2))))
+      (overlay-put overlay 'invisible t)
+      (push overlay dslide-overlays)))
+  (when dslide-hide-tags
+    (when-let* ((tags-beg (match-beginning 5))
+                (overlay (make-overlay (1- tags-beg) (match-end 5))))
+      (overlay-put overlay 'invisible t)
+      (push overlay dslide-overlays)))
+
   ;; Ooooh! right, yeah, the element parser doesn't give you affiliated keywords
   ;; when you ask for keywords.  As much sense as that would make, the only
   ;; technique I've found for this is falling back to regex.

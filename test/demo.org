@@ -135,6 +135,8 @@ There is a comment block above this paragraph.  There is a comment below this pa
 # There is a comment after this paragraph too.
 
 This is another case where you can use ~dslide-deck-develop~ to see the comments while showing just presentation content in another window.  (use ~make-frame~ 💡)
+** TODO Todos and Tags :tag1:tag2:tag3:
+Todos and tags are by default hidden.  Set ~dslide-hide-tags~ and ~dslide-hide-todos~ if you need them visible in a presentation.
 * Babel Integration
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-babel
