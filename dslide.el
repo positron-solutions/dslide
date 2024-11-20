@@ -713,7 +713,7 @@ Class can be overridden to affect root behaviors.  See
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle
     ;; already
-    (error "No slide selected"))
+    (error "No slide was set"))
 
   (let ((inhibit-redisplay t)
         (old-point-min (point-min))
@@ -767,7 +767,7 @@ Class can be overridden to affect root behaviors.  See
   (unless (oref obj slide)
     ;; Calls implied from other commands should have started the lifecycle
     ;; already
-    (error "No slide selected"))
+    (error "No slide was set"))
 
   ;; Going backward is almost the same as going forward.  The big difference is
   ;; that when a slide is instantiated, it needs to be sent to its end.  Usually
@@ -1682,7 +1682,7 @@ heading.
 
 The action's marker is moved to the end of the heading if no
 matching heading is found.  This allows a subsequent backwards
-step to process the last heading.")
+step to process the most recently visited heading.")
 
 (cl-defmethod dslide-child-next ((obj dslide-slide-action)
                                  &optional reverse-in-place)
@@ -2005,9 +2005,10 @@ its height and width for filling in other content."
 Element is an org element.Optional KEEP-FILL will obscure but not
 change the contents of text, keeping its height and width for
 filling in other content."
-  (dslide-hide-region (org-element-property :begin element)
-                  (org-element-property :end element)
-                  keep-fill))
+  (dslide-hide-region
+   (org-element-property :begin element)
+   (org-element-property :end element)
+   keep-fill))
 
 (defun dslide-hide-item (item &optional keep-fill)
   "Return an overlay that hides ITEM.
@@ -2202,6 +2203,7 @@ PREDICATE should accept an ELEMENT and return non-nil."
           (goto-char (match-end 0)))
         found))))
 
+;; TODO so, exactly when are you passing in types 🤡?
 (defun dslide-type-p (element-or-type type)
   "Check element TYPE.
 ELEMENT-OR-TYPE can be a type symbol or an org element.  TYPE can
@@ -2215,17 +2217,7 @@ be a list of types or a type from `org-element-all-elements.'"
         (member element-type type)
       (eq element-type type))))
 
-(defun dslide--child-predicate (heading &optional predicate)
-  "Create PREDICATE matching children of HEADING.
-PREDICATE should return matching children."
-  (let ((level (org-element-property :level heading))
-        (predicate (or predicate #'identity)))
-    (lambda (child)
-      (and (= (1+ level) (org-element-property :level child))
-           (funcall predicate child)
-           child))))
-
-;; TODO symbol bloat
+;; TODO cruft
 (defun dslide--heading-p (element)
   (dslide-type-p element 'headline))
 
@@ -2561,7 +2553,7 @@ hooks must occur in the deck's :slide-buffer."
         (kill-buffer slide-buffer-name))
 
       (let* ((class (or (intern-soft (dslide--keyword-value
-                                      "DECK_CLASS"))
+                                      "DSLIDE_DECK_CLASS"))
                         dslide-default-deck-class
                         'dslide-deck))
              ;; TODO detect misconfiguration
@@ -2569,7 +2561,6 @@ hooks must occur in the deck's :slide-buffer."
                                        "DSLIDE_FILTER"))
                          #'dslide-built-in-filter))
              (window-config (current-window-configuration))
-
              (slide-buffer (clone-indirect-buffer
                             slide-buffer-name
                             nil))
@@ -2586,8 +2577,7 @@ hooks must occur in the deck's :slide-buffer."
         (widen)
         (org-fold-show-all)
         ;; Enter the state model
-        (dslide--choose-slide deck
-                          dslide-start-from)))))
+        (dslide--choose-slide deck dslide-start-from)))))
 
 (defun dslide--showing-contents-p ()
   "Return t if current buffer is displaying contents."
@@ -2912,7 +2902,6 @@ each slide show from the contents view."
       (narrow-to-region (point-max)
                         (point-max))))
   (run-hooks 'dslide-narrow-hook)
-
   (when dslide-header
     (funcall (or dslide-header-fun #'dslide-make-header) nil nil))
 
