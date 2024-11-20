@@ -389,6 +389,10 @@ The babel block below, which is not visible during the presentation, will call V
         (kill-buffer output))
       (error "VLC is not installed.  How have you surived this long?"))
 #+end_src
+* Skipping Headings
+You can quickly skip slides that won't work for you presentation by adding COMMENT right after the stars.  The default filter function, ~dslide-built-in-filter~ will skip them.  You can define your own filter function by setting ~dslide-default-filter~.  Child actions and the contents view respect these settings.
+** COMMENT Half-Baked Slide
+This slide will not be visible in the presentation because it is commented.  Good for skipping slides that only work in some settings or ones you only half-finished right before showtime.
 * Customization
 View customize variables by calling =M-x customize-group RET dslide=
 ** Slide Actions

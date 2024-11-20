@@ -1,0 +1,84 @@
+#+title:	Basic Capability
+#+author:	Positron
+#+email:	contact@positron.solutions
+
+* Reveal Items
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-item-reveal
+:END:
+Positron is deeply committed to bringing you the finest in:
+- Pen 🖊️
+- Pineapple 🍍
+- Apple 🍎
+- Pen 🖊️
+* Breadcrumbs
+This information goes deep.  To customize breadcrumb appearance, check out ~dslide-breadcrumb-face~.
+** Deep
+And it will go deeper still yet
+*** Deeper
+The rabbit hole has only the bounds of your imagination
+**** Deepest?
+Wow, these breadcrumbs are very high-carb
+***** Okay Deep Enough!
+How many levels of headings could there be?
+* Every Child
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-every-child
+:END:
+This is not a test, but a testament to excellence
+** Pen Pineapple 🖊️🍍
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
+:END:
+- Pen 🖊 is an office utensil used to sign documents
+- Pineapple is an office utensil used to flavore the water cooler
+** Apple Pen 🍎🖊️
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
+:END:
+- Apple is a fruit that grows on a tree
+- Pen 🖊 is a fruit that grows on paper
+** Invisible :noslide:
+⚠️ This slide is filtered and you shouldn't be seeing this.
+* Inline Children
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-inline
+:END:
+- You won't believe these animations
+- This is the world's greatest presentation software
+  + But mainly because it integrates with all you programming tools
+** Pen 🖊️
+Information, you have to breathe it in
+** Pineapple 🍍
+Isn't this animation so cool?
+** Apple 🍎
+This is a reason to be alive
+** Pen 🖊️
+[[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
+** Invisible :noslide:
+⚠️ Definitely broken
+* Flat Slide
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-flat
+:END:
+This slide shows its child headings inline.
+- The slide action shows the entire contents, not just the section
+- There is no child action
+** Blue Team
+- Has to do all the work
+- Must create an air-tight submarine
+** Red Team
+- Uses some metasploit and calls it a day
+- Failure is an option
+* Flat Slide Filtering
+:PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-flat
+:END:
+** COMMENT Should Be Invisible
+⚠️ There's an error if you see this
+** Visible
+Everything seems to be okay
+** Invisible Again :noexport:
+⚠️ Something is broken
+** Still Invisible :noslide:
+⚠️ Definitely broken

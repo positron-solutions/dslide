@@ -825,22 +825,26 @@ Class can be overridden to affect root behaviors.  See
           (reached-beginning
            (user-error "No more previous slides!")))))
 
+(cl-defmethod dslide--filter-function ((obj dslide-deck))
+  (oref obj filter))
+
 (cl-defmethod dslide--choose-slide ((obj dslide-deck) how)
   "Set the current slide of OBJ, according to HOW."
-  ;; TODO apply filter when choosing starting slide
-  (pcase how
-    ('first (oset obj slide (dslide--make-slide
-                             (dslide--document-first-heading))))
-    ('contents (oset obj slide (dslide--make-slide
-                                (dslide--root-heading-at-point (point)))))
-    ('point
-     (let ((base-point (with-current-buffer (oref obj base-buffer)
-                         (point))))
-       ;; TODO implement looking inside the slides using `goto' and recover
-       ;; the child with a point argument.
-       (oset obj slide
-             (dslide--make-slide
-              (dslide--root-heading-at-point base-point)))))))
+  (let ((filter (oref obj filter)))
+    (pcase how
+      ('first (oset obj slide (dslide--make-slide
+                               (dslide--document-first-heading filter))))
+      ('contents (oset obj slide (dslide--make-slide
+                                  (dslide--root-heading-at-point
+                                   filter (point)))))
+      ('point
+       (let ((base-point (with-current-buffer (oref obj base-buffer)
+                           (point))))
+         ;; TODO implement looking inside the slides using `goto' and recover
+         ;; the child with a point argument.
+         (oset obj slide
+               (dslide--make-slide
+                (dslide--root-heading-at-point filter base-point))))))))
 
 (cl-defmethod dslide-deck-live-p ((obj dslide-deck))
   "Check if all of OBJ's buffers are alive or can be recovered."
@@ -1626,6 +1630,7 @@ restriction, meaning no progress was made.")
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
         (narrow-to-region begin end)
+        (dslide-hide-filtered-children obj)
         (when (and dslide-slide-in-effect
                    (not (oref obj inline)))
           (dslide-animation-setup begin end))
@@ -1642,6 +1647,25 @@ restriction, meaning no progress was made.")
          (get-buffer-window-list (current-buffer) nil t))
         ;; Return progress
         begin))))
+
+(cl-defgeneric dslide-hide-filtered-children (obj)
+  "Hide all children that will be skipped.
+See `dslide-default-filter' and related settings.  Since these children will
+be mostly skipped by subsequent logic, we just cover them with overlays so
+they can be ignored for the slide's lifecycle.")
+
+;; TODO consolidate mapping over child headings
+(cl-defmethod dslide-hide-filtered-children ((obj dslide-slide-action))
+  (let* ((filter (dslide--filter-function dslide--deck))
+         (heading (dslide-heading obj))
+         (target-level (1+ (org-element-property :level heading))))
+    (dslide--contents-map
+     heading 'headline
+     (lambda (child)
+       (and (= target-level
+               (org-element-property :level child))
+            (not (funcall filter child))
+            (push (dslide-hide-element child) dslide-overlays))))))
 
 (cl-defgeneric dslide-child-next (obj &optional reverse-in-place)
   "Return the next direct child heading element.
@@ -1662,22 +1686,26 @@ step to process the last heading.")
 
 (cl-defmethod dslide-child-next ((obj dslide-slide-action)
                                  &optional reverse-in-place)
-  (if-let* ((marker (dslide-marker obj))
-            (heading (dslide-heading obj))
-            (target-level (1+ (org-element-property :level heading)))
-            (next (dslide--contents-map
-                   heading 'headline
-                   (lambda (child)
-                     (and (= target-level (org-element-property :level child))
-                          (funcall (if reverse-in-place #'>= #'>)
-                                   (org-element-property :begin child) marker)
-                          child))
-                   nil t)))
-      (prog1 next
-        (dslide-marker obj (org-element-property
-                            (if reverse-in-place :end :begin) next)))
-    (dslide-marker obj (org-element-property :end (dslide-heading obj)))
-    nil))
+  (let* ((filter (dslide--filter-function dslide--deck))
+         (marker (dslide-marker obj))
+         (heading (dslide-heading obj))
+         (target-level (1+ (org-element-property :level heading)))
+         (next (dslide--contents-map
+                heading 'headline
+                (lambda (child)
+                  (and (= target-level
+                          (org-element-property :level child))
+                       (funcall filter child)
+                       (funcall (if reverse-in-place #'>= #'>)
+                                (org-element-property :begin child) marker)
+                       child))
+                nil t)))
+    (if next
+        (prog1 next
+          (dslide-marker obj (org-element-property
+                              (if reverse-in-place :end :begin) next)))
+      (prog1 nil
+        (dslide-marker obj (org-element-property :end (dslide-heading obj)))))))
 
 (cl-defgeneric dslide-child-previous (obj &optional reverse-in-place)
   "Return the previous direct child heading element.
@@ -1696,24 +1724,28 @@ state from being at the first child heading.")
 
 (cl-defmethod dslide-child-previous ((obj dslide-slide-action)
                                      &optional reverse-in-place)
-  (if-let* ((marker (dslide-marker obj))
-            (heading (dslide-heading obj))
-            (target-level (1+ (org-element-property :level heading)))
-            ;; We have to get all the children and find the last match
-            (next (car
-                   (last
-                    (dslide--contents-map
-                     heading 'headline
-                     (lambda (child)
-                       (and (= target-level (org-element-property :level child))
-                            (funcall
-                             (if reverse-in-place #'<= #'<)
-                             (org-element-property :begin child) marker)
-                            child)))))))
-      (prog1 next
-        (dslide-marker obj (org-element-property :begin next)))
-    (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
-    nil))
+  (let* ((filter (dslide--filter-function dslide--deck))
+         (marker (dslide-marker obj))
+         (heading (dslide-heading obj))
+         (target-level (1+ (org-element-property :level heading)))
+         ;; We have to get all the children and find the last match
+         (next (car
+                (last
+                 (dslide--contents-map
+                  heading 'headline
+                  (lambda (child)
+                    (and (= target-level (org-element-property
+                                          :level child))
+                         (funcall filter child)
+                         (funcall
+                          (if reverse-in-place #'<= #'<)
+                          (org-element-property :begin child) marker)
+                         child)))))))
+    (if next
+        (prog1 next
+          (dslide-marker obj (org-element-property :begin next)))
+      (prog1 nil
+        (dslide-marker obj (org-element-property :begin (dslide-heading obj)))))))
 
 ;; ** Flat Slide Action
 (defclass dslide-slide-action-flat (dslide-slide-action) ()
@@ -1944,10 +1976,12 @@ Child headings become independent slides.")
 (defun dslide-built-in-filter (heading)
   "HEADING is an org element.
 Return the heading unless it's filtered."
-  ;; TODO implement.  This is not particularly hard.  The filtering must be done
-  ;; according to the parent's predicate.  Slides and decks implement parent.
-  ;; Actions should use their parent's predicate.
-  heading)
+  (unless
+      (or (org-element-property :commentedp heading)
+          (let ((tags (org-element-property :tags heading)))
+            (or (member "noslide" tags)
+                (member "noexport" tags))))
+    heading))
 
 ;; * Hiding Elements
 
@@ -2125,40 +2159,47 @@ PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
        (org-element-property :contents-begin heading)
        (org-element-property :end heading)))))
 
-;; TODO these two functions behaved badly and rely on non-element methods of
-;; unknown behavior
 (defun dslide--previous-sibling (heading &optional predicate)
   "Return the previous sibling HEADING if it exists.
-PREDICATE should accept an ELEMENT argument and return non-nil."
+PREDICATE should accept an ELEMENT and return non-nil."
   (without-restriction
     (save-excursion
       (goto-char (org-element-property :begin heading))
       (let* ((predicate (or predicate #'identity))
+             (goal-level (org-element-property :level heading))
+             (level goal-level)
              found)
         (while (and (not (bobp))
                     (not found)
-                    (org-get-previous-sibling))
+                    (>= level goal-level)
+                    (re-search-backward org-heading-regexp nil t))
+          (goto-char (match-beginning 0))
           (let ((element (org-element-at-point)))
-            (when (and (eq (org-element-type element) 'headline)
-                       (funcall predicate element))
-              (setq found element))))
+            (setq level (org-element-property :level element))
+            (setq found (and (= level goal-level)
+                             (funcall predicate element)))))
         found))))
 
 (defun dslide--next-sibling (heading &optional predicate)
   "Return the next sibling HEADING if it exists.
-PREDICATE should accept an ELEMENT argument and return non-nil."
+PREDICATE should accept an ELEMENT and return non-nil."
   (without-restriction
     (save-excursion
-      (goto-char (org-element-property :begin heading))
+      (goto-char (org-element-property :end heading))
       (let* ((predicate (or predicate #'identity))
+             (goal-level (org-element-property :level heading))
+             (level goal-level)
              found)
         (while (and (not (eobp))
                     (not found)
-                    (org-get-next-sibling))
+                    (>= level goal-level)
+                    (re-search-forward org-heading-regexp nil t))
+          (goto-char (match-beginning 0))
           (let ((element (org-element-at-point)))
-            (when (and (eq (org-element-type element) 'headline)
-                       (funcall predicate element))
-              (setq found element))))
+            (setq level (org-element-property :level element))
+            (setq found (and (= level goal-level)
+                             (funcall predicate element))))
+          (goto-char (match-end 0)))
         found))))
 
 (defun dslide-type-p (element-or-type type)
@@ -2200,38 +2241,33 @@ could be the root."
       (setq element (org-element-property :parent element)))
     found))
 
-(defun dslide--document-first-heading ()
+(defun dslide--document-first-heading (filter)
   "Return the first heading element in the buffer."
   (save-restriction
     (widen)
     (save-excursion
-      (let ((buffer-invisibility-spec nil))
+      (let ((buffer-invisibility-spec nil)
+            found)
         (goto-char (point-min))
-        (let ((first-element (org-element-at-point)))
-          (if (and first-element
-                   (eq (org-element-type first-element)
-                       'headline))
-              (org-element-at-point)
-            (when (re-search-forward org-outline-regexp-bol nil t)
-              (goto-char (match-beginning 0))
-              (org-element-at-point))))))))
+        (while (and (not found)
+                    (not (eobp))
+                    (re-search-forward org-heading-regexp nil t))
+          (goto-char (match-beginning 0))
+          (let ((heading (org-element-at-point)))
+            (setq found (funcall filter heading))))
+        found))))
 
-(defun dslide--root-heading-at-point (&optional point)
+(defun dslide--root-heading-at-point (filter &optional point)
   "Return the root heading if the POINT is contained by one."
   (save-excursion
     (when point (goto-char point))
     (let* ((element (org-element-at-point))
-           (parent (dslide--element-root element 'headline)))
-      (or parent (dslide--any-heading)))))
-
-(defun dslide--any-heading ()
-  "Return any heading that can be found."
-  (save-excursion
-    (if (not (numberp (org-back-to-heading-or-point-min)))
-        (org-element-at-point)
-      (when (re-search-forward org-heading-regexp)
-        (org-back-to-heading)
-        (org-element-at-point)))))
+           (parent (or (dslide--element-root element 'headline)
+                       (dslide--document-first-heading filter))))
+      (if (funcall filter parent)
+          parent
+        (or (dslide--next-sibling parent filter)
+            (dslide--previous-sibling parent filter))))))
 
 (defun dslide-and (&rest predicates)
   "Combine PREDICATES for filtering elements.
@@ -2528,6 +2564,10 @@ hooks must occur in the deck's :slide-buffer."
                                       "DECK_CLASS"))
                         dslide-default-deck-class
                         'dslide-deck))
+             ;; TODO detect misconfiguration
+             (filter (or (intern-soft (dslide--keyword-value
+                                       "DSLIDE_FILTER"))
+                         #'dslide-built-in-filter))
              (window-config (current-window-configuration))
 
              (slide-buffer (clone-indirect-buffer
@@ -2537,6 +2577,7 @@ hooks must occur in the deck's :slide-buffer."
                           :base-buffer base-buffer
                           :slide-buffer slide-buffer
                           :window-config window-config
+                          :filter filter
                           nil)))
         (setq dslide--deck deck)
         (display-buffer slide-buffer dslide--display-actions)
@@ -2848,15 +2889,28 @@ each slide show from the contents view."
   (oset dslide--deck slide-buffer-state 'contents)
   (widen)
   (org-overview)
-  (goto-char (org-element-property :begin (dslide--root-heading-at-point)))
-  (recenter)
+  (let ((data (org-element-parse-buffer))
+        (filter (dslide--filter-function dslide--deck)))
+    ;; hide filtered headings
+    (org-element-map data 'headline
+      (lambda (e)
+        (unless (funcall filter e)
+          (let ((overlay (make-overlay
+                          (org-element-property :begin e)
+                          (org-element-property :end e))))
+            (overlay-put overlay 'display "\n")
+            (push overlay dslide-overlays))))
+      nil nil t)
+    (goto-char
+     (org-element-property :begin (dslide--root-heading-at-point filter)))
+    (recenter)
 
-  (if-let ((first (dslide--document-first-heading)))
-      (narrow-to-region (org-element-property :begin first)
-                        (point-max))
-    ;; No first heading.  Just header.  Empty contents.
-    (narrow-to-region (point-max)
-                      (point-max)))
+    (if-let ((first (dslide--document-first-heading filter)))
+        (narrow-to-region (org-element-property :begin first)
+                          (point-max))
+      ;; No first heading.  Just header.  Empty contents.
+      (narrow-to-region (point-max)
+                        (point-max))))
   (run-hooks 'dslide-narrow-hook)
 
   (when dslide-header
@@ -2864,9 +2918,6 @@ each slide show from the contents view."
 
   (when dslide-contents-selection-highlight
     (add-hook 'post-command-hook #'dslide--contents-hl-line nil t))
-
-  ;; TODO walk all headings with the filter and add overlays on the hidden stuff
-  ;; TODO filter slides that don't have a display action?
 
   (dslide--feedback :contents)
   (run-hooks 'dslide-contents-hook))
@@ -2969,10 +3020,15 @@ video or custom actions."
   ;; must presenters.
   (dslide--ensure-slide-buffer)
   (if (dslide--showing-contents-p)
-      (progn (org-next-visible-heading 1)
-             (while dslide--step-overlays
-               (delete-overlay (pop dslide--step-overlays)))
-             (dslide--follow (point)))
+      (let* ((filter (dslide--filter-function dslide--deck))
+             (current (dslide--root-heading-at-point filter))
+             (next (dslide--next-sibling current filter)))
+        (if next
+            (goto-char (org-element-property :begin next))
+          (message "No more slides!"))
+        (while dslide--step-overlays
+          (delete-overlay (pop dslide--step-overlays)))
+        (dslide--follow (point)))
     (dslide--ensure-slide-buffer)
     (if (eq (oref dslide--deck base-buffer)
             (window-buffer (selected-window)))
@@ -2991,7 +3047,12 @@ video or custom actions."
   ;; must presenters.
   (dslide--ensure-slide-buffer)
   (if (dslide--showing-contents-p)
-      (progn (org-previous-visible-heading 1)
+      (progn (let* ((filter (dslide--filter-function dslide--deck))
+                    (current (dslide--root-heading-at-point filter))
+                    (previous (dslide--previous-sibling current filter)))
+               (if previous
+                   (goto-char (org-element-property :begin previous))
+                 (message "No previous slide!")))
              (while dslide--step-overlays
                (delete-overlay (pop dslide--step-overlays)))
              (dslide--follow (point)))
