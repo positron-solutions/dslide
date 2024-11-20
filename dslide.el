@@ -1506,87 +1506,182 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     :initform nil
     :initarg :kill-buffer
     :documentation "Kill the buffer.  Default nil just buries it.")
+   (slide-display
+    :initform t
+    :initarg :slide-display
+    :documentation "Show images inline on the slide.
+t - basically the same as calling `org-display-inline-images'.
+reveal - images will be revealed one by one.
+nil - do not show images on the slide.")
+   (standalone-display
+    :initform t
+    :initarg :standalone-display
+    :documentation "Show images in their own buffer.
+t - same as window.
+window - use just the current window
+full-frame - use the entire frame to show the image.
+nil - do not show images in their own buffer.")
+   (hide-mode-line
+    :initform t
+    :initarg :hide-mode-line
+    :documentation "Turn on `hide-mode-line-mode'.
+Only affects standalone-display.")
    (include-linked
     :initform nil
     :initarg :include-linked
     :documentation "Loads linked images.  See `org-display-inline-images'.")
-   (fullscreen
-    :initform nil
-    :initarg :fullscreen
-    :documentation "Switch to full frame during display.")
-   (hide-mode-line
-    :initform t
-    :initarg :hide-mode-line
-    :documentation "Turn on `hide-mode-line-mode'.")
    (refresh
     :initform nil
     :initarg :refresh
-    :documentation "Reload images.  See `org-display-inline-images'."))
-  "Show images fullscreen in a buffer.")
+    :documentation "Reload images.  See `org-display-inline-images'.")
+   (overlays
+    :initform nil
+    :documentation "Overlays used to hide images for reveal."))
+  "Show images.")
 
 (cl-defmethod dslide-begin ((obj dslide-action-image))
-  (org-display-inline-images
-   (oref obj include-linked)
-   (oref obj refresh)
-   (org-element-property :begin (dslide-heading obj))
-   (org-element-property :end (dslide-heading obj))))
+  (if (oref obj slide-display)
+      (progn
+        (org-display-inline-images
+         (oref obj include-linked)
+         (oref obj refresh)
+         (org-element-property :begin (dslide-heading obj))
+         (org-element-property :end (dslide-heading obj)))
+        ;; When revealing, keep track of our overlays
+        (when (eq (oref obj slide-display) 'reveal)
+          (dslide-section-map
+           obj 'link
+           (lambda (e)
+             (let ((overlay (make-overlay
+                             (1- (org-element-property :begin e))
+                             (org-element-property :end e))))
+               (overlay-put overlay 'invisible t)
+               (push overlay (oref obj overlays)))))))
+    ;; If just hiding the images, dump the overlays into `dslide-overlays'.
+    (dslide-section-map
+     obj 'link
+     (lambda (e)
+       (let ((overlay (make-overlay
+                       (1- (org-element-property :begin e))
+                       (org-element-property :end e))))
+         (overlay-put overlay 'invisible t)
+         (overlay-put overlay 'priority 1000)
+         (push overlay dslide-overlays))))))
 
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
 ;; TODO make it just a link action?
 (cl-defmethod dslide-forward ((obj dslide-action-image))
-  (when-let ((link (dslide-section-next obj 'link)))
-    (dslide-push-window-config nil)
-    ;; TODO success detection
-    (let ((org-link-frame-setup '((file . find-file)))
-          (display-buffer-overriding-action (when (oref obj fullscreen)
-                                              '(display-buffer-full-frame))))
-      (org-link-open link))
+  ;; When just revealing images without doing standalone display, we can
+  ;; reverse in place, hiding and showing the same image when changing
+  ;; directions.  When doing standalone but not reveal, we do not reverse in
+  ;; place at all.  When combining standalone and reveal, the standalone
+  ;; callback implements reverse-in-place by itself.
+  (let* ((standalone-display (oref obj standalone-display))
+         (slide-display (oref obj slide-display))
+         (in-place (and (eq slide-display 'reveal)
+                        (null standalone-display))))
+    (when-let ((link (dslide-section-next obj 'link nil in-place)))
+      ;; Show the image standalone
+      (when (member standalone-display '(full-frame window t))
+        (dslide-push-window-config nil)
+        ;; TODO success detection
+        (let ((org-link-frame-setup '((file . find-file)))
+              (display-buffer-overriding-action
+               (when (eq standalone-display 'full-frame)
+                 '(display-buffer-full-frame))))
+          (org-link-open link))
+        (when (eq (buffer-local-value 'major-mode (current-buffer)) 'image-mode)
+          (when (oref obj hide-mode-line)
+            (when (and (require 'hide-mode-line nil t)
+                       (fboundp 'hide-mode-line-mode))
+              (hide-mode-line-mode 1)))
+          (image-transform-fit-to-window)
+          (let ((image-buffer (current-buffer)))
+            (dslide-push-step
+             (lambda (direction)
+               (when (buffer-live-p image-buffer)
+                 (if (oref obj kill-buffer)
+                     (kill-buffer image-buffer)
+                   (bury-buffer image-buffer)))
+               ;; If not doing reveal, return nil to not count as a step.
+               ;; If doing reveal, going backwards needs to count as a step.
+               (when (eq slide-display 'reveal)
+                 (eq direction 'backward)))))))
 
-    (when (eq (buffer-local-value 'major-mode (current-buffer))
-              'image-mode)
-      (when (oref obj hide-mode-line)
-        (when (and (require 'hide-mode-line nil t)
-                   (fboundp 'hide-mode-line-mode))
-          (hide-mode-line-mode 1)))
-      (image-transform-fit-to-window)
-      (let ((image-buffer (current-buffer)))
-        (dslide-push-step
-         (lambda (_)
-           (when (buffer-live-p image-buffer)
-             (if (oref obj kill-buffer)
-                 (kill-buffer image-buffer)
-               (bury-buffer image-buffer)))))))
-    (org-element-property :begin link)))
+      ;; When revealing images, if one of our overlays is hiding this image,
+      ;; remove it.
+      (when (eq (oref obj slide-display) 'reveal)
+        (let ((link-overlays (seq-intersection (oref obj overlays)
+                                               (overlays-at (org-element-property
+                                                             :begin link)))))
+          (oset obj overlays (seq-difference (oref obj overlays) link-overlays))
+          (mapc #'delete-overlay link-overlays)))
+
+      (org-element-property :end link))))
 
 (cl-defmethod dslide-backward ((obj dslide-action-image))
-  (when-let ((link (dslide-section-previous obj 'link)))
-    (dslide-push-window-config nil)
-    ;; TODO success detection
-    (let ((org-link-frame-setup '((file . find-file)))
-          (display-buffer-overriding-action (when (oref obj fullscreen)
-                                              '(display-buffer-full-frame))))
-      (org-link-open link))
+  ;; When just revealing images without doing standalone display, we can
+  ;; reverse in place, hiding and showing the same image when changing
+  ;; directions.  When doing standalone but not reveal, we do not reverse in
+  ;; place at all.  When combining standalone and reveal, the standalone
+  ;; callback implements reverse-in-place by itself.
+  (let* ((standalone-display (oref obj standalone-display))
+         (slide-display (oref obj slide-display)))
+    (when-let ((link (dslide-section-previous obj 'link nil)))
+      (when (member standalone-display '(full-frame window t))
+        (dslide-push-window-config nil)
+        ;; TODO success detection
+        (let ((org-link-frame-setup '((file . find-file)))
+              (display-buffer-overriding-action
+               (when (eq standalone-display 'full-frame)
+                 '(display-buffer-full-frame))))
+          (org-link-open link))
+        (when (eq (buffer-local-value 'major-mode (current-buffer))
+                  'image-mode)
+          (when (oref obj hide-mode-line)
+            (when (and (require 'hide-mode-line nil t)
+                       (fboundp 'hide-mode-line-mode))
+              (hide-mode-line-mode 1)))
+          (image-transform-fit-to-window)
+          (let ((image-buffer (current-buffer)))
+            (dslide-push-step
+             (lambda (_)
+               (when (buffer-live-p image-buffer)
+                 (if (oref obj kill-buffer)
+                     (kill-buffer image-buffer)
+                   (bury-buffer image-buffer))))))))
+      (when (eq slide-display 'reveal)
+        (let ((overlay (make-overlay
+                        (1- (org-element-property :begin link))
+                        (org-element-property :end link))))
+          (overlay-put overlay 'invisible t)
+          (overlay-put overlay 'priority 1000)
+          (push overlay (oref obj overlays))))
+      (org-element-property :begin link))))
 
-    (when (eq (buffer-local-value 'major-mode (current-buffer))
-              'image-mode)
-      (when (oref obj hide-mode-line)
-        (when (and (require 'hide-mode-line nil t)
-                   (fboundp 'hide-mode-line-mode))
-          (hide-mode-line-mode 1)))
-      (image-transform-fit-to-window)
-      (let ((image-buffer (current-buffer)))
-        (dslide-push-step
-         (lambda (_)
-           (when (buffer-live-p image-buffer)
-             (if (oref obj kill-buffer)
-                 (kill-buffer image-buffer)
-               (bury-buffer image-buffer)))))))
-    (org-element-property :begin link)))
+(cl-defmethod dslide-final :after ((obj dslide-action-image))
+  (mapc #'delete-overlay (oref obj overlays)))
 
 (cl-defmethod dslide-end ((obj dslide-action-image))
   (dslide-marker obj (org-element-property :end (dslide-heading obj)))
-  (dslide-begin obj))
+  (if (oref obj slide-display)
+      (progn
+        (org-display-inline-images
+         (oref obj include-linked)
+         (oref obj refresh)
+         (org-element-property :begin (dslide-heading obj))
+         (org-element-property :end (dslide-heading obj))))
+    ;; If just hiding the images, dump the overlays into `dslide-overlays'.
+    (dslide-section-map
+     obj 'link
+     (lambda (e)
+       (let ((overlay (make-overlay
+                       (1- (org-element-property :begin e))
+                       (org-element-property :end e))))
+         (overlay-put overlay 'invisible t)
+         (overlay-put overlay 'priority 1000)
+         (push overlay dslide-overlays))))))
 
 ;; * Slide Actions
 ;; A slide action will generally control the restriction, hydrate children, and

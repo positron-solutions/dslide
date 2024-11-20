@@ -111,11 +111,25 @@ Positron is deeply committed to bringing you the finest in:
 :END:
 - The action will automatically turn on inline images so you don't have to remember to run ~org-toggle-inline-images~.
 - The image buffer is configured to act as a slide, so it still responds to the keybindings.
-- See more options, such as fullscreen etc by calling ~describe-symbol~ on ~dslide-action-image~
+- See more options, such as full-frame etc by calling ~describe-symbol~ on ~dslide-action-image~
 #+ATTR_HTML: :width 45%
 [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
 #+ATTR_HTML: :width 45%
 [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+** Standalone Image
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-image :slide-display nil
+:END:
+You can show images without them being visible on the slide.  A way to achieve a similar effect is to have a child heading with no slide action and only images.
+#+ATTR_HTML: :width 50%
+[[./images/yuki-o-yak.jpeg]]
+** Reveal Images
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-image :slide-display reveal :standalone-display nil
+:END:
+Reveal a series of images, like bullet points, but where each one is worth a thousand words.
+#+ATTR_HTML: :width 22%
+[[./images/representation.png]] [[./images/independence.png]] [[./images/consistent.png]] [[./images/accountability.png]]
 * No Header Slide
 :PROPERTIES:
 :DSLIDE_SLIDE_ACTION: dslide-slide-action-child :header nil
