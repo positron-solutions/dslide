@@ -309,7 +309,8 @@ keyword."
   :type 'function)
 
 ;; TODO test the use of plist args
-(defcustom dslide-default-actions '(dslide-action-hide-markup)
+(defcustom dslide-default-actions '(dslide-action-hide-markup
+                                    dslide-action-propertize)
   "Actions that run within the section display action lifecycle.
 It's value is a list of symbol `dslide-action' sub-classes or (CLASS . ARGS)
 forms where ARGS is a plist.  Each subclass will be instantiated
@@ -1256,6 +1257,41 @@ for `dslide-contents-map'.")
             (push dslide-overlays overlay)))))))
 
 (cl-defmethod dslide-end ((obj dslide-action-hide-markup))
+  (dslide-begin obj))
+
+;; ** Text Property Action
+;; Interpret text properties via affiliated keyword into text properties for
+;; more control over text display on slides.
+
+(defclass dslide-action-propertize (dslide-action) ()
+  "Interpret affiliated keywords into text properties.")
+
+(cl-defmethod dslide-begin ((obj dslide-action-propertize))
+  (dslide-section-map
+   obj '(paragraph src-block headline plain-list
+                   quote-block special-block
+                   table)
+   ;; TODO see `org-element-all-elements' and make this more comprehensive
+   (lambda (e)
+     (message "Element found: %s" (car e))
+     (when-let ((props (org-element-property
+                        :attr_dslide_propertize e)))
+       (let ((overlay (make-overlay (org-element-property :post-affiliated e)
+                                    (org-element-property :end e)))
+             (props (car props))        ; TODO multi-value support
+             (offset 0))
+         (while offset
+           (let* ((prop (ignore-error 'end-of-file
+                          (read-from-string props offset)))
+                  (value (ignore-error 'end-of-file
+                           (read-from-string props (cdr prop)))))
+             (if (and prop value)
+                 (progn (overlay-put overlay (car prop) (car value))
+                        (setq offset (cdr value)))
+               (setq offset nil))))
+         (push overlay dslide-overlays))))))
+
+(cl-defmethod dslide-end ((obj dslide-action-propertize))
   (dslide-begin obj))
 
 ;; ** Item Reveal Action
