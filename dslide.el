@@ -207,8 +207,8 @@ Can be a float or integer."
 
 (defcustom dslide-feedback-messages
   '(:start "Start! ▶"
-    :forward "Forward ➡"
-    :backward "⬅ Backward"
+    :forward "Forward →"
+    :backward "← Backward"
     :contents "Contents ☰"
     :stop "Stop ■"
     :after-last-slide "No more slides!")
