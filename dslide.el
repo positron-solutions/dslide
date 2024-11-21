@@ -1270,10 +1270,7 @@ for `dslide-contents-map'.")
 
 (cl-defmethod dslide-begin ((obj dslide-action-propertize))
   (dslide-section-map
-   obj '(paragraph src-block headline plain-list
-                   quote-block special-block
-                   table)
-   ;; TODO see `org-element-all-elements' and make this more comprehensive
+   obj t
    (lambda (e)
      (message "Element found: %s" (car e))
      (when-let ((props (org-element-property
@@ -2207,7 +2204,9 @@ its height and width for filling in other content."
   "Map FUN over the contents of the ELEMENT matching TYPE.
 INFO, FIRST-MATCH, and NO-RECURSION are described in
 `org-element-map'."
-  (let ((type (if (listp type) type (list type))))
+  (let ((type (if (or (listp type) (eq t type))
+                  type
+                (list type))))
     (save-excursion
       (save-restriction
         (narrow-to-region (org-element-property :begin element)
