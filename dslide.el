@@ -406,7 +406,9 @@ This is global.  If a presentation is active, you can look at this variable to
 coordinate with it.")
 
 (defvar dslide-overlays nil
-  "Overlays used to hide or change contents display.")
+  "Overlays used to hide or change contents display.
+These are cleaned up when the restriction is changed or when switching
+between contents and slides.")
 
 (defvar dslide--step-overlays nil
   "Overlays that only live for one step.")
@@ -1760,6 +1762,14 @@ restriction, meaning no progress was made.")
                   (dslide--section-end heading))))
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
+        ;; Restriction changes are a good moment to clean up overlays dumped
+        ;; into `dslide-overlays'.  ⚠️ However, this doesn't properly handle
+        ;; the case that the new restriction contains the old restriction,
+        ;; meaning some of the existing overlays may still be necessary.  This
+        ;; should be good for now since there are no known cases where this
+        ;; edge case is reached.
+        (while dslide-overlays
+          (delete-overlay (pop dslide-overlays)))
         (narrow-to-region begin end)
         (dslide-hide-filtered-children obj)
         (when (and dslide-slide-in-effect
