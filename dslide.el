@@ -1272,7 +1272,6 @@ for `dslide-contents-map'.")
   (dslide-section-map
    obj t
    (lambda (e)
-     (message "Element found: %s" (car e))
      (when-let ((props (org-element-property
                         :attr_dslide_propertize e)))
        (let ((overlay (make-overlay (org-element-property :post-affiliated e)
@@ -1280,9 +1279,9 @@ for `dslide-contents-map'.")
              (props (car props))        ; TODO multi-value support
              (offset 0))
          (while offset
-           (let* ((prop (ignore-error 'end-of-file
+           (let* ((prop (ignore-error end-of-file
                           (read-from-string props offset)))
-                  (value (ignore-error 'end-of-file
+                  (value (ignore-error end-of-file
                            (read-from-string props (cdr prop)))))
              (if (and prop value)
                  (progn (overlay-put overlay (car prop) (car value))
