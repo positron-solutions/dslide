@@ -1,0 +1,570 @@
+#+title: Domain Specific sLIDEs
+#+subtitle: for version {{{package-version}}}
+#+author: {{{package-author}}}
+#+email: {{{package-email}}}
+#+date: 2024-{{{year}}}
+#+property: header-args :eval no`
+#+options: broken-links:nil \n:nil ::t |:t ^:nil -:t f:t *:t <:t e:t ':t
+#+options: d:nil todo:nil pri:nil tags:not-in-toc stat:nil
+#+language: en
+#+export_file_name: dslide.texi
+#+texinfo_dir_category: Emacs
+#+texinfo_dir_title: Dslide: (dslide).
+#+texinfo_dir_desc: A presentation framework
+#+macro: package-version (eval (if (require 'erk nil t) (erk-package-version) "0.4.0"))
+#+macro: package-author (eval (if (require 'erk nil t) (erk-package-author) "Positron"))
+#+macro: package-email (eval (if (require 'erk nil t) (erk-package-email "contact@positron.solutions")))
+#+macro: year (eval (format-time-string "%Y"))
+#+texinfo_header: @comment !!!THIS FILE HAS BEEN GENERATED!!! Edit manual.org instead!
+
+* Introduction
+:PROPERTIES:
+:DESCRIPTION: Why You Heart DSL IDE
+:END:
+Dslide is designed for conducting presentations in Emacs.  Abstractly, a presentation is a scripted sequence of content.  Org mode documents are the primary means of encoding these sequences for dslide.
+
+What dslide primarily adds to Emacs and Org Mode:
+
+- Simplified user interface suitable for a presentation remote controller
+- Data model that adapts Emacs to this interface
+- Method of attaching reusable, configurable programmed behavior to org mode content
+- Extensible framework for creating custom programmed behavior
+- Presenter tools such as viewing hidden content invisible to the audience
+** Design Goals
+:PROPERTIES:
+:DESCRIPTION: Things Hopefully Achieved
+:END:
+Granular configurability was the first goal.  Dslide's predecessor, ~org-tree-slide~, could only be configured at the level of the entire document, using customize variables.
+
+Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks, because Emacs sits on top of all your other programming tools and sub-processes, so does dslide.  The action system is a framework for attaching reusable, configurable programmed behavior to multiple headings.
+
+High productivity was another goal.  With a decent org configuration, use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to slides.  Dslide respects export settings, allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents, to store and organize information.
+** Strengths
+:PROPERTIES:
+:DESCRIPTION: When Dslide is Perfect
+:END:
+Dslide is particularly good for presentations that are for internal use or intended for closed audiences, where the polish that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
+
+- Tech demos
+- Early stage startup pitches
+- Conducting team meetings
+* Glossary
+:PROPERTIES:
+:DESCRIPTION: Words We Invented
+:END:
+- =Deck=: an object that is used to relate the display and base buffer and is the root of all sequences.  It's another word for "presentation" or PT.
+- =Slide=: an object that interprets an org heading to hydrate its actions
+- =Action=: an object that responds to ~dslide-deck-forward~ and ~dslide-deck-backward~ calls and implements lifecycle methods to initialize and clean up state
+  + =Slide Action=: an action subclass that handles initial display of the slide and creation of child slides from sub-headings.
+  + =Section Actions=: actions that typically control the display and behavior of a heading's section, the region between the headline and child headings.
+- =Step=: a single call to ~dslide-deck-foward~ or ~dslide-deck-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods
+- =Contents=: A view of the folded top-level headings that is used for quickly navigating between headings during a presentation.
+- =Slide Buffer=: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name.
+  + Indirect buffer and =slide-buffer= are used interchangeably
+  + Base buffer or =base-buffer= is used pretty exclusively
+- =Stateful Sequence=: ~dslide-stateful-sequence~ is an interface that other classes implement when they will receive delegated commands from the user.
+** Org Mode Terms
+:PROPERTIES:
+:DESCRIPTION: Ones You Might Not Know
+:END:
+Select org mode terms more frequently used by dslide.  Don't miss [[info:org#Org Syntax][Org Syntax (org)]].
+
+- =Element=: org documents are parsed into elements and objects.  Headings, plain lists, and blocks are examples of elements.  See the [[https://orgmode.org/worg/dev/org-element-api.html][org element api]] documentation.  Dslide makes heavy use of org's element parser to implement its features.
+- =Keyword=: A single =#+keyword_style:= line used to specify some option
+- =Affilated keyword=: A =#+attr_keyword_style:= line that directly preceeds an element and is used to add metadata to arbitrary org elements
+- =Property=: Meta data attached to headings. See [[info:org#Property Syntax][Property Syntax (org)]]
+* Creating
+:PROPERTIES:
+:DESCRIPTION: Making Org Documents Into Presentations
+:END:
+Making an org document into a presentation.
+** Actions
+:PROPERTIES:
+:DESCRIPTION: Overview
+:END:
+By default, you just get one slide per heading, a header, and some animation.  This is not very exciting.  You need to add actions to slides to consume their section content in a more engaging way.
+
+There are two kinds of actions:
+- =Slide actions=: mostly responsible for narrowing to a slide and then handling the child headings, either inline or as separate slides
+- =Section actions=: work on the content in the heading's section.
+
+To browse all actions, because they are all EIEIO classes, you can use ~eieio-browse~ and see the actions descend from ~dslide-action~.
+
+#+begin_src
+  +--dslide-stateful-sequence
+       +--dslide-action
+            +--dslide-action-propertize
+            +--dslide-action-image
+            +--dslide-action-babel
+            +--dslide-action-item-reveal
+            +--dslide-action-hide-markup
+            +--dslide-slide-action
+                 +--dslide-slide-action-every-child
+                 +--dslide-slide-action-inline
+                 +--dslide-slide-action-child
+                 +--dslide-slide-action-flat
+#+end_src
+** Adding Actions
+:PROPERTIES:
+:DESCRIPTION: Making Content Do Stuff
+:END:
+#+vindex: dslide-default-actions
+By default, every slide has two actions, configurable in ~dslide-default-actions~:
+- ~dslide-action-propertize~ for adding text properties to arbitrary elements
+- ~dslide-action-hide-markup~ to hide keywords, todo states, and tags, allowing you to have these things in your source without them cluttering the presentation
+
+Actions must be added to a slide using the slide's property drawer.
+
+- =DSLIDE_SLIDE_ACTION=: Usually narrows to the slide and creates children from child headings.  Lifecycle encloses the section actions.
+- =DSLIDE_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+
+#+begin_export html
+Regular Org Mode markup is used to add actions to headings.  See more examples in the [[../test]] directory.
+#+end_export
+
+#+begin_src org
+  ,* Full Screen Images
+  :PROPERTIES:
+  :DSLIDE_ACTIONS: dslide-action-images
+  :END:
+  ,#+attr_html: :width 50%
+  [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
+#+end_src
+** Action Arguments
+:PROPERTIES:
+:DESCRIPTION: Tweaking Behavior
+:END:
+Many actions understand arguments, allowing tuning of similar behaviors from the same class.
+
+To view an action's arguments, call ~describe-symbol~ on it.  Any slot definition usually has the same =:initarg= and will be understood when added as a plist-style argument.
+
+Configuring the slot is done by adding plist-style properties after the class name:
+
+#+begin_src org
+  :PROPERTIES:
+  :DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
+  :END:
+#+end_src
+
+You can also use "property+" syntax to add to a property, and these accept plist arguments too:
+
+#+begin_src org
+  :PROPERTIES:
+  :DSLIDE_ACTIONS: dslide-action-babel
+  :DSLIDE_ACTIONS+: dslide-action-images :full-frame t
+  :END:
+#+end_src
+
+🚧 The current plist read implementation splits the string rather than using ~read-string~ and is therefore not smart enough to parse lists as arguments.  However ~dslide-action-propertize~ demonstrates doing this correctly and shows that it will be possible if needed.
+** Annotating Elements
+:PROPERTIES:
+:DESCRIPTION: Telling Actions What and Where
+:END:
+Some actions, such as ~dslide-action-propertize~, can't decide which elements to operate on or what to do with the element.  You can add some meta data to an element using an *affiliated keyword*.
+
+⚠️ If you are extending an action and want to create your own affiliated keyword, they  must start with =attr= or else the parser will not consider them affiliated!
+
+#+begin_src org
+  ,* Fancy Text
+  :PROPERTIES:
+  :DSLIDE_ACTIONS: dslide-action-propertize
+  :END:
+  Add text properties to an element using the =attr_dslide_propertize= affiliated keyword.  No quoting is required.  Lists will be interpreted as such.
+
+  ,#+attr_dslide_propertize: face (:background "#ddddff" :foreground "#000000" :weight bold :height 2.0)
+  This is some fancy text
+#+end_src
+** Babel Scripting
+:PROPERTIES:
+:DESCRIPTION: Fully Programmable Steps
+:END:
+#+findex: dslide-action-babel
+#+cindex: scripting babel steps
+You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~dslide-action-babel~ action.
+
+By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the ~dslide-action-babel~ class and examples in [[./test/demo.org]].
+
+The =#+attr_dslide:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
+
+- =begin= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
+
+- =final= is only called when no progress can be made or if the presentation is stopped.
+
+- =forward= and =backward= are self-explanatory.  Position your =backward= blocks *above* any block that they undo
+
+- =both= runs either direction.  It will not repeat in place when reversing.  Use seperate =forward= and =backward= blocks for that 💡
+
+The babel action also understands regular babel options such as =:exports= and =:results=.  Exports none will make the block invisible.  Results controls whether results will be printed into the buffer or not.
+*** Step Callbacks
+#+findex: dslide-push-step
+#+cindex: pushing steps
+See ~dslide-push-step~ for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume ~dslide-deck-forward~ and ~dslide-deck-backward~ itself, a callback may be easier.  Using ~dslide-push-step~ is also one way to optionally add a step callback from a babel block.
+** Hiding Markup
+:PROPERTIES:
+:DESCRIPTION: No More Ugly
+:END:
+#+findex: dslide-action-hide-markup
+#+vindex: dslide-hide-markup-types
+Dslide uses a lot of markup that would not look good in a presentation.  It also filters it by default using ~dslide-action-hide-markup~.  You can adjust the types using ~dslide-hide-markup-types~
+*** Hiding Todos and Tags
+#+vindex: dslide-hide-todo
+#+vindex: dslide-hide-tags
+~dslide-action-hide-markup~ will also hide todos and tags.  You can modifiy this with ~dslide-hide-todo~ and ~dslide-hide-tags~.
+** Filtering Headings
+:PROPERTIES:
+:DESCRIPTION: It's Not Done Yet
+:END:
+#+cindex: commented headings
+- Any heading with =COMMENT= directly after the stars will be skipped
+- Any heading with the =:noslide:= or =:noexport:= tags will be skipped
+
+Use this when your headings are work-in-progress and you run out of time on Friday before the feature demo meeting.  Have some content that is used only in some exports?  Use =:noslide:=.
+** Header Keywords
+:PROPERTIES:
+:DESCRIPTION: Title, Author, Email
+:END:
+#+vindex: dslide-header
+If ~dslide-header~ is configured, the keywords for the document title, email, and author etc will be used to generate an okay header.
+
+#+begin_src org
+  #+,title:	Domain Specific sLIDEs
+  ,#+author:	Positron
+  ,#+email:	contact@positron.solutions
+#+end_src
+** File Local Variables
+:PROPERTIES:
+:DESCRIPTION: Don't Forget Free Lunch
+:END:
+Don't forget that if you need a customize variable only set in a particular presentation, you can use file local variables.  Not every setting needs a keyword or babel block integration.
+
+#+begin_src org
+  # Local Variables:
+  # dslide-header: nil
+  # End:
+#+end_src
+* Presenting
+:PROPERTIES:
+:DESCRIPTION: Controlling the Presentation
+:END:
+How to control and view your presentation.
+** Two Button Interface
+:PROPERTIES:
+:DESCRIPTION: Its All Forwards and Backwards
+:END:
+Presentations tend to be organized into a scripted linear sequence.  We want to control the entire presentation sequence mostly with two buttons, forwards and backwards.
+
+The controllers for presenting usually have very few buttons.  Dslide was designed with this usage pattern in mind and can mostly be controlled by two commands.
+
+#+findex: dslide-deck-forward
+- ~dslide-deck-forward~
+#+findex: dslide-deck-backward
+- ~dslide-deck-backward~
+
+#+findex: dslide-deck-start
+Many controllers also have a "play" button or similar.  It's recommended to map this to ~dslide-deck-start~.
+
+🚧 It is intended to overload ~dslide-deck-start~ further to implement "secondary" actions that can be triggered non-linearly.
+
+#+findex: dslide-deck-stop
+There is likely no good place to bind ~dslide-deck-stop~, but it's not critical.  You can do everything with just three buttons.
+** Contents Interface
+:PROPERTIES:
+:DESCRIPTION: Navigating Faster
+:END:
+Navigate your presentation faster when answering questions.  The contents interface is a view of top-level headings.  It overloads the presentation controls to navigate.
+
+To enter the contents, call ~dslide-deck-start~ when a presentation is already active.
+
+- ~dslide-deck-start~ will resume the presentation at that heading
+- ~dslide-deck-stop~ will similarly exit the contents view
+- ~dslide-deck-forward~ and ~dslide-deck-backward~ move between top level headings.
+** Narrating
+:PROPERTIES:
+:DESCRIPTION: And Debugging Live
+:END:
+The presentation you see is a cloned [[info:elisp#Indirect Buffers][indirect buffer]] of your org mode buffer. The Elisp state and overlays are independent. There are two key advantages:
+
+- Any state you create in the presentation will not pollute the org mode buffer you are editing
+- We can display the source for the presentation simultaneously
+
+#+findex: dslide-deck-develop
+~dslide-deck-develop~ will attempt to display both the presentation and source simultaneously.  Whenever the source is visible, highlights will be applied to indicate where the presentation is at.  *This is especially helpful for including presentation notes in comments, which are hidden by default*.
+
+To leave a comment for yourself in the presentation source, just add a comment block or comment line:
+
+#+begin_src org
+  # This is also a comment
+
+  ,#+begin_comment
+  This is a comment that only I can see while presenting, only when I look at my base buffer while sharing another frame.
+  ,#+end_comment
+#+end_src
+
+You can also switch a window to the base buffer manually.  That's almost all ~dslide-deck-develop~ does.
+** Cursor Visibility
+#+findex: dslide-cursor-hide
+#+findex: dslide-cursor-restore
+By default, the cursor is hidden in the presentation buffer using ~dslide-cursor-hide~.  You can call ~dslide-cursor-restore~ if you need it.
+* Configuring
+:PROPERTIES:
+:DESCRIPTION: Global Settings
+:END:
+Be sure to check =M-x= ~customize-group~ =dslide= to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
+
+Many settings can be configured at:
+- global level through customize variables
+- document level through keywords
+- slide level through the property drawer
+** Binding
+You likely want to start the mode via ~dslide-deck-start~.  Once the mode starts, it creates an indirect buffer to display the slides and then calls ~dslide-deck-start-function~ once the mode is active and everything is initialized, so you can customize startup behavior.
+
+All commands begin with ~dslide-deck~ 💡
+#+begin_src elisp
+  (keymap-set org-mode-map "<f5>" #'dslide-deck-start)
+#+end_src
+Once the global minor mode, ~dslide-mode~ is active, additional bindings in ~dslide-mode-map~ are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
+*** Secondary Commands 🚧
+Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~dslide-deck-start~ binding within presentations to enter / exit these branches.
+** Hooks
+Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base buffer* ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use ~dslide-start-hook~. 💡
+
+- ~dslide-start-hook~ is run in the indirect buffer after it is set it.  This is what you want.
+- ~dslide-stop-hook~ is run in the base buffer because the indirect buffer is already dead.
+- ~dslide-contents-hook~ is run after switching to contents.  It runs in the slide buffer.
+- ~dslide-narrow-hook~ is run after narrowing, usually after a slide is started
+- ~dslide-after-last-slide-hook~ is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add ~dslide-deck-stop~ to exit without feedback.
+
+  Another option is to use ~dslide-push-step~ to push a callback that will only run when called going forward.
+
+#+begin_src elisp
+  (defun my-stop-if-forward ()
+    (dslide-push-step (lambda (direction)
+                    (when (eq direction 'forward)
+                      ;; Be sure to return t or the callback won't count as a
+                      ;; step and the hook will run again.
+                      (prog1 t (dslide-deck-stop))))))
+
+  (setq dslide-after-last-slide-hook #'my-stop-if-forward)
+#+end_src
+*** Per-Slide Actions
+💡 If you want to do something on each slide or specific slides, before using hooks, instead consider using actions.
+
+See the ~dslide-action-hide-markup~ which is by default added to ~dslide-default-actions~ and hides markup on every slide.  The lifecycle of actions and their methods for obtaining the current slide's heading make them very good for per-slide behavior.
+** Steezing Org
+:PROPERTIES:
+:DESCRIPTION: Making it Pretty
+:END:
+Not unique to dslide, if you want more professional looking results, you will likely need to make your org a bit prettier.
+
+The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
+
+In short, use:
+- ~org-modern~
+- ~org-appear~
+- ~nerd-icons~ for more cheesy (Emacs logo)
+- And set the faces for org headings and document title.
+
+Don't forget built-in ~emoji-search~ and searching ~insert-char~.
+
+Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
+* Extending
+:PROPERTIES:
+:DESCRIPTION: Reusing Dslide Classes
+:END:
+This section is intended to provide an overview for extending dslide classes or hacking on dslide itself.
+** Creating Actions
+:PROPERTIES:
+:DESCRIPTION: Overview
+:END:
+Actions are the right choice when you need custom behavior that you want to re-use.  Actions can be configured with arguments.  They implement the stateful sequence lifecycle.  For one-off solutions, you probably just want a babel block.
+
+First choose your action type:
+
+#+findex: dslide-slide-action
+- Override ~dslide-slide-action~ to create a slide action.  Your action will control the display of the slide and its children, usually controlling the narrow state and adding or removing overlays from children.
+#+findex: dslide-action
+- Override ~dslide-action~ to create an action that works mainly on a heading's section content.
+
+Override methods as appropriate, configure a heading to use your action, and you're done.  Some actions, such as ~dslide-action-propertize~ only work when some of the section data is annotated.
+** A Custom Action
+:PROPERTIES:
+:DESCRIPTION: Example Class
+:END:
+#+findex: dslide-section-next
+#+findex: dslide-section-previous
+The ~dslide-section-next~  and ~dslide-section-previous~ method documentation are very helpful behavior for quickly writing custom actions.  They advance the action's =:marker= forwards and backwards to the next matching element and return that element so we can do something with it.
+
+- declare a class
+- override a few methods
+- now you too can paint the paragraphs red
+
+Example code:
+
+#+begin_src elisp
+  (defclass dslide-action-red-paragraphs (dslide-action)
+    ((overlays :initform nil))
+    "Paint the paragraphs red, one by one.")
+
+  ;; Default no-op `dslide-begin' is sufficient
+
+  ;; Default implementation of `dslide-end', which just plays forward to the end,
+  ;; is well-behaved with this class.
+
+  ;; Remove any remaining overlays when calling final.
+  (cl-defmethod dslide-final :after ((obj dslide-action-red-paragraphs))
+    (mapc #'delete-overlay (oref obj overlays)))
+
+  ;; Find the next paragraph and add an overlay if it exists
+  (cl-defmethod dslide-forward ((obj dslide-action-red-paragraphs))
+    (when-let ((paragraph (dslide-section-next obj 'paragraph)))
+      (let* ((beg (org-element-property :begin paragraph))
+             (end (org-element-property :end paragraph))
+             (new-overlay (make-overlay beg end)))
+        (overlay-put new-overlay 'face 'error)
+        (push new-overlay (oref obj overlays))
+        ;; Return non-nil to indicate progress was made.  This also informs the
+        ;; highlight when following the slides in the base buffer.
+        beg)))
+
+  (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
+    (when-let* ((overlay (pop (oref obj overlays))))
+      (delete-overlay overlay)
+      ;; If there is a preceding overlay, move to its beginning else move to the
+      ;; beginning of the heading.
+      (if-let ((overlay (car (oref obj overlays))))
+          (dslide-marker obj (overlay-start overlay))
+        (dslide-marker obj (org-element-property :begin (dslide-heading obj))))))
+#+end_src
+** Default Classes
+:PROPERTIES:
+:DESCRIPTION: Overriding the Guts
+:END:
+The deck and slide class as well as actions can be sub-classed.  Use the existing sub-classes of actions as example code for writing other classes.  See the [[info:eieio#Top][eieio#Top]] manual for explanation of OOP in Elisp.
+
+- =Action=:  Creating new action subclasses are an efficient way to perform similar operations on typical kinds of org data.
+- =Slide:=  Slides can be configured extensively by changing their actions.  However, for more vertical cooperation between slides or cooperation among actions, extended slides could be useful.
+- =Deck=:  If the core methods of the deck are insufficient, extension is another option besides advice, hooks, and modifying the source.
+
+  If you suspect you might need to sub-class the ~dslide-slide~ or ~dslide-deck~, please file an issue because your use case is probably interesting.
+* Hacking
+:PROPERTIES:
+:DESCRIPTION: High-level Design Summary
+:END:
+This section provides really high-level summary of the code's major design choices to prepare for diving into source.
+** Objects & Ownership
+Org mode uses trees.  Presentations are linear sequences.  We can either traverse the tree or flatten it.  Dslide chose to traverse.  This design allowed implementing features such as ~dslide-slide-action-each-child~.  The children of such a parent slide exist simultaneously.  A consequence of the choice not to flatten is that parents own their children.  The lifecycle of a parent always encompasses its child.
+
+- The deck object is the root of all functionality and many commands delegate through it
+- The deck owns slides, which own actions
+- Slide actions may further own child slides
+** Stateful Sequence
+#+findex: dslide-stateful-sequence
+Presentations are supposed to be linear sequences.  However, they may require setup and teardown.  This is the "stateful" part of a ~dslide-stateful-sequence~.
+
+#+findex: dslide-forward
+#+findex: dslide-backward
+If all sequences were idempotent, we would just implement ~dslide-forward~ and ~dslide-backward~. The reason this was not done is because those methods would have to differentiate calls to perform setup versus attempting to make progress and counting as steps.  It was extremely tricky, and so setup and teardown were split into three methods.
+
+#+findex: dslide-begin
+#+findex: dslide-end
+This setup and teardown can happen in both directions, so there is ~dslide-begin~ and ~dslide-end~.  The latter commonly calls the former and then advances the state to the end, but some more optimal setups are possible and already in use.
+
+#+findex: dslide-final
+Slides may be disposed of after they no longer make progress.  To ensure this finalization happens, the parent calls ~dslide-final~.
+*** Actions
+Actions live on the slide.  They implement stateful sequence.  There are two kinds of actions:
+
+- Action: A regular action usually works on the section contents.
+- Slide Action: A slide action usually will narrow to its own contents.  It can create new slides by calling ~dslide--make-slide~, where it can override them to prevent them from narrowing.  The slide action is always called before any other action, whether going in forward or reverse.
+** Flow Control
+Decks, slides, and actions implement the ~dslide-stateful-sequence~ interface.  On each call to ~dslide-deck-forward~ or ~dslide-deck-backward~, the deck receives the first call to its ~dslide-forward~ method.
+
+First, the deck will check for any step callbacks.  These are added with ~dslide-push-step~. The deck delegates this to the slide.  The slide may delegate down to an action, which may delegate to a slide.
+
+In the most basic case, each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result, indicating that progress was made.  If the delegate returns nil, it means it was unable to make progress, and so the caller will instead try its own next action.
+
+Whenever all slides and actions return nil all the way back up to the deck, it looks for a next or previous top-level heading to make into a slide.  If none is found, it indicates that the user is at the beginning or end of the presentation.
+
+The deck object and slide actions frequently create new children from org headings.  They call their ~dslide-begin~ or ~dslide-end~ methods right after that.  If these methods don't indicate progress, the ~dslide-forward~ or ~dslide-back~ method will be called.
+** Instantiating Slides
+#+findex: dslide--make-slide
+Slides are created by calling ~dslide--make-slide~ with an org element for a heading.  This function interprets the class name and arguments for the new slide and instantiates the object.
+
+The default classes and actions can be configured at the document or customize level.  Set the =DSLIDE_DECK_CLASS= and =DSLIDE_SLIDE_CLASS= as well as other properties that work at the heading level.  The order of precedence (*Not fully implemented* 🚧):
+
+- Property definition of the current heading
+- Property definition in the document
+- Customize variable
+
+~dslide--make-slide~ will look in order for the highest precedence setting and then instantiate the class with that value in the slot.
+* Contributing
+:PROPERTIES:
+:DESCRIPTION: Give me hamburgers
+:END:
+- Since you likely just need something to magically happen, the recommended option is to place a hamburger in the [[https://github.com/sponsors/positron-solutions][hamburger jar]] and file an issue.
+- If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
+** Work In Progress 🚧
+Open issues and give feedback on feature requests.  Contributions welcome.
+*** Slide Action Precedence
+When a slide is created in ~dslide-make-slide~, it can obtain them from several places:
+- passed in arguments, as slide actions do to prevent children from trying to display themselves
+- properties, how slides are usually configured
+- customize variables that set the default actions.
+The order of precedence and capability to override options is still pretty immature.
+*** Secondary Commands
+See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-deck-start~.  I think this command will turn into ~dslide-deck-secondary~ in the ~dslide-mode-map~.
+*** ~dslide-goto~, starting from point
+Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
+*** Affiliated Buffers
+There is no tracking whether a buffer is part of the presentation or not.  How would a buffer become one?  Should it be implicit?  Without any sort of tracking, the consequence is that having a presentation open leaves the minor mode bindings hot.  These commands do weird things when run from these situations, especially if running babel scripts, so some kind of first-class buffer affiliation seems necessary.
+*** Non-Graphic Display
+For terminals, the line-height based slide-in effect is not supported.
+*** Improper Levels
+Children with no parents or missing a level are currently not supported and likely cause bad behavior.
+*** Counting Slides
+Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A ~children~ method for sequences works as long as sequences actually implement it.
+*** Non-Org Sequences
+There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
+*** Sub-Sequence Call &  Restore
+* Thanks
+:PROPERTIES:
+:DESCRIPTION: And Acknowledgements
+:END:
+This package is a direct descendant of Takaaki ISHIKAWA's [[https://github.com/takaxp/org-tree-slide][org-tree-slide]] package.  Many of the ideas and some of the implementations were either inherited or inspired by ideas from that package.  This package would not exist without the inspiration.  Thanks to everyone who contributed on org-tree-slide.
+* Pronunciation
+:PROPERTIES:
+:DESCRIPTION: Butcher it Right
+:END:
+While it may have been spoken many times before, let it be official that there is no correct way to pronounce DSL IDE.  Here are some options:
+
+- D-S-L I-D-E: as if it is an IDE for designing DSLs, clearly false and pretentious sounding, but those who keep score lose for being too anxious to win
+- D'slide: perhaps, "the slide"
+- DEEE slide: We are going un un-slide your slide.  Powerpoint is no more.  Emacs has triumphed over the board room at last
+
+Please spread these and other intentionally wrongful pronunciations to protect those who have only ever read the name from persecution by self-annointed in-groups who claim to know the correct way to pronounce this made up word.
+* Indices
+** Command and Function index
+:PROPERTIES:
+:INDEX: fn
+:END:
+
+** Concept index
+:PROPERTIES:
+:INDEX: cp
+:END:
+
+** Variable index
+:PROPERTIES:
+:INDEX: vr
+:END:
+
+* Copying
+:PROPERTIES:
+:COPYING: t
+:END:
+
+#+include: "../COPYING"
+
+# Local Variables:
+# after-save-hook: (lambda () (when (require 'erk nil t) (erk-export-docs)))
+# End:
