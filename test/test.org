@@ -1,0 +1,101 @@
+#+title: Tests for Macro Slide
+#+author:  Positron
+#+email:  contact@positron.solutions
+
+* Babel Slide Integration
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: org-tree-slide-action-babel
+:END:
+
+#+attr_method: init
+#+begin_src elisp :results silent
+  'init
+#+end_src
+
+#+attr_method: end
+#+begin_src elisp :results silent
+  'end
+#+end_src
+
+#+attr_method: step-backward
+#+begin_src elisp :results silent
+  '(backward 1)
+#+end_src
+
+#+begin_src elisp :results silent
+  '(forward 1)
+#+end_src
+
+#+attr_method: step-backward
+#+begin_src elisp :results silent
+  '(backward 2)
+#+end_src
+
+#+begin_src elisp :results silent
+  '(forward 2)
+#+end_src
+
+#+attr_method: final
+#+begin_src elisp :resutls silent
+  'final
+#+end_src
+
+* Flat Slide
+:PROPERTIES:
+:SLIDE_SECTION_DISPLAY_ACTION: org-tree-slide-action-contents
+:SLIDE_CHILD_ACTION: nil
+:END:
+This slide shows its child headings inline.
+- The slide action shows the entire contents, not just the section
+- There is no child action
+** Blue Team
+- Has to do all the work
+- Must create an air-tight submarine
+** Red Team
+- Uses some metasploit and calls it a day
+- Failure is an option
+* Image Slides
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: org-tree-slide-action-image
+:END:
+This is an image slide.  You can view the images inline using ~org-toggle-inline-images~.  Each image will be opened in a full-screen buffer, which is configured to act as a slide.
+
+#+ATTR_HTML: :width 30%
+[[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+
+* Reveal Items
+:PROPERTIES:
+:SLIDE_SECTION_ACTIONS: org-tree-slide-action-item-reveal
+:END:
+It's a good presentation
+- More items?
+- What happens now?
+- 1
+
+* Inline Children
+:PROPERTIES:
+:SLIDE_CHILD_ACTION: org-tree-slide-child-action-inline
+:END:
+- You won't believe these animations
+- Can be combined with the item-by-item actions
+- This is the world's greatest presentation software
+** Pen 🖊️
+Information, you have to breathe it in
+** Pineapple 🍍
+Isn't this animation so cool?
+** Apple 🍎
+This is a reason to be alive
+** Pen 🖊️
+[[https://www.youtube.com/watch?v=Ct6BUPvE2sM][In case you live under a rock]]
+* Breadcrumbs
+This infomration goes deep
+** Deep
+And it will go deeper still yet
+*** Deeper
+The rabbit hole has only the bounds of your imagination
+**** Deeper Still
+Wow, these breadcrumbs are very high-carb
+***** Deepest?
+How many levels of headings could there be?
+****** Okay Deep Enuogh
+I guess this is good enough to prove the point
