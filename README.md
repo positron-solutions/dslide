@@ -55,7 +55,7 @@ Version 0.5.3 👷  Subscribe to Positron's [YouTube](https://www.youtube.com/@P
 
 ## Try It Out
 
-With just defaults, run `dslide-deck-start` on your existing documents.  You can load the examples in the <./test/demo.md> file to see a showcase of configuration behavior.
+With just defaults, run `dslide-deck-start` on your existing documents.  You can load the examples in the [./test/demo.org](./test/demo.org) file to see a showcase of configuration behavior.
 
 The default keymap uses arrow keys.  Left and right are `dslide-deck-forward` and `dslide-deck-backward`.  Up is `dslide-deck-start` and will show the contents.  Down is `dslide-deck-stop` and will stop the slide show.
 
@@ -226,7 +226,7 @@ Some actions, such as `dslide-action-propertize`, can't decide which elements to
 
 You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the `dslide-action-babel` action.
 
-By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the `dslide-action-babel` class and examples in <./test/demo.md>.
+By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the `dslide-action-babel` class and examples in [./test/demo.org](./test/demo.org).
 
 The `#+attr_dslide:` affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
