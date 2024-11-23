@@ -360,6 +360,7 @@ an DSLIDE_FILTER keyword."
 (defcustom dslide-hide-markup-types '(comment
                                       comment-block
                                       drawer
+                                      export-block
                                       property-drawer
                                       keyword)
   "Default types to be hidden by `dslide-action-hide-markup'.
