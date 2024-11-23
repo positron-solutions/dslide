@@ -40,7 +40,7 @@ Version 0.5.3 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-
 :UNNUMBERED: notoc
 :END:
  #+begin_src elisp
-   ;; From MELPA
+   ;; From MELPA or ELPA
    (use-package dslide)
 
    ;; package-vc
@@ -61,7 +61,7 @@ Version 0.5.3 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-
    ;; or use manual load-path & require, you brave yak shaver
  #+end_src
 ** Try It Out
-With just defaults, run ~dslide-deck-start~ on your existing documents.  You can load the examples in the [[./test/demo.org]] file to see a showcase of configuration behavior.
+With just defaults, run ~dslide-deck-start~ on your existing documents.  You can load the examples in the [[file:./test/demo.org][./test/demo.org]] file to see a showcase of configuration behavior.
 
 The default keymap uses arrow keys.  Left and right are ~dslide-deck-forward~ and ~dslide-deck-backward~.  Up is ~dslide-deck-start~ and will show the contents.  Down is ~dslide-deck-stop~ and will stop the slide show.
 * Features

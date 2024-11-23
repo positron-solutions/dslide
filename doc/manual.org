@@ -182,7 +182,7 @@ Some actions, such as ~dslide-action-propertize~, can't decide which elements to
 #+cindex: scripting babel steps
 You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~dslide-action-babel~ action.
 
-By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the ~dslide-action-babel~ class and examples in [[./test/demo.org]].
+By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the ~dslide-action-babel~ class and examples in [[file:./test/demo.org][./test/demo.org]].
 
 The =#+attr_dslide:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
@@ -525,7 +525,6 @@ Children with no parents or missing a level are currently not supported and like
 Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A ~children~ method for sequences works as long as sequences actually implement it.
 *** Non-Org Sequences
 There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
-*** Sub-Sequence Call &  Restore
 * Thanks
 :PROPERTIES:
 :DESCRIPTION: And Acknowledgements
