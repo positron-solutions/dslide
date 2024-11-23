@@ -3,6 +3,7 @@
 https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-968f-5f5b1989a868
 
 <a href="https://melpa.org/#/dslide"><img src="https://melpa.org/packages/dslide-badge.svg" alt="melpa package"></a> <a href="https://stable.melpa.org/#/dslide"><img src="https://stable.melpa.org/packages/dslide-badge.svg" alt="melpa stable package"></a>
+<a href="https://elpa.nongnu.org/nongnu/dslide.html"><img src="https://elpa.nongnu.org/nongnu/dslide.svg" alt="Non-GNU ELPA"></a>
 
 
 # Present Org Documents 🦄
@@ -22,7 +23,7 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 
 ## Status 🛠️
 
-Version 0.5.3 👷  Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
+Version 0.5.4 👷 Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
 
 -   Stabilizing the API and naming (estimated 98% stable)
 -   Gathering user feedback & experience to pinpoint actual use patterns

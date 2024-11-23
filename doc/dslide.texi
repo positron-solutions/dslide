@@ -9,73 +9,73 @@
 
 @copying
 GNU GENERAL PUBLIC LICENSE
-   Version 3, 29 June 2007
+   Version 3@comma{} 29 June 2007
 
-Copyright (C) 2007 Free Software Foundation, Inc. @uref{http://fsf.org/}
+Copyright (C) 2007 Free Software Foundation@comma{} Inc. @uref{http://fsf.org/}
 Everyone is permitted to copy and distribute verbatim copies
-of this license document, but changing it is not allowed.
+of this license document@comma{} but changing it is not allowed.
 
 Preamble
 
-  The GNU General Public License is a free, copyleft license for
+  The GNU General Public License is a free@comma{} copyleft license for
 software and other kinds of works.
 
   The licenses for most software and other practical works are designed
-to take away your freedom to share and change the works.  By contrast,
+to take away your freedom to share and change the works.  By contrast@comma{}
 the GNU General Public License is intended to guarantee your freedom to
 share and change all versions of a program--to make sure it remains free
-software for all its users.  We, the Free Software Foundation, use the
+software for all its users.  We@comma{} the Free Software Foundation@comma{} use the
 GNU General Public License for most of our software; it applies also to
 any other work released this way by its authors.  You can apply it to
-your programs, too.
+your programs@comma{} too.
 
-  When we speak of free software, we are referring to freedom, not
+  When we speak of free software@comma{} we are referring to freedom@comma{} not
 price.  Our General Public Licenses are designed to make sure that you
 have the freedom to distribute copies of free software (and charge for
-them if you wish), that you receive source code or can get it if you
-want it, that you can change the software or use pieces of it in new
-free programs, and that you know you can do these things.
+them if you wish)@comma{} that you receive source code or can get it if you
+want it@comma{} that you can change the software or use pieces of it in new
+free programs@comma{} and that you know you can do these things.
 
-  To protect your rights, we need to prevent others from denying you
-these rights or asking you to surrender the rights.  Therefore, you have
-certain responsibilities if you distribute copies of the software, or if
+  To protect your rights@comma{} we need to prevent others from denying you
+these rights or asking you to surrender the rights.  Therefore@comma{} you have
+certain responsibilities if you distribute copies of the software@comma{} or if
 you modify it: responsibilities to respect the freedom of others.
 
-  For example, if you distribute copies of such a program, whether
-gratis or for a fee, you must pass on to the recipients the same
-freedoms that you received.  You must make sure that they, too, receive
+  For example@comma{} if you distribute copies of such a program@comma{} whether
+gratis or for a fee@comma{} you must pass on to the recipients the same
+freedoms that you received.  You must make sure that they@comma{} too@comma{} receive
 or can get the source code.  And you must show them these terms so they
 know their rights.
 
   Developers that use the GNU GPL protect your rights with two steps:
-(1) assert copyright on the software, and (2) offer you this License
-giving you legal permission to copy, distribute and/or modify it.
+(1) assert copyright on the software@comma{} and (2) offer you this License
+giving you legal permission to copy@comma{} distribute and/or modify it.
 
-  For the developers' and authors' protection, the GPL clearly explains
+  For the developers' and authors' protection@comma{} the GPL clearly explains
 that there is no warranty for this free software.  For both users' and
-authors' sake, the GPL requires that modified versions be marked as
-changed, so that their problems will not be attributed erroneously to
+authors' sake@comma{} the GPL requires that modified versions be marked as
+changed@comma{} so that their problems will not be attributed erroneously to
 authors of previous versions.
 
   Some devices are designed to deny users access to install or run
-modified versions of the software inside them, although the manufacturer
+modified versions of the software inside them@comma{} although the manufacturer
 can do so.  This is fundamentally incompatible with the aim of
 protecting users' freedom to change the software.  The systematic
 pattern of such abuse occurs in the area of products for individuals to
-use, which is precisely where it is most unacceptable.  Therefore, we
+use@comma{} which is precisely where it is most unacceptable.  Therefore@comma{} we
 have designed this version of the GPL to prohibit the practice for those
-products.  If such problems arise substantially in other domains, we
+products.  If such problems arise substantially in other domains@comma{} we
 stand ready to extend this provision to those domains in future versions
-of the GPL, as needed to protect the freedom of users.
+of the GPL@comma{} as needed to protect the freedom of users.
 
-  Finally, every program is threatened constantly by software patents.
+  Finally@comma{} every program is threatened constantly by software patents.
 States should not allow patents to restrict development and use of
-software on general-purpose computers, but in those that do, we wish to
+software on general-purpose computers@comma{} but in those that do@comma{} we wish to
 avoid the special danger that patents applied to a free program could
-make it effectively proprietary.  To prevent this, the GPL assures that
+make it effectively proprietary.  To prevent this@comma{} the GPL assures that
 patents cannot be used to render the program non-free.
 
-  The precise terms and conditions for copying, distribution and
+  The precise terms and conditions for copying@comma{} distribution and
 modification follow.
 
 TERMS AND CONDITIONS
@@ -88,39 +88,39 @@ Definitions.
 ``This License'' refers to version 3 of the GNU General Public License.
 
   ``Copyright'' also means copyright-like laws that apply to other kinds of
-works, such as semiconductor masks.
+works@comma{} such as semiconductor masks.
 
   ``The Program'' refers to any copyrightable work licensed under this
 License.  Each licensee is addressed as ``you''.  ``Licensees'' and
 ``recipients'' may be individuals or organizations.
 
   To ``modify'' a work means to copy from or adapt all or part of the work
-in a fashion requiring copyright permission, other than the making of an
+in a fashion requiring copyright permission@comma{} other than the making of an
 exact copy.  The resulting work is called a ``modified version'' of the
 earlier work or a work ``based on'' the earlier work.
 
   A ``covered work'' means either the unmodified Program or a work based
 on the Program.
 
-  To ``propagate'' a work means to do anything with it that, without
-permission, would make you directly or secondarily liable for
-infringement under applicable copyright law, except executing it on a
-computer or modifying a private copy.  Propagation includes copying,
-distribution (with or without modification), making available to the
-public, and in some countries other activities as well.
+  To ``propagate'' a work means to do anything with it that@comma{} without
+permission@comma{} would make you directly or secondarily liable for
+infringement under applicable copyright law@comma{} except executing it on a
+computer or modifying a private copy.  Propagation includes copying@comma{}
+distribution (with or without modification)@comma{} making available to the
+public@comma{} and in some countries other activities as well.
 
   To ``convey'' a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
-a computer network, with no transfer of a copy, is not conveying.
+a computer network@comma{} with no transfer of a copy@comma{} is not conveying.
 
   An interactive user interface displays ``Appropriate Legal Notices''
 to the extent that it includes a convenient and prominently visible
-feature that (1) displays an appropriate copyright notice, and (2)
+feature that (1) displays an appropriate copyright notice@comma{} and (2)
 tells the user that there is no warranty for the work (except to the
-extent that warranties are provided), that licensees may convey the
-work under this License, and how to view a copy of this License.  If
-the interface presents a list of user commands or options, such as a
-menu, a prominent item in the list meets this criterion.
+extent that warranties are provided)@comma{} that licensees may convey the
+work under this License@comma{} and how to view a copy of this License.  If
+the interface presents a list of user commands or options@comma{} such as a
+menu@comma{} a prominent item in the list meets this criterion.
 
 @enumerate
 @item
@@ -132,31 +132,31 @@ for making modifications to it.  ``Object code'' means any non-source
 form of a work.
 
   A ``Standard Interface'' means an interface that either is an official
-standard defined by a recognized standards body, or, in the case of
-interfaces specified for a particular programming language, one that
+standard defined by a recognized standards body@comma{} or@comma{} in the case of
+interfaces specified for a particular programming language@comma{} one that
 is widely used among developers working in that language.
 
-  The ``System Libraries'' of an executable work include anything, other
-than the work as a whole, that (a) is included in the normal form of
-packaging a Major Component, but which is not part of that Major
-Component, and (b) serves only to enable use of the work with that
-Major Component, or to implement a Standard Interface for which an
+  The ``System Libraries'' of an executable work include anything@comma{} other
+than the work as a whole@comma{} that (a) is included in the normal form of
+packaging a Major Component@comma{} but which is not part of that Major
+Component@comma{} and (b) serves only to enable use of the work with that
+Major Component@comma{} or to implement a Standard Interface for which an
 implementation is available to the public in source code form.  A
-``Major Component'', in this context, means a major essential component
-(kernel, window system, and so on) of the specific operating system
-(if any) on which the executable work runs, or a compiler used to
-produce the work, or an object code interpreter used to run it.
+``Major Component''@comma{} in this context@comma{} means a major essential component
+(kernel@comma{} window system@comma{} and so on) of the specific operating system
+(if any) on which the executable work runs@comma{} or a compiler used to
+produce the work@comma{} or an object code interpreter used to run it.
 
   The ``Corresponding Source'' for a work in object code form means all
-the source code needed to generate, install, and (for an executable
-work) run the object code and to modify the work, including scripts to
-control those activities.  However, it does not include the work's
-System Libraries, or general-purpose tools or generally available free
+the source code needed to generate@comma{} install@comma{} and (for an executable
+work) run the object code and to modify the work@comma{} including scripts to
+control those activities.  However@comma{} it does not include the work's
+System Libraries@comma{} or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
-which are not part of the work.  For example, Corresponding Source
+which are not part of the work.  For example@comma{} Corresponding Source
 includes interface definition files associated with source files for
-the work, and the source code for shared libraries and dynamically
-linked subprograms that the work is specifically designed to require,
+the work@comma{} and the source code for shared libraries and dynamically
+linked subprograms that the work is specifically designed to require@comma{}
 such as by intimate data communication or control flow between those
 subprograms and other parts of the work.
 
@@ -173,22 +173,22 @@ Basic Permissions.
 @end enumerate
 
   All rights granted under this License are granted for the term of
-copyright on the Program, and are irrevocable provided the stated
+copyright on the Program@comma{} and are irrevocable provided the stated
 conditions are met.  This License explicitly affirms your unlimited
 permission to run the unmodified Program.  The output from running a
-covered work is covered by this License only if the output, given its
-content, constitutes a covered work.  This License acknowledges your
-rights of fair use or other equivalent, as provided by copyright law.
+covered work is covered by this License only if the output@comma{} given its
+content@comma{} constitutes a covered work.  This License acknowledges your
+rights of fair use or other equivalent@comma{} as provided by copyright law.
 
-  You may make, run and propagate covered works that you do not
-convey, without conditions so long as your license otherwise remains
+  You may make@comma{} run and propagate covered works that you do not
+convey@comma{} without conditions so long as your license otherwise remains
 in force.  You may convey covered works to others for the sole purpose
-of having them make modifications exclusively for you, or provide you
-with facilities for running those works, provided that you comply with
+of having them make modifications exclusively for you@comma{} or provide you
+with facilities for running those works@comma{} provided that you comply with
 the terms of this License in conveying all material for which you do
 not control copyright.  Those thus making or running the covered works
-for you must do so exclusively on your behalf, under your direction
-and control, on terms that prohibit them from making any copies of
+for you must do so exclusively on your behalf@comma{} under your direction
+and control@comma{} on terms that prohibit them from making any copies of
 your copyrighted material outside their relationship with you.
 
   Conveying under any other circumstances is permitted solely under
@@ -202,16 +202,16 @@ Protecting Users' Legal Rights From Anti-Circumvention Law.
 
   No covered work shall be deemed part of an effective technological
 measure under any applicable law fulfilling obligations under article
-11 of the WIPO copyright treaty adopted on 20 December 1996, or
+11 of the WIPO copyright treaty adopted on 20 December 1996@comma{} or
 similar laws prohibiting or restricting circumvention of such
 measures.
 
-  When you convey a covered work, you waive any legal power to forbid
+  When you convey a covered work@comma{} you waive any legal power to forbid
 circumvention of technological measures to the extent such circumvention
 is effected by exercising rights under this License with respect to
-the covered work, and you disclaim any intention to limit operation or
-modification of the work as a means of enforcing, against the work's
-users, your or third parties' legal rights to forbid circumvention of
+the covered work@comma{} and you disclaim any intention to limit operation or
+modification of the work as a means of enforcing@comma{} against the work's
+users@comma{} your or third parties' legal rights to forbid circumvention of
 technological measures.
 
 @enumerate
@@ -220,14 +220,14 @@ Conveying Verbatim Copies.
 @end enumerate
 
   You may convey verbatim copies of the Program's source code as you
-receive it, in any medium, provided that you conspicuously and
+receive it@comma{} in any medium@comma{} provided that you conspicuously and
 appropriately publish on each copy an appropriate copyright notice;
 keep intact all notices stating that this License and any
 non-permissive terms added in accord with section 7 apply to the code;
 keep intact all notices of the absence of any warranty; and give all
 recipients a copy of this License along with the Program.
 
-  You may charge any price or no price for each copy that you convey,
+  You may charge any price or no price for each copy that you convey@comma{}
 and you may offer support or warranty protection for a fee.
 
 @enumerate
@@ -235,12 +235,12 @@ and you may offer support or warranty protection for a fee.
 Conveying Modified Source Versions.
 @end enumerate
 
-  You may convey a work based on the Program, or the modifications to
-produce it from the Program, in the form of source code under the
-terms of section 4, provided that you also meet all of these conditions:
+  You may convey a work based on the Program@comma{} or the modifications to
+produce it from the Program@comma{} in the form of source code under the
+terms of section 4@comma{} provided that you also meet all of these conditions:
 
 a) The work must carry prominent notices stating that you modified
-it, and giving a relevant date.
+it@comma{} and giving a relevant date.
 
 b) The work must carry prominent notices stating that it is
 released under this License and any conditions added under section
@@ -250,23 +250,23 @@ This requirement modifies the requirement in section 4 to
 @end enumerate
 ``keep intact all notices''.
 
-c) You must license the entire work, as a whole, under this
+c) You must license the entire work@comma{} as a whole@comma{} under this
 License to anyone who comes into possession of a copy.  This
-License will therefore apply, along with any applicable section 7
-additional terms, to the whole of the work, and all its parts,
+License will therefore apply@comma{} along with any applicable section 7
+additional terms@comma{} to the whole of the work@comma{} and all its parts@comma{}
 regardless of how they are packaged.  This License gives no
-permission to license the work in any other way, but it does not
+permission to license the work in any other way@comma{} but it does not
 invalidate such permission if you have separately received it.
 
-d) If the work has interactive user interfaces, each must display
-Appropriate Legal Notices; however, if the Program has interactive
-interfaces that do not display Appropriate Legal Notices, your
+d) If the work has interactive user interfaces@comma{} each must display
+Appropriate Legal Notices; however@comma{} if the Program has interactive
+interfaces that do not display Appropriate Legal Notices@comma{} your
 work need not make them do so.
 
   A compilation of a covered work with other separate and independent
-works, which are not by their nature extensions of the covered work,
-and which are not combined with it such as to form a larger program,
-in or on a volume of a storage or distribution medium, is called an
+works@comma{} which are not by their nature extensions of the covered work@comma{}
+and which are not combined with it such as to form a larger program@comma{}
+in or on a volume of a storage or distribution medium@comma{} is called an
 ``aggregate'' if the compilation and its resulting copyright are not
 used to limit the access or legal rights of the compilation's users
 beyond what the individual works permit.  Inclusion of a covered work
@@ -279,100 +279,100 @@ Conveying Non-Source Forms.
 @end enumerate
 
   You may convey a covered work in object code form under the terms
-of sections 4 and 5, provided that you also convey the
-machine-readable Corresponding Source under the terms of this License,
+of sections 4 and 5@comma{} provided that you also convey the
+machine-readable Corresponding Source under the terms of this License@comma{}
 in one of these ways:
 
-a) Convey the object code in, or embodied in, a physical product
-(including a physical distribution medium), accompanied by the
+a) Convey the object code in@comma{} or embodied in@comma{} a physical product
+(including a physical distribution medium)@comma{} accompanied by the
 Corresponding Source fixed on a durable physical medium
 customarily used for software interchange.
 
-b) Convey the object code in, or embodied in, a physical product
-(including a physical distribution medium), accompanied by a
-written offer, valid for at least three years and valid for as
+b) Convey the object code in@comma{} or embodied in@comma{} a physical product
+(including a physical distribution medium)@comma{} accompanied by a
+written offer@comma{} valid for at least three years and valid for as
 long as you offer spare parts or customer support for that product
-model, to give anyone who possesses the object code either (1) a
+model@comma{} to give anyone who possesses the object code either (1) a
 copy of the Corresponding Source for all the software in the
-product that is covered by this License, on a durable physical
-medium customarily used for software interchange, for a price no
+product that is covered by this License@comma{} on a durable physical
+medium customarily used for software interchange@comma{} for a price no
 more than your reasonable cost of physically performing this
-conveying of source, or (2) access to copy the
+conveying of source@comma{} or (2) access to copy the
 Corresponding Source from a network server at no charge.
 
 c) Convey individual copies of the object code with a copy of the
 written offer to provide the Corresponding Source.  This
-alternative is allowed only occasionally and noncommercially, and
-only if you received the object code with such an offer, in accord
+alternative is allowed only occasionally and noncommercially@comma{} and
+only if you received the object code with such an offer@comma{} in accord
 with subsection 6b.
 
 d) Convey the object code by offering access from a designated
-place (gratis or for a charge), and offer equivalent access to the
+place (gratis or for a charge)@comma{} and offer equivalent access to the
 Corresponding Source in the same way through the same place at no
 further charge.  You need not require recipients to copy the
 Corresponding Source along with the object code.  If the place to
-copy the object code is a network server, the Corresponding Source
+copy the object code is a network server@comma{} the Corresponding Source
 may be on a different server (operated by you or a third party)
-that supports equivalent copying facilities, provided you maintain
+that supports equivalent copying facilities@comma{} provided you maintain
 clear directions next to the object code saying where to find the
 Corresponding Source.  Regardless of what server hosts the
-Corresponding Source, you remain obligated to ensure that it is
+Corresponding Source@comma{} you remain obligated to ensure that it is
 available for as long as needed to satisfy these requirements.
 
-e) Convey the object code using peer-to-peer transmission, provided
+e) Convey the object code using peer-to-peer transmission@comma{} provided
 you inform other peers where the object code and Corresponding
 Source of the work are being offered to the general public at no
 charge under subsection 6d.
 
-  A separable portion of the object code, whose source code is excluded
-from the Corresponding Source as a System Library, need not be
+  A separable portion of the object code@comma{} whose source code is excluded
+from the Corresponding Source as a System Library@comma{} need not be
 included in conveying the object code work.
 
-  A ``User Product'' is either (1) a ``consumer product'', which means any
-tangible personal property which is normally used for personal, family,
-or household purposes, or (2) anything designed or sold for incorporation
-into a dwelling.  In determining whether a product is a consumer product,
+  A ``User Product'' is either (1) a ``consumer product''@comma{} which means any
+tangible personal property which is normally used for personal@comma{} family@comma{}
+or household purposes@comma{} or (2) anything designed or sold for incorporation
+into a dwelling.  In determining whether a product is a consumer product@comma{}
 doubtful cases shall be resolved in favor of coverage.  For a particular
-product received by a particular user, ``normally used'' refers to a
-typical or common use of that class of product, regardless of the status
+product received by a particular user@comma{} ``normally used'' refers to a
+typical or common use of that class of product@comma{} regardless of the status
 of the particular user or of the way in which the particular user
-actually uses, or expects or is expected to use, the product.  A product
+actually uses@comma{} or expects or is expected to use@comma{} the product.  A product
 is a consumer product regardless of whether the product has substantial
-commercial, industrial or non-consumer uses, unless such uses represent
+commercial@comma{} industrial or non-consumer uses@comma{} unless such uses represent
 the only significant mode of use of the product.
 
-  ``Installation Information'' for a User Product means any methods,
-procedures, authorization keys, or other information required to install
+  ``Installation Information'' for a User Product means any methods@comma{}
+procedures@comma{} authorization keys@comma{} or other information required to install
 and execute modified versions of a covered work in that User Product from
 a modified version of its Corresponding Source.  The information must
 suffice to ensure that the continued functioning of the modified object
 code is in no case prevented or interfered with solely because
 modification has been made.
 
-  If you convey an object code work under this section in, or with, or
-specifically for use in, a User Product, and the conveying occurs as
+  If you convey an object code work under this section in@comma{} or with@comma{} or
+specifically for use in@comma{} a User Product@comma{} and the conveying occurs as
 part of a transaction in which the right of possession and use of the
 User Product is transferred to the recipient in perpetuity or for a
-fixed term (regardless of how the transaction is characterized), the
+fixed term (regardless of how the transaction is characterized)@comma{} the
 Corresponding Source conveyed under this section must be accompanied
 by the Installation Information.  But this requirement does not apply
 if neither you nor any third party retains the ability to install
-modified object code on the User Product (for example, the work has
+modified object code on the User Product (for example@comma{} the work has
 been installed in ROM).
 
   The requirement to provide Installation Information does not include a
-requirement to continue to provide support service, warranty, or updates
-for a work that has been modified or installed by the recipient, or for
+requirement to continue to provide support service@comma{} warranty@comma{} or updates
+for a work that has been modified or installed by the recipient@comma{} or for
 the User Product in which it has been modified or installed.  Access to a
 network may be denied when the modification itself materially and
 adversely affects the operation of the network or violates the rules and
 protocols for communication across the network.
 
-  Corresponding Source conveyed, and Installation Information provided,
+  Corresponding Source conveyed@comma{} and Installation Information provided@comma{}
 in accord with this section must be in a format that is publicly
 documented (and with an implementation available to the public in
-source code form), and must require no special password or key for
-unpacking, reading or copying.
+source code form)@comma{} and must require no special password or key for
+unpacking@comma{} reading or copying.
 
 @enumerate
 @item
@@ -382,21 +382,21 @@ Additional Terms.
   ``Additional permissions'' are terms that supplement the terms of this
 License by making exceptions from one or more of its conditions.
 Additional permissions that are applicable to the entire Program shall
-be treated as though they were included in this License, to the extent
+be treated as though they were included in this License@comma{} to the extent
 that they are valid under applicable law.  If additional permissions
-apply only to part of the Program, that part may be used separately
-under those permissions, but the entire Program remains governed by
+apply only to part of the Program@comma{} that part may be used separately
+under those permissions@comma{} but the entire Program remains governed by
 this License without regard to the additional permissions.
 
-  When you convey a copy of a covered work, you may at your option
-remove any additional permissions from that copy, or from any part of
+  When you convey a copy of a covered work@comma{} you may at your option
+remove any additional permissions from that copy@comma{} or from any part of
 it.  (Additional permissions may be written to require their own
 removal in certain cases when you modify the work.)  You may place
-additional permissions on material, added by you to a covered work,
+additional permissions on material@comma{} added by you to a covered work@comma{}
 for which you have or can give appropriate copyright permission.
 
-  Notwithstanding any other provision of this License, for material you
-add to a covered work, you may (if authorized by the copyright holders of
+  Notwithstanding any other provision of this License@comma{} for material you
+add to a covered work@comma{} you may (if authorized by the copyright holders of
 that material) supplement the terms of this License with terms:
 
 a) Disclaiming warranty or limiting liability differently from the
@@ -406,7 +406,7 @@ b) Requiring preservation of specified reasonable legal notices or
 author attributions in that material or in the Appropriate Legal
 Notices displayed by works containing it; or
 
-c) Prohibiting misrepresentation of the origin of that material, or
+c) Prohibiting misrepresentation of the origin of that material@comma{} or
 requiring that modified versions of such material be marked in
 reasonable ways as different from the original version; or
 
@@ -414,31 +414,31 @@ d) Limiting the use for publicity purposes of names of licensors or
 authors of the material; or
 
 e) Declining to grant rights under trademark law for use of some
-trade names, trademarks, or service marks; or
+trade names@comma{} trademarks@comma{} or service marks; or
 
 f) Requiring indemnification of licensors and authors of that
 material by anyone who conveys the material (or modified versions of
-it) with contractual assumptions of liability to the recipient, for
+it) with contractual assumptions of liability to the recipient@comma{} for
 any liability that these contractual assumptions directly impose on
 those licensors and authors.
 
   All other non-permissive additional terms are considered ``further
 restrictions'' within the meaning of section 10.  If the Program as you
-received it, or any part of it, contains a notice stating that it is
+received it@comma{} or any part of it@comma{} contains a notice stating that it is
 governed by this License along with a term that is a further
-restriction, you may remove that term.  If a license document contains
+restriction@comma{} you may remove that term.  If a license document contains
 a further restriction but permits relicensing or conveying under this
-License, you may add to a covered work material governed by the terms
-of that license document, provided that the further restriction does
+License@comma{} you may add to a covered work material governed by the terms
+of that license document@comma{} provided that the further restriction does
 not survive such relicensing or conveying.
 
-  If you add terms to a covered work in accord with this section, you
-must place, in the relevant source files, a statement of the
-additional terms that apply to those files, or a notice indicating
+  If you add terms to a covered work in accord with this section@comma{} you
+must place@comma{} in the relevant source files@comma{} a statement of the
+additional terms that apply to those files@comma{} or a notice indicating
 where to find the applicable terms.
 
-  Additional terms, permissive or non-permissive, may be stated in the
-form of a separately written license, or stated as exceptions;
+  Additional terms@comma{} permissive or non-permissive@comma{} may be stated in the
+form of a separately written license@comma{} or stated as exceptions;
 the above requirements apply either way.
 
 @enumerate
@@ -448,28 +448,28 @@ Termination.
 
   You may not propagate or modify a covered work except as expressly
 provided under this License.  Any attempt otherwise to propagate or
-modify it is void, and will automatically terminate your rights under
+modify it is void@comma{} and will automatically terminate your rights under
 this License (including any patent licenses granted under the third
 paragraph of section 11).
 
-  However, if you cease all violation of this License, then your
+  However@comma{} if you cease all violation of this License@comma{} then your
 license from a particular copyright holder is reinstated (a)
-provisionally, unless and until the copyright holder explicitly and
-finally terminates your license, and (b) permanently, if the copyright
+provisionally@comma{} unless and until the copyright holder explicitly and
+finally terminates your license@comma{} and (b) permanently@comma{} if the copyright
 holder fails to notify you of the violation by some reasonable means
 prior to 60 days after the cessation.
 
-  Moreover, your license from a particular copyright holder is
+  Moreover@comma{} your license from a particular copyright holder is
 reinstated permanently if the copyright holder notifies you of the
-violation by some reasonable means, this is the first time you have
+violation by some reasonable means@comma{} this is the first time you have
 received notice of violation of this License (for any work) from that
-copyright holder, and you cure the violation prior to 30 days after
+copyright holder@comma{} and you cure the violation prior to 30 days after
 your receipt of the notice.
 
   Termination of your rights under this section does not terminate the
 licenses of parties who have received copies or rights from you under
 this License.  If your rights have been terminated and not permanently
-reinstated, you do not qualify to receive new licenses for the same
+reinstated@comma{} you do not qualify to receive new licenses for the same
 material under section 10.
 
 @enumerate
@@ -480,39 +480,39 @@ Acceptance Not Required for Having Copies.
   You are not required to accept this License in order to receive or
 run a copy of the Program.  Ancillary propagation of a covered work
 occurring solely as a consequence of using peer-to-peer transmission
-to receive a copy likewise does not require acceptance.  However,
+to receive a copy likewise does not require acceptance.  However@comma{}
 nothing other than this License grants you permission to propagate or
 modify any covered work.  These actions infringe copyright if you do
-not accept this License.  Therefore, by modifying or propagating a
-covered work, you indicate your acceptance of this License to do so.
+not accept this License.  Therefore@comma{} by modifying or propagating a
+covered work@comma{} you indicate your acceptance of this License to do so.
 
 @enumerate
 @item
 Automatic Licensing of Downstream Recipients.
 @end enumerate
 
-  Each time you convey a covered work, the recipient automatically
-receives a license from the original licensors, to run, modify and
-propagate that work, subject to this License.  You are not responsible
+  Each time you convey a covered work@comma{} the recipient automatically
+receives a license from the original licensors@comma{} to run@comma{} modify and
+propagate that work@comma{} subject to this License.  You are not responsible
 for enforcing compliance by third parties with this License.
 
   An ``entity transaction'' is a transaction transferring control of an
-organization, or substantially all assets of one, or subdividing an
-organization, or merging organizations.  If propagation of a covered
-work results from an entity transaction, each party to that
+organization@comma{} or substantially all assets of one@comma{} or subdividing an
+organization@comma{} or merging organizations.  If propagation of a covered
+work results from an entity transaction@comma{} each party to that
 transaction who receives a copy of the work also receives whatever
 licenses to the work the party's predecessor in interest had or could
-give under the previous paragraph, plus a right to possession of the
-Corresponding Source of the work from the predecessor in interest, if
+give under the previous paragraph@comma{} plus a right to possession of the
+Corresponding Source of the work from the predecessor in interest@comma{} if
 the predecessor has it or can get it with reasonable efforts.
 
   You may not impose any further restrictions on the exercise of the
-rights granted or affirmed under this License.  For example, you may
-not impose a license fee, royalty, or other charge for exercise of
-rights granted under this License, and you may not initiate litigation
+rights granted or affirmed under this License.  For example@comma{} you may
+not impose a license fee@comma{} royalty@comma{} or other charge for exercise of
+rights granted under this License@comma{} and you may not initiate litigation
 (including a cross-claim or counterclaim in a lawsuit) alleging that
-any patent claim is infringed by making, using, selling, offering for
-sale, or importing the Program or any portion of it.
+any patent claim is infringed by making@comma{} using@comma{} selling@comma{} offering for
+sale@comma{} or importing the Program or any portion of it.
 
 @enumerate
 @item
@@ -524,63 +524,63 @@ License of the Program or a work on which the Program is based.  The
 work thus licensed is called the contributor's ``contributor version''.
 
   A contributor's ``essential patent claims'' are all patent claims
-owned or controlled by the contributor, whether already acquired or
-hereafter acquired, that would be infringed by some manner, permitted
-by this License, of making, using, or selling its contributor version,
+owned or controlled by the contributor@comma{} whether already acquired or
+hereafter acquired@comma{} that would be infringed by some manner@comma{} permitted
+by this License@comma{} of making@comma{} using@comma{} or selling its contributor version@comma{}
 but do not include claims that would be infringed only as a
 consequence of further modification of the contributor version.  For
-purposes of this definition, ``control'' includes the right to grant
+purposes of this definition@comma{} ``control'' includes the right to grant
 patent sublicenses in a manner consistent with the requirements of
 this License.
 
-  Each contributor grants you a non-exclusive, worldwide, royalty-free
-patent license under the contributor's essential patent claims, to
-make, use, sell, offer for sale, import and otherwise run, modify and
+  Each contributor grants you a non-exclusive@comma{} worldwide@comma{} royalty-free
+patent license under the contributor's essential patent claims@comma{} to
+make@comma{} use@comma{} sell@comma{} offer for sale@comma{} import and otherwise run@comma{} modify and
 propagate the contents of its contributor version.
 
-  In the following three paragraphs, a ``patent license'' is any express
-agreement or commitment, however denominated, not to enforce a patent
+  In the following three paragraphs@comma{} a ``patent license'' is any express
+agreement or commitment@comma{} however denominated@comma{} not to enforce a patent
 (such as an express permission to practice a patent or covenant not to
 sue for patent infringement).  To ``grant'' such a patent license to a
 party means to make such an agreement or commitment not to enforce a
 patent against the party.
 
-  If you convey a covered work, knowingly relying on a patent license,
+  If you convey a covered work@comma{} knowingly relying on a patent license@comma{}
 and the Corresponding Source of the work is not available for anyone
-to copy, free of charge and under the terms of this License, through a
-publicly available network server or other readily accessible means,
+to copy@comma{} free of charge and under the terms of this License@comma{} through a
+publicly available network server or other readily accessible means@comma{}
 then you must either (1) cause the Corresponding Source to be so
-available, or (2) arrange to deprive yourself of the benefit of the
-patent license for this particular work, or (3) arrange, in a manner
-consistent with the requirements of this License, to extend the patent
+available@comma{} or (2) arrange to deprive yourself of the benefit of the
+patent license for this particular work@comma{} or (3) arrange@comma{} in a manner
+consistent with the requirements of this License@comma{} to extend the patent
 license to downstream recipients.  ``Knowingly relying'' means you have
-actual knowledge that, but for the patent license, your conveying the
-covered work in a country, or your recipient's use of the covered work
-in a country, would infringe one or more identifiable patents in that
+actual knowledge that@comma{} but for the patent license@comma{} your conveying the
+covered work in a country@comma{} or your recipient's use of the covered work
+in a country@comma{} would infringe one or more identifiable patents in that
 country that you have reason to believe are valid.
 
-  If, pursuant to or in connection with a single transaction or
-arrangement, you convey, or propagate by procuring conveyance of, a
-covered work, and grant a patent license to some of the parties
-receiving the covered work authorizing them to use, propagate, modify
-or convey a specific copy of the covered work, then the patent license
+  If@comma{} pursuant to or in connection with a single transaction or
+arrangement@comma{} you convey@comma{} or propagate by procuring conveyance of@comma{} a
+covered work@comma{} and grant a patent license to some of the parties
+receiving the covered work authorizing them to use@comma{} propagate@comma{} modify
+or convey a specific copy of the covered work@comma{} then the patent license
 you grant is automatically extended to all recipients of the covered
 work and works based on it.
 
   A patent license is ``discriminatory'' if it does not include within
-the scope of its coverage, prohibits the exercise of, or is
+the scope of its coverage@comma{} prohibits the exercise of@comma{} or is
 conditioned on the non-exercise of one or more of the rights that are
 specifically granted under this License.  You may not convey a covered
 work if you are a party to an arrangement with a third party that is
-in the business of distributing software, under which you make payment
+in the business of distributing software@comma{} under which you make payment
 to the third party based on the extent of your activity of conveying
-the work, and under which the third party grants, to any of the
-parties who would receive the covered work from you, a discriminatory
+the work@comma{} and under which the third party grants@comma{} to any of the
+parties who would receive the covered work from you@comma{} a discriminatory
 patent license (a) in connection with copies of the covered work
-conveyed by you (or copies made from those copies), or (b) primarily
+conveyed by you (or copies made from those copies)@comma{} or (b) primarily
 for and in connection with specific products or compilations that
-contain the covered work, unless you entered into that arrangement,
-or that patent license was granted, prior to 28 March 2007.
+contain the covered work@comma{} unless you entered into that arrangement@comma{}
+or that patent license was granted@comma{} prior to 28 March 2007.
 
   Nothing in this License shall be construed as excluding or limiting
 any implied license or other defenses to infringement that may
@@ -591,14 +591,14 @@ otherwise be available to you under applicable patent law.
 No Surrender of Others' Freedom.
 @end enumerate
 
-  If conditions are imposed on you (whether by court order, agreement or
-otherwise) that contradict the conditions of this License, they do not
+  If conditions are imposed on you (whether by court order@comma{} agreement or
+otherwise) that contradict the conditions of this License@comma{} they do not
 excuse you from the conditions of this License.  If you cannot convey a
 covered work so as to satisfy simultaneously your obligations under this
-License and any other pertinent obligations, then as a consequence you may
-not convey it at all.  For example, if you agree to terms that obligate you
+License and any other pertinent obligations@comma{} then as a consequence you may
+not convey it at all.  For example@comma{} if you agree to terms that obligate you
 to collect a royalty for further conveying from those to whom you convey
-the Program, the only way you could satisfy both those terms and this
+the Program@comma{} the only way you could satisfy both those terms and this
 License would be to refrain entirely from conveying the Program.
 
 @enumerate
@@ -606,13 +606,13 @@ License would be to refrain entirely from conveying the Program.
 Use with the GNU Affero General Public License.
 @end enumerate
 
-  Notwithstanding any other provision of this License, you have
+  Notwithstanding any other provision of this License@comma{} you have
 permission to link or combine any covered work with a work licensed
 under version 3 of the GNU Affero General Public License into a single
-combined work, and to convey the resulting work.  The terms of this
-License will continue to apply to the part which is the covered work,
-but the special requirements of the GNU Affero General Public License,
-section 13, concerning interaction through a network will apply to the
+combined work@comma{} and to convey the resulting work.  The terms of this
+License will continue to apply to the part which is the covered work@comma{}
+but the special requirements of the GNU Affero General Public License@comma{}
+section 13@comma{} concerning interaction through a network will apply to the
 combination as such.
 
 @enumerate
@@ -622,25 +622,25 @@ Revised Versions of this License.
 
   The Free Software Foundation may publish revised and/or new versions of
 the GNU General Public License from time to time.  Such new versions will
-be similar in spirit to the present version, but may differ in detail to
+be similar in spirit to the present version@comma{} but may differ in detail to
 address new problems or concerns.
 
   Each version is given a distinguishing version number.  If the
 Program specifies that a certain numbered version of the GNU General
-Public License ``or any later version'' applies to it, you have the
+Public License ``or any later version'' applies to it@comma{} you have the
 option of following the terms and conditions either of that numbered
 version or of any later version published by the Free Software
 Foundation.  If the Program does not specify a version number of the
-GNU General Public License, you may choose any version ever published
+GNU General Public License@comma{} you may choose any version ever published
 by the Free Software Foundation.
 
   If the Program specifies that a proxy can decide which future
-versions of the GNU General Public License can be used, that proxy's
+versions of the GNU General Public License can be used@comma{} that proxy's
 public statement of acceptance of a version permanently authorizes you
 to choose that version for the Program.
 
   Later license versions may give you additional or different
-permissions.  However, no additional obligations are imposed on any
+permissions.  However@comma{} no additional obligations are imposed on any
 author or copyright holder as a result of your choosing to follow a
 later version.
 
@@ -649,14 +649,14 @@ later version.
 Disclaimer of Warranty.
 @end enumerate
 
-  THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+  THERE IS NO WARRANTY FOR THE PROGRAM@comma{} TO THE EXTENT PERMITTED BY
 APPLICABLE LAW@.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
 HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM ``AS IS'' WITHOUT WARRANTY
-OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO,
+OF ANY KIND@comma{} EITHER EXPRESSED OR IMPLIED@comma{} INCLUDING@comma{} BUT NOT LIMITED TO@comma{}
 THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE@.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
-IS WITH YOU@.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
-ALL NECESSARY SERVICING, REPAIR OR CORRECTION@.
+IS WITH YOU@.  SHOULD THE PROGRAM PROVE DEFECTIVE@comma{} YOU ASSUME THE COST OF
+ALL NECESSARY SERVICING@comma{} REPAIR OR CORRECTION@.
 
 @enumerate
 @item
@@ -664,12 +664,12 @@ Limitation of Liability.
 @end enumerate
 
   IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
-THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
-GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
+WILL ANY COPYRIGHT HOLDER@comma{} OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
+THE PROGRAM AS PERMITTED ABOVE@comma{} BE LIABLE TO YOU FOR DAMAGES@comma{} INCLUDING ANY
+GENERAL@comma{} SPECIAL@comma{} INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE
 USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF
 DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD
-PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
+PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS)@comma{}
 EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES@.
 
@@ -679,21 +679,21 @@ Interpretation of Sections 15 and 16.
 @end enumerate
 
   If the disclaimer of warranty and limitation of liability provided
-above cannot be given local legal effect according to their terms,
+above cannot be given local legal effect according to their terms@comma{}
 reviewing courts shall apply local law that most closely approximates
 an absolute waiver of all civil liability in connection with the
-Program, unless a warranty or assumption of liability accompanies a
+Program@comma{} unless a warranty or assumption of liability accompanies a
 copy of the Program in return for a fee.
 
 END OF TERMS AND CONDITIONS
 
 How to Apply These Terms to Your New Programs
 
-  If you develop a new program, and you want it to be of the greatest
-possible use to the public, the best way to achieve this is to make it
+  If you develop a new program@comma{} and you want it to be of the greatest
+possible use to the public@comma{} the best way to achieve this is to make it
 free software which everyone can redistribute and change under these terms.
 
-  To do so, attach the following notices to the program.  It is safest
+  To do so@comma{} attach the following notices to the program.  It is safest
 to attach them to the start of each source file to most effectively
 state the exclusion of warranty; and each file should have at least
 the ``copyright'' line and a pointer to where the full notice is found.
@@ -703,41 +703,41 @@ Copyright (C) <year>  <name of author>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
+the Free Software Foundation@comma{} either version 3 of the License@comma{} or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
+This program is distributed in the hope that it will be useful@comma{}
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE@.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see @uref{http://www.gnu.org/licenses/}.
+along with this program.  If not@comma{} see @uref{http://www.gnu.org/licenses/}.
 
 Also add information on how to contact you by electronic and paper mail.
 
-  If the program does terminal interaction, make it output a short
+  If the program does terminal interaction@comma{} make it output a short
 notice like this when it starts in an interactive mode:
 
 <program>  Copyright (C) <year>  <name of author>
 This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-This is free software, and you are welcome to redistribute it
+This is free software@comma{} and you are welcome to redistribute it
 under certain conditions; type `show c' for details.
 
 The hypothetical commands `show w' and `show c' should show the appropriate
-parts of the General Public License.  Of course, your program's commands
-might be different; for a GUI interface, you would use an ``about box''.
+parts of the General Public License.  Of course@comma{} your program's commands
+might be different; for a GUI interface@comma{} you would use an ``about box''.
 
-  You should also get your employer (if you work as a programmer) or school,
-if any, to sign a ``copyright disclaimer'' for the program, if necessary.
-For more information on this, and how to apply and follow the GNU GPL, see
+  You should also get your employer (if you work as a programmer) or school@comma{}
+if any@comma{} to sign a ``copyright disclaimer'' for the program@comma{} if necessary.
+For more information on this@comma{} and how to apply and follow the GNU GPL@comma{} see
 @uref{http://www.gnu.org/licenses/}.
 
   The GNU General Public License does not permit incorporating your program
-into proprietary programs.  If your program is a subroutine library, you
+into proprietary programs.  If your program is a subroutine library@comma{} you
 may consider it more useful to permit linking proprietary applications with
-the library.  If this is what you want to do, use the GNU Lesser General
-Public License instead of this License.  But first, please read
+the library.  If this is what you want to do@comma{} use the GNU Lesser General
+Public License instead of this License.  But first@comma{} please read
 @uref{http://www.gnu.org/philosophy/why-not-lgpl.html}.
 @end copying
 
@@ -853,13 +853,12 @@ Work In Progress 🚧
 
 * Slide Action Precedence::
 * Secondary Commands::
-* @code{dslide-goto}, starting from point: @code{dslide-goto} starting from point. 
+* @code{dslide-goto}@comma{} starting from point::
 * Affiliated Buffers::
 * Non-Graphic Display::
 * Improper Levels::
 * Counting Slides::
 * Non-Org Sequences::
-* Sub-Sequence Call &  Restore: Sub-Sequence Call & Restore. 
 
 Indices
 
@@ -873,7 +872,7 @@ Indices
 @node Introduction
 @chapter Introduction
 
-Dslide is designed for conducting presentations in Emacs.  Abstractly, a presentation is a scripted sequence of content.  Org mode documents are the primary means of encoding these sequences for dslide.
+Dslide is designed for conducting presentations in Emacs.  Abstractly@comma{} a presentation is a scripted sequence of content.  Org mode documents are the primary means of encoding these sequences for dslide.
 
 What dslide primarily adds to Emacs and Org Mode:
 
@@ -883,7 +882,7 @@ Simplified user interface suitable for a presentation remote controller
 @item
 Data model that adapts Emacs to this interface
 @item
-Method of attaching reusable, configurable programmed behavior to org mode content
+Method of attaching reusable@comma{} configurable programmed behavior to org mode content
 @item
 Extensible framework for creating custom programmed behavior
 @item
@@ -898,16 +897,16 @@ Presenter tools such as viewing hidden content invisible to the audience
 @node Design Goals
 @section Design Goals
 
-Granular configurability was the first goal.  Dslide's predecessor, @code{org-tree-slide}, could only be configured at the level of the entire document, using customize variables.
+Granular configurability was the first goal.  Dslide's predecessor@comma{} @code{org-tree-slide}@comma{} could only be configured at the level of the entire document@comma{} using customize variables.
 
-Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks, because Emacs sits on top of all your other programming tools and sub-processes, so does dslide.  The action system is a framework for attaching reusable, configurable programmed behavior to multiple headings.
+Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks@comma{} because Emacs sits on top of all your other programming tools and sub-processes@comma{} so does dslide.  The action system is a framework for attaching reusable@comma{} configurable programmed behavior to multiple headings.
 
-High productivity was another goal.  With a decent org configuration, use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to slides.  Dslide respects export settings, allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents, to store and organize information.
+High productivity was another goal.  With a decent org configuration@comma{} use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to slides.  Dslide respects export settings@comma{} allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents@comma{} to store and organize information.
 
 @node Strengths
 @section Strengths
 
-Dslide is particularly good for presentations that are for internal use or intended for closed audiences, where the polish that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
+Dslide is particularly good for presentations that are for internal use or intended for closed audiences@comma{} where the polish that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
 
 @itemize
 @item
@@ -932,10 +931,10 @@ Conducting team meetings
 @item
 @samp{Slide Action}: an action subclass that handles initial display of the slide and creation of child slides from sub-headings.
 @item
-@samp{Section Actions}: actions that typically control the display and behavior of a heading's section, the region between the headline and child headings.
+@samp{Section Actions}: actions that typically control the display and behavior of a heading's section@comma{} the region between the headline and child headings.
 @end itemize
 @item
-@samp{Step}: a single call to @code{dslide-deck-foward} or @code{dslide-deck-backward}, usually delegated down to @code{dslide-forward} and @code{dslide-backward} methods
+@samp{Step}: a single call to @code{dslide-deck-foward} or @code{dslide-deck-backward}@comma{} usually delegated down to @code{dslide-forward} and @code{dslide-backward} methods
 @item
 @samp{Contents}: A view of the folded top-level headings that is used for quickly navigating between headings during a presentation.
 @item
@@ -961,7 +960,7 @@ Select org mode terms more frequently used by dslide.  Don't miss @ref{Org Synta
 
 @itemize
 @item
-@samp{Element}: org documents are parsed into elements and objects.  Headings, plain lists, and blocks are examples of elements.  See the @uref{https://orgmode.org/worg/dev/org-element-api.html, org element api} documentation.  Dslide makes heavy use of org's element parser to implement its features.
+@samp{Element}: org documents are parsed into elements and objects.  Headings@comma{} plain lists@comma{} and blocks are examples of elements.  See the @uref{https://orgmode.org/worg/dev/org-element-api.html, org element api} documentation.  Dslide makes heavy use of org's element parser to implement its features.
 @item
 @samp{Keyword}: A single @samp{#+keyword_style:} line used to specify some option
 @item
@@ -990,17 +989,17 @@ Making an org document into a presentation.
 @node Actions
 @section Actions
 
-By default, you just get one slide per heading, a header, and some animation.  This is not very exciting.  You need to add actions to slides to consume their section content in a more engaging way.
+By default@comma{} you just get one slide per heading@comma{} a header@comma{} and some animation.  This is not very exciting.  You need to add actions to slides to consume their section content in a more engaging way.
 
 There are two kinds of actions:
 @itemize
 @item
-@samp{Slide actions}: mostly responsible for narrowing to a slide and then handling the child headings, either inline or as separate slides
+@samp{Slide actions}: mostly responsible for narrowing to a slide and then handling the child headings@comma{} either inline or as separate slides
 @item
 @samp{Section actions}: work on the content in the heading's section.
 @end itemize
 
-To browse all actions, because they are all EIEIO classes, you can use @code{eieio-browse} and see the actions descend from @code{dslide-action}.
+To browse all actions@comma{} because they are all EIEIO classes@comma{} you can use @code{eieio-browse} and see the actions descend from @code{dslide-action}.
 
 @example
 +--dslide-stateful-sequence
@@ -1021,12 +1020,12 @@ To browse all actions, because they are all EIEIO classes, you can use @code{eie
 @section Adding Actions
 
 @vindex dslide-default-actions
-By default, every slide has two actions, configurable in @code{dslide-default-actions}:
+By default@comma{} every slide has two actions@comma{} configurable in @code{dslide-default-actions}:
 @itemize
 @item
 @code{dslide-action-propertize} for adding text properties to arbitrary elements
 @item
-@code{dslide-action-hide-markup} to hide keywords, todo states, and tags, allowing you to have these things in your source without them cluttering the presentation
+@code{dslide-action-hide-markup} to hide keywords@comma{} todo states@comma{} and tags@comma{} allowing you to have these things in your source without them cluttering the presentation
 @end itemize
 
 Actions must be added to a slide using the slide's property drawer.
@@ -1050,9 +1049,9 @@ Actions must be added to a slide using the slide's property drawer.
 @node Action Arguments
 @section Action Arguments
 
-Many actions understand arguments, allowing tuning of similar behaviors from the same class.
+Many actions understand arguments@comma{} allowing tuning of similar behaviors from the same class.
 
-To view an action's arguments, call @code{describe-symbol} on it.  Any slot definition usually has the same @samp{:initarg} and will be understood when added as a plist-style argument.
+To view an action's arguments@comma{} call @code{describe-symbol} on it.  Any slot definition usually has the same @samp{:initarg} and will be understood when added as a plist-style argument.
 
 Configuring the slot is done by adding plist-style properties after the class name:
 
@@ -1062,7 +1061,7 @@ Configuring the slot is done by adding plist-style properties after the class na
 :END:
 @end example
 
-You can also use ``property+'' syntax to add to a property, and these accept plist arguments too:
+You can also use ``property+'' syntax to add to a property@comma{} and these accept plist arguments too:
 
 @example
 :PROPERTIES:
@@ -1076,9 +1075,9 @@ You can also use ``property+'' syntax to add to a property, and these accept pli
 @node Annotating Elements
 @section Annotating Elements
 
-Some actions, such as @code{dslide-action-propertize}, can't decide which elements to operate on or what to do with the element.  You can add some meta data to an element using an @strong{affiliated keyword}.
+Some actions@comma{} such as @code{dslide-action-propertize}@comma{} can't decide which elements to operate on or what to do with the element.  You can add some meta data to an element using an @strong{affiliated keyword}.
 
-⚠️ If you are extending an action and want to create your own affiliated keyword, they  must start with @samp{attr} or else the parser will not consider them affiliated!
+⚠️ If you are extending an action and want to create your own affiliated keyword@comma{} they  must start with @samp{attr} or else the parser will not consider them affiliated!
 
 @example
 * Fancy Text
@@ -1098,13 +1097,13 @@ This is some fancy text
 @cindex scripting babel steps
 You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the @code{dslide-action-babel} action.
 
-By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the @code{dslide-action-babel} class and examples in @uref{./test/demo.org}.
+By default blocks only execute going forward@comma{} one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the @code{dslide-action-babel} class and examples in @uref{./test/demo.org, ./test/demo.org}.
 
 The @samp{#+attr_dslide:} affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
 @itemize
 @item
-@samp{begin} and @samp{end} are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from @strong{top-to-bottom} always, making it easier to re-use code usually.
+@samp{begin} and @samp{end} are run when the slide is instantiated@comma{} going forward and backward respectively.  You can have several blocks with these methods@comma{} and they will be run from @strong{top-to-bottom} always@comma{} making it easier to re-use code usually.
 
 @item
 @samp{final} is only called when no progress can be made or if the presentation is stopped.
@@ -1127,7 +1126,7 @@ The babel action also understands regular babel options such as @samp{:exports} 
 
 @findex dslide-push-step
 @cindex pushing steps
-See @code{dslide-push-step} for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume @code{dslide-deck-forward} and @code{dslide-deck-backward} itself, a callback may be easier.  Using @code{dslide-push-step} is also one way to optionally add a step callback from a babel block.
+See @code{dslide-push-step} for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume @code{dslide-deck-forward} and @code{dslide-deck-backward} itself@comma{} a callback may be easier.  Using @code{dslide-push-step} is also one way to optionally add a step callback from a babel block.
 
 @node Hiding Markup
 @section Hiding Markup
@@ -1164,10 +1163,10 @@ Use this when your headings are work-in-progress and you run out of time on Frid
 @section Header Keywords
 
 @vindex dslide-header
-If @code{dslide-header} is configured, the keywords for the document title, email, and author etc will be used to generate an okay header.
+If @code{dslide-header} is configured@comma{} the keywords for the document title@comma{} email@comma{} and author etc will be used to generate an okay header.
 
 @example
-#+,title:        Domain Specific sLIDEs
+#+@comma{}title:        Domain Specific sLIDEs
 #+author:        Positron
 #+email:        contact@@positron.solutions
 @end example
@@ -1175,7 +1174,7 @@ If @code{dslide-header} is configured, the keywords for the document title, emai
 @node File Local Variables
 @section File Local Variables
 
-Don't forget that if you need a customize variable only set in a particular presentation, you can use file local variables.  Not every setting needs a keyword or babel block integration.
+Don't forget that if you need a customize variable only set in a particular presentation@comma{} you can use file local variables.  Not every setting needs a keyword or babel block integration.
 
 @example
 # Local Variables:
@@ -1198,7 +1197,7 @@ How to control and view your presentation.
 @node Two Button Interface
 @section Two Button Interface
 
-Presentations tend to be organized into a scripted linear sequence.  We want to control the entire presentation sequence mostly with two buttons, forwards and backwards.
+Presentations tend to be organized into a scripted linear sequence.  We want to control the entire presentation sequence mostly with two buttons@comma{} forwards and backwards.
 
 The controllers for presenting usually have very few buttons.  Dslide was designed with this usage pattern in mind and can mostly be controlled by two commands.
 
@@ -1219,14 +1218,14 @@ Many controllers also have a ``play'' button or similar.  It's recommended to ma
 🚧 It is intended to overload @code{dslide-deck-start} further to implement ``secondary'' actions that can be triggered non-linearly.
 
 @findex dslide-deck-stop
-There is likely no good place to bind @code{dslide-deck-stop}, but it's not critical.  You can do everything with just three buttons.
+There is likely no good place to bind @code{dslide-deck-stop}@comma{} but it's not critical.  You can do everything with just three buttons.
 
 @node Contents Interface
 @section Contents Interface
 
 Navigate your presentation faster when answering questions.  The contents interface is a view of top-level headings.  It overloads the presentation controls to navigate.
 
-To enter the contents, call @code{dslide-deck-start} when a presentation is already active.
+To enter the contents@comma{} call @code{dslide-deck-start} when a presentation is already active.
 
 @itemize
 @item
@@ -1250,15 +1249,15 @@ We can display the source for the presentation simultaneously
 @end itemize
 
 @findex dslide-deck-develop
-@code{dslide-deck-develop} will attempt to display both the presentation and source simultaneously.  Whenever the source is visible, highlights will be applied to indicate where the presentation is at.  @strong{This is especially helpful for including presentation notes in comments, which are hidden by default}.
+@code{dslide-deck-develop} will attempt to display both the presentation and source simultaneously.  Whenever the source is visible@comma{} highlights will be applied to indicate where the presentation is at.  @strong{This is especially helpful for including presentation notes in comments@comma{} which are hidden by default}.
 
-To leave a comment for yourself in the presentation source, just add a comment block or comment line:
+To leave a comment for yourself in the presentation source@comma{} just add a comment block or comment line:
 
 @example
 # This is also a comment
 
 #+begin_comment
-This is a comment that only I can see while presenting, only when I look at my base buffer while sharing another frame.
+This is a comment that only I can see while presenting@comma{} only when I look at my base buffer while sharing another frame.
 #+end_comment
 @end example
 
@@ -1269,12 +1268,12 @@ You can also switch a window to the base buffer manually.  That's almost all @co
 
 @findex dslide-cursor-hide
 @findex dslide-cursor-restore
-By default, the cursor is hidden in the presentation buffer using @code{dslide-cursor-hide}.  You can call @code{dslide-cursor-restore} if you need it.
+By default@comma{} the cursor is hidden in the presentation buffer using @code{dslide-cursor-hide}.  You can call @code{dslide-cursor-restore} if you need it.
 
 @node Configuring
 @chapter Configuring
 
-Be sure to check @samp{M-x} @code{customize-group} @samp{dslide} to see all declared custom variables. All of the variables are configured to recommended defaults except hooks, which would depend on other packages usually.
+Be sure to check @samp{M-x} @code{customize-group} @samp{dslide} to see all declared custom variables. All of the variables are configured to recommended defaults except hooks@comma{} which would depend on other packages usually.
 
 Many settings can be configured at:
 @itemize
@@ -1295,13 +1294,13 @@ slide level through the property drawer
 @node Binding
 @section Binding
 
-You likely want to start the mode via @code{dslide-deck-start}.  Once the mode starts, it creates an indirect buffer to display the slides and then calls @code{dslide-deck-start-function} once the mode is active and everything is initialized, so you can customize startup behavior.
+You likely want to start the mode via @code{dslide-deck-start}.  Once the mode starts@comma{} it creates an indirect buffer to display the slides and then calls @code{dslide-deck-start-function} once the mode is active and everything is initialized@comma{} so you can customize startup behavior.
 
 All commands begin with @code{dslide-deck} 💡
 @lisp
 (keymap-set org-mode-map "<f5>" #'dslide-deck-start)
 @end lisp
-Once the global minor mode, @code{dslide-mode} is active, additional bindings in @code{dslide-mode-map} are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
+Once the global minor mode@comma{} @code{dslide-mode} is active@comma{} additional bindings in @code{dslide-mode-map} are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
 
 @menu
 * Secondary Commands 🚧::
@@ -1310,12 +1309,12 @@ Once the global minor mode, @code{dslide-mode} is active, additional bindings in
 @node Secondary Commands 🚧
 @subsection Secondary Commands 🚧
 
-Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the @code{dslide-deck-start} binding within presentations to enter / exit these branches.
+Because you might want to play a video or take a branch in the presentation and then exit that branch@comma{} the plan is to overload the @code{dslide-deck-start} binding within presentations to enter / exit these branches.
 
 @node Hooks
 @section Hooks
 
-Beware of using the normal @code{dslide-mode-hook} 😱 because it runs @strong{in the base buffer} ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use @code{dslide-start-hook}. 💡
+Beware of using the normal @code{dslide-mode-hook} 😱 because it runs @strong{in the base buffer} ⚠️.  If you remap faces or add a bunch of styling@comma{} it will be copied to the indirect buffer but then linger in your base buffer.  Instead@comma{} use @code{dslide-start-hook}. 💡
 
 @itemize
 @item
@@ -1325,7 +1324,7 @@ Beware of using the normal @code{dslide-mode-hook} 😱 because it runs @strong{
 @item
 @code{dslide-contents-hook} is run after switching to contents.  It runs in the slide buffer.
 @item
-@code{dslide-narrow-hook} is run after narrowing, usually after a slide is started
+@code{dslide-narrow-hook} is run after narrowing@comma{} usually after a slide is started
 @item
 @code{dslide-after-last-slide-hook} is run when the user tries to go forward but there are no more slides.  You can use this to implement a final feedback before quitting or add @code{dslide-deck-stop} to exit without feedback.
 
@@ -1350,18 +1349,18 @@ Another option is to use @code{dslide-push-step} to push a callback that will on
 @node Per-Slide Actions
 @subsection Per-Slide Actions
 
-💡 If you want to do something on each slide or specific slides, before using hooks, instead consider using actions.
+💡 If you want to do something on each slide or specific slides@comma{} before using hooks@comma{} instead consider using actions.
 
 See the @code{dslide-action-hide-markup} which is by default added to @code{dslide-default-actions} and hides markup on every slide.  The lifecycle of actions and their methods for obtaining the current slide's heading make them very good for per-slide behavior.
 
 @node Steezing Org
 @section Steezing Org
 
-Not unique to dslide, if you want more professional looking results, you will likely need to make your org a bit prettier.
+Not unique to dslide@comma{} if you want more professional looking results@comma{} you will likely need to make your org a bit prettier.
 
 The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by @uref{https://systemcrafters.net/emacs-tips/presentations-with-org-present/, System Crafters}.  Also see Prot's @uref{https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/, further} documentation on customizing org mode faces and fonts.
 
-In short, use:
+In short@comma{} use:
 @itemize
 @item
 @code{org-modern}
@@ -1375,7 +1374,7 @@ And set the faces for org headings and document title.
 
 Don't forget built-in @code{emoji-search} and searching @code{insert-char}.
 
-Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom @code{org-modern}, using custom spacing everywhere fights with @code{visual-line-mode} currently.
+Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom @code{org-modern}@comma{} using custom spacing everywhere fights with @code{visual-line-mode} currently.
 
 @node Extending
 @chapter Extending
@@ -1391,14 +1390,14 @@ This section is intended to provide an overview for extending dslide classes or 
 @node Creating Actions
 @section Creating Actions
 
-Actions are the right choice when you need custom behavior that you want to re-use.  Actions can be configured with arguments.  They implement the stateful sequence lifecycle.  For one-off solutions, you probably just want a babel block.
+Actions are the right choice when you need custom behavior that you want to re-use.  Actions can be configured with arguments.  They implement the stateful sequence lifecycle.  For one-off solutions@comma{} you probably just want a babel block.
 
 First choose your action type:
 
 @findex dslide-slide-action
 @itemize
 @item
-Override @code{dslide-slide-action} to create a slide action.  Your action will control the display of the slide and its children, usually controlling the narrow state and adding or removing overlays from children.
+Override @code{dslide-slide-action} to create a slide action.  Your action will control the display of the slide and its children@comma{} usually controlling the narrow state and adding or removing overlays from children.
 @end itemize
 @findex dslide-action
 @itemize
@@ -1406,7 +1405,7 @@ Override @code{dslide-slide-action} to create a slide action.  Your action will 
 Override @code{dslide-action} to create an action that works mainly on a heading's section content.
 @end itemize
 
-Override methods as appropriate, configure a heading to use your action, and you're done.  Some actions, such as @code{dslide-action-propertize} only work when some of the section data is annotated.
+Override methods as appropriate@comma{} configure a heading to use your action@comma{} and you're done.  Some actions@comma{} such as @code{dslide-action-propertize} only work when some of the section data is annotated.
 
 @node A Custom Action
 @section A Custom Action
@@ -1429,11 +1428,11 @@ Example code:
 @lisp
 (defclass dslide-action-red-paragraphs (dslide-action)
   ((overlays :initform nil))
-  "Paint the paragraphs red, one by one.")
+  "Paint the paragraphs red@comma{} one by one.")
 
 ;; Default no-op `dslide-begin' is sufficient
 
-;; Default implementation of `dslide-end', which just plays forward to the end,
+;; Default implementation of `dslide-end'@comma{} which just plays forward to the end@comma{}
 ;; is well-behaved with this class.
 
 ;; Remove any remaining overlays when calling final.
@@ -1455,7 +1454,7 @@ Example code:
 (cl-defmethod dslide-backward ((obj dslide-action-red-paragraphs))
   (when-let* ((overlay (pop (oref obj overlays))))
     (delete-overlay overlay)
-    ;; If there is a preceding overlay, move to its beginning else move to the
+    ;; If there is a preceding overlay@comma{} move to its beginning else move to the
     ;; beginning of the heading.
     (if-let ((overlay (car (oref obj overlays))))
         (dslide-marker obj (overlay-start overlay))
@@ -1471,11 +1470,11 @@ The deck and slide class as well as actions can be sub-classed.  Use the existin
 @item
 @samp{Action}:  Creating new action subclasses are an efficient way to perform similar operations on typical kinds of org data.
 @item
-@samp{Slide:}  Slides can be configured extensively by changing their actions.  However, for more vertical cooperation between slides or cooperation among actions, extended slides could be useful.
+@samp{Slide:}  Slides can be configured extensively by changing their actions.  However@comma{} for more vertical cooperation between slides or cooperation among actions@comma{} extended slides could be useful.
 @item
-@samp{Deck}:  If the core methods of the deck are insufficient, extension is another option besides advice, hooks, and modifying the source.
+@samp{Deck}:  If the core methods of the deck are insufficient@comma{} extension is another option besides advice@comma{} hooks@comma{} and modifying the source.
 
-If you suspect you might need to sub-class the @code{dslide-slide} or @code{dslide-deck}, please file an issue because your use case is probably interesting.
+If you suspect you might need to sub-class the @code{dslide-slide} or @code{dslide-deck}@comma{} please file an issue because your use case is probably interesting.
 @end itemize
 
 @node Hacking
@@ -1499,7 +1498,7 @@ Org mode uses trees.  Presentations are linear sequences.  We can either travers
 @item
 The deck object is the root of all functionality and many commands delegate through it
 @item
-The deck owns slides, which own actions
+The deck owns slides@comma{} which own actions
 @item
 Slide actions may further own child slides
 @end itemize
@@ -1508,18 +1507,18 @@ Slide actions may further own child slides
 @section Stateful Sequence
 
 @findex dslide-stateful-sequence
-Presentations are supposed to be linear sequences.  However, they may require setup and teardown.  This is the ``stateful'' part of a @code{dslide-stateful-sequence}.
+Presentations are supposed to be linear sequences.  However@comma{} they may require setup and teardown.  This is the ``stateful'' part of a @code{dslide-stateful-sequence}.
 
 @findex dslide-forward
 @findex dslide-backward
-If all sequences were idempotent, we would just implement @code{dslide-forward} and @code{dslide-backward}. The reason this was not done is because those methods would have to differentiate calls to perform setup versus attempting to make progress and counting as steps.  It was extremely tricky, and so setup and teardown were split into three methods.
+If all sequences were idempotent@comma{} we would just implement @code{dslide-forward} and @code{dslide-backward}. The reason this was not done is because those methods would have to differentiate calls to perform setup versus attempting to make progress and counting as steps.  It was extremely tricky@comma{} and so setup and teardown were split into three methods.
 
 @findex dslide-begin
 @findex dslide-end
-This setup and teardown can happen in both directions, so there is @code{dslide-begin} and @code{dslide-end}.  The latter commonly calls the former and then advances the state to the end, but some more optimal setups are possible and already in use.
+This setup and teardown can happen in both directions@comma{} so there is @code{dslide-begin} and @code{dslide-end}.  The latter commonly calls the former and then advances the state to the end@comma{} but some more optimal setups are possible and already in use.
 
 @findex dslide-final
-Slides may be disposed of after they no longer make progress.  To ensure this finalization happens, the parent calls @code{dslide-final}.
+Slides may be disposed of after they no longer make progress.  To ensure this finalization happens@comma{} the parent calls @code{dslide-final}.
 
 @menu
 * Actions: Actions (1). 
@@ -1534,21 +1533,21 @@ Actions live on the slide.  They implement stateful sequence.  There are two kin
 @item
 Action: A regular action usually works on the section contents.
 @item
-Slide Action: A slide action usually will narrow to its own contents.  It can create new slides by calling @code{dslide--make-slide}, where it can override them to prevent them from narrowing.  The slide action is always called before any other action, whether going in forward or reverse.
+Slide Action: A slide action usually will narrow to its own contents.  It can create new slides by calling @code{dslide--make-slide}@comma{} where it can override them to prevent them from narrowing.  The slide action is always called before any other action@comma{} whether going in forward or reverse.
 @end itemize
 
 @node Flow Control
 @section Flow Control
 
-Decks, slides, and actions implement the @code{dslide-stateful-sequence} interface.  On each call to @code{dslide-deck-forward} or @code{dslide-deck-backward}, the deck receives the first call to its @code{dslide-forward} method.
+Decks@comma{} slides@comma{} and actions implement the @code{dslide-stateful-sequence} interface.  On each call to @code{dslide-deck-forward} or @code{dslide-deck-backward}@comma{} the deck receives the first call to its @code{dslide-forward} method.
 
-First, the deck will check for any step callbacks.  These are added with @code{dslide-push-step}. The deck delegates this to the slide.  The slide may delegate down to an action, which may delegate to a slide.
+First@comma{} the deck will check for any step callbacks.  These are added with @code{dslide-push-step}. The deck delegates this to the slide.  The slide may delegate down to an action@comma{} which may delegate to a slide.
 
-In the most basic case, each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result, indicating that progress was made.  If the delegate returns nil, it means it was unable to make progress, and so the caller will instead try its own next action.
+In the most basic case@comma{} each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result@comma{} indicating that progress was made.  If the delegate returns nil@comma{} it means it was unable to make progress@comma{} and so the caller will instead try its own next action.
 
-Whenever all slides and actions return nil all the way back up to the deck, it looks for a next or previous top-level heading to make into a slide.  If none is found, it indicates that the user is at the beginning or end of the presentation.
+Whenever all slides and actions return nil all the way back up to the deck@comma{} it looks for a next or previous top-level heading to make into a slide.  If none is found@comma{} it indicates that the user is at the beginning or end of the presentation.
 
-The deck object and slide actions frequently create new children from org headings.  They call their @code{dslide-begin} or @code{dslide-end} methods right after that.  If these methods don't indicate progress, the @code{dslide-forward} or @code{dslide-back} method will be called.
+The deck object and slide actions frequently create new children from org headings.  They call their @code{dslide-begin} or @code{dslide-end} methods right after that.  If these methods don't indicate progress@comma{} the @code{dslide-forward} or @code{dslide-back} method will be called.
 
 @node Instantiating Slides
 @section Instantiating Slides
@@ -1574,9 +1573,9 @@ Customize variable
 
 @itemize
 @item
-Since you likely just need something to magically happen, the recommended option is to place a hamburger in the @uref{https://github.com/sponsors/positron-solutions, hamburger jar} and file an issue.
+Since you likely just need something to magically happen@comma{} the recommended option is to place a hamburger in the @uref{https://github.com/sponsors/positron-solutions, hamburger jar} and file an issue.
 @item
-If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
+If you do have time@comma{} excellent.  Happy to support your PR's and provide context about the architecture and behavior.
 @end itemize
 
 @menu
@@ -1591,24 +1590,23 @@ Open issues and give feedback on feature requests.  Contributions welcome.
 @menu
 * Slide Action Precedence::
 * Secondary Commands::
-* @code{dslide-goto}, starting from point: @code{dslide-goto} starting from point. 
+* @code{dslide-goto}@comma{} starting from point::
 * Affiliated Buffers::
 * Non-Graphic Display::
 * Improper Levels::
 * Counting Slides::
 * Non-Org Sequences::
-* Sub-Sequence Call &  Restore: Sub-Sequence Call & Restore. 
 @end menu
 
 @node Slide Action Precedence
 @subsection Slide Action Precedence
 
-When a slide is created in @code{dslide-make-slide}, it can obtain them from several places:
+When a slide is created in @code{dslide-make-slide}@comma{} it can obtain them from several places:
 @itemize
 @item
-passed in arguments, as slide actions do to prevent children from trying to display themselves
+passed in arguments@comma{} as slide actions do to prevent children from trying to display themselves
 @item
-properties, how slides are usually configured
+properties@comma{} how slides are usually configured
 @item
 customize variables that set the default actions.
 @end itemize
@@ -1619,20 +1617,20 @@ The order of precedence and capability to override options is still pretty immat
 
 See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of @code{dslide-deck-start}.  I think this command will turn into @code{dslide-deck-secondary} in the @code{dslide-mode-map}.
 
-@node @code{dslide-goto} starting from point
-@subsection @code{dslide-goto}, starting from point
+@node @code{dslide-goto}@comma{} starting from point
+@subsection @code{dslide-goto}@comma{} starting from point
 
-Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
+Since not many actions currently have implemented this very accurately@comma{} playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
 
 @node Affiliated Buffers
 @subsection Affiliated Buffers
 
-There is no tracking whether a buffer is part of the presentation or not.  How would a buffer become one?  Should it be implicit?  Without any sort of tracking, the consequence is that having a presentation open leaves the minor mode bindings hot.  These commands do weird things when run from these situations, especially if running babel scripts, so some kind of first-class buffer affiliation seems necessary.
+There is no tracking whether a buffer is part of the presentation or not.  How would a buffer become one?  Should it be implicit?  Without any sort of tracking@comma{} the consequence is that having a presentation open leaves the minor mode bindings hot.  These commands do weird things when run from these situations@comma{} especially if running babel scripts@comma{} so some kind of first-class buffer affiliation seems necessary.
 
 @node Non-Graphic Display
 @subsection Non-Graphic Display
 
-For terminals, the line-height based slide-in effect is not supported.
+For terminals@comma{} the line-height based slide-in effect is not supported.
 
 @node Improper Levels
 @subsection Improper Levels
@@ -1642,15 +1640,12 @@ Children with no parents or missing a level are currently not supported and like
 @node Counting Slides
 @subsection Counting Slides
 
-Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A @code{children} method for sequences works as long as sequences actually implement it.
+Especially if slides launch sub-sequences@comma{} and they do it from Lisp@comma{} this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A @code{children} method for sequences works as long as sequences actually implement it.
 
 @node Non-Org Sequences
 @subsection Non-Org Sequences
 
-There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
-
-@node Sub-Sequence Call & Restore
-@subsection Sub-Sequence Call &  Restore
+There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences@comma{} which may hydrate and call into sub-sequences@comma{} meaning anything is pretty trivially possible.
 
 @node Thanks
 @chapter Thanks
@@ -1660,13 +1655,13 @@ This package is a direct descendant of Takaaki ISHIKAWA's @uref{https://github.c
 @node Pronunciation
 @chapter Pronunciation
 
-While it may have been spoken many times before, let it be official that there is no correct way to pronounce DSL IDE@.  Here are some options:
+While it may have been spoken many times before@comma{} let it be official that there is no correct way to pronounce DSL IDE@.  Here are some options:
 
 @itemize
 @item
-D-S-L I-D-E: as if it is an IDE for designing DSLs, clearly false and pretentious sounding, but those who keep score lose for being too anxious to win
+D-S-L I-D-E: as if it is an IDE for designing DSLs@comma{} clearly false and pretentious sounding@comma{} but those who keep score lose for being too anxious to win
 @item
-D'slide: perhaps, ``the slide''
+D'slide: perhaps@comma{} ``the slide''
 @item
 DEEE slide: We are going un un-slide your slide.  Powerpoint is no more.  Emacs has triumphed over the board room at last
 @end itemize
