@@ -934,6 +934,8 @@ order.")
   (mapc #'dslide-final (oref obj section-actions))
   (when-let ((slide-action (oref obj slide-action)))
     (dslide-final slide-action))
+  ;; Clean up stale overlays
+  (dslide--slide-cleanup-overlays obj)
   ;; Clean up heading marker, which is shared by children
   (set-marker (oref obj begin) nil))
 
@@ -946,6 +948,24 @@ order.")
   (or (when-let ((slide-action (oref obj slide-action)))
         (dslide-backward slide-action))
       (dslide--map-find #'dslide-backward (oref obj section-actions))))
+
+(cl-defmethod dslide--slide-cleanup-overlays ((obj dslide-slide))
+  ;; Use this only during final.  TODO We might need a better way to store and
+  ;; purge these overlays.  A generational strategy might be better.
+  (setq dslide-overlays
+        (let ((beg (oref obj begin))
+              (end (save-restriction
+                     (goto-char (oref obj begin))
+                     (org-element-property
+                      :end (org-element-at-point))))
+              filtered)
+          (dolist (o dslide-overlays filtered)
+            (let ((o-beg (overlay-start o))
+                  (o-end (overlay-end o)))
+              ;; conservatively only deletes fully contained overlays
+              (if (and (>= o-beg beg) (<= o-end end) )
+                  (delete-overlay o)
+                (push o filtered)))))))
 
 (cl-defgeneric dslide--map-find (pred sequence)
   "Find first non-nil return value from mapping PRED over SEQUENCE."
@@ -1760,14 +1780,6 @@ restriction, meaning no progress was made.")
                   (dslide--section-end heading))))
       (unless (and (<= (point-min) begin)
                    (>= (point-max) end))
-        ;; Restriction changes are a good moment to clean up overlays dumped
-        ;; into `dslide-overlays'.  ⚠️ However, this doesn't properly handle
-        ;; the case that the new restriction contains the old restriction,
-        ;; meaning some of the existing overlays may still be necessary.  This
-        ;; should be good for now since there are no known cases where this
-        ;; edge case is reached.
-        (while dslide-overlays
-          (delete-overlay (pop dslide-overlays)))
         (narrow-to-region begin end)
         (dslide-hide-filtered-children obj)
         (when (and dslide-slide-in-effect
