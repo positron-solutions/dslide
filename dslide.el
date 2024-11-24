@@ -1674,7 +1674,8 @@ Only affects standalone-display.")
           (oset obj overlays (seq-difference (oref obj overlays) link-overlays))
           (mapc #'delete-overlay link-overlays)))
 
-      (org-element-property :end link))))
+      (when (or standalone-display in-place)
+        (org-element-property :end link)))))
 
 (cl-defmethod dslide-backward ((obj dslide-action-image))
   ;; When just revealing images without doing standalone display, we can
@@ -1714,7 +1715,10 @@ Only affects standalone-display.")
           (overlay-put overlay 'invisible t)
           (overlay-put overlay 'priority 1000)
           (push overlay (oref obj overlays))))
-      (org-element-property :begin link))))
+
+      (when (or standalone-display
+                slide-display)
+        (org-element-property :begin link)))))
 
 (cl-defmethod dslide-final :after ((obj dslide-action-image))
   (mapc #'delete-overlay (oref obj overlays)))
