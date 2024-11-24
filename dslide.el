@@ -1256,7 +1256,7 @@ for `dslide-contents-map'.")
         (goto-char (oref obj begin))
         (while (re-search-forward org-keyword-regexp bound t)
           (let ((overlay (make-overlay (match-beginning 0)
-                                       (match-end 0))))
+                                       (min (1+ (match-end 0)) (point-max)) )))
             (overlay-put overlay 'invisible t)
             (push dslide-overlays overlay)))))))
 
