@@ -1292,24 +1292,20 @@ for `dslide-contents-map'.")
 
 (cl-defmethod dslide-begin ((obj dslide-action-propertize))
   (dslide-section-map
-   obj t
+   obj t                                ; t for all types
    (lambda (e)
-     (when-let ((props (org-element-property
-                        :attr_dslide_propertize e)))
-       (let ((overlay (make-overlay (org-element-property :post-affiliated e)
-                                    (1- (org-element-property :end e))))
-             (props (car props))        ; TODO multi-value support
-             (offset 0))
-         (while offset
-           (let* ((prop (ignore-error end-of-file
-                          (read-from-string props offset)))
-                  (value (ignore-error end-of-file
-                           (read-from-string props (cdr prop)))))
-             (if (and prop value)
-                 (progn (overlay-put overlay (car prop) (car value))
-                        (setq offset (cdr value)))
-               (setq offset nil))))
-         (push overlay dslide-overlays))))))
+     (when-let ((keywords (org-element-property :attr_dslide_propertize e))
+                (overlay (make-overlay (org-element-property :post-affiliated e)
+                                       (1- (org-element-property :end e)))))
+       (while-let ((keyword (pop keywords))
+                   (offset 0))
+         (while-let ((prop (ignore-error end-of-file
+                             (read-from-string keyword offset)))
+                     (value (ignore-error end-of-file
+                              (read-from-string keyword (cdr prop)))))
+           (overlay-put overlay (car prop) (car value))
+           (setq offset (cdr value))))
+       (push overlay dslide-overlays)))))
 
 (cl-defmethod dslide-end ((obj dslide-action-propertize))
   (dslide-begin obj))
