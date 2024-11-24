@@ -3041,12 +3041,29 @@ each slide show from the contents view."
     ;; hide filtered headings
     (org-element-map data 'headline
       (lambda (e)
-        (unless (funcall filter e)
-          (let ((overlay (make-overlay
-                          (org-element-property :begin e)
-                          (org-element-property :end e))))
-            (overlay-put overlay 'display "\n")
-            (push overlay dslide-overlays))))
+        (when (= 1 (org-element-property :level e))
+          (if (funcall filter e)
+              ;; TODO Consolidate this with hide markup action
+              (progn
+                (when (or dslide-hide-tags dslide-hide-todo)
+                  (save-excursion
+                    (goto-char (org-element-property :begin e))
+                    (org-heading-components)))
+                (when dslide-hide-todo
+                  (when-let* ((todo-beg (match-beginning 2))
+                              (overlay (make-overlay (1- todo-beg) (match-end 2))))
+                    (overlay-put overlay 'invisible t)
+                    (push overlay dslide-overlays)))
+                (when dslide-hide-tags
+                  (when-let* ((tags-beg (match-beginning 5))
+                              (overlay (make-overlay (1- tags-beg) (match-end 5))))
+                    (overlay-put overlay 'invisible t)
+                    (push overlay dslide-overlays))))
+            (let ((overlay (make-overlay
+                            (org-element-property :begin e)
+                            (org-element-property :end e))))
+              (overlay-put overlay 'display "\n")
+              (push overlay dslide-overlays)))))
       nil nil t)
     (goto-char
      (org-element-property :begin (dslide--root-heading-at-point filter)))
