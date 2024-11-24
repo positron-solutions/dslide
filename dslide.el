@@ -923,7 +923,7 @@ order.")
     ;; matter for `dslide-end', but this ordering matches the situation that would
     ;; occur if the user just called `dslide-forward' repeatedly, and we want the
     ;; end state to be as close to "normal" as possible.
-    (mapc #'dslide-end (oref obj section-actions))
+    (mapc #'dslide-end (reverse (oref obj section-actions)))
     (if slide-action progress
       (dslide-backward obj))))
 
@@ -947,7 +947,7 @@ order.")
 (cl-defmethod dslide-backward ((obj dslide-slide))
   (or (when-let ((slide-action (oref obj slide-action)))
         (dslide-backward slide-action))
-      (dslide--map-find #'dslide-backward (oref obj section-actions))))
+      (dslide--map-find #'dslide-backward (reverse (oref obj section-actions)))))
 
 (cl-defmethod dslide--slide-cleanup-overlays ((obj dslide-slide))
   ;; Use this only during final.  TODO We might need a better way to store and
