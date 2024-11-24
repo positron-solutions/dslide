@@ -829,7 +829,9 @@ Class can be overridden to affect root behaviors.  See
            (user-error "No more previous slides!")))))
 
 (cl-defmethod dslide--filter-function ((obj dslide-deck))
-  (oref obj filter))
+  ;; If the active slide has a more specific filter, return that
+  (or (oref (oref obj slide) filter)
+      (oref obj slide)))
 
 (cl-defmethod dslide--choose-slide ((obj dslide-deck) how)
   "Set the current slide of OBJ, according to HOW."
