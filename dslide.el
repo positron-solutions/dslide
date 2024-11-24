@@ -3058,7 +3058,7 @@ each slide show from the contents view."
             (let ((overlay (make-overlay
                             (org-element-property :begin e)
                             (org-element-property :end e))))
-              (overlay-put overlay 'display "\n")
+              (overlay-put overlay 'display "")
               (push overlay dslide-overlays)))))
       nil nil t)
     (goto-char
