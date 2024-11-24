@@ -1277,7 +1277,7 @@ for `dslide-contents-map'.")
      (when-let ((props (org-element-property
                         :attr_dslide_propertize e)))
        (let ((overlay (make-overlay (org-element-property :post-affiliated e)
-                                    (org-element-property :end e)))
+                                    (1- (org-element-property :end e))))
              (props (car props))        ; TODO multi-value support
              (offset 0))
          (while offset
