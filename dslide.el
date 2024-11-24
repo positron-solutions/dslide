@@ -636,8 +636,7 @@ simplify their implementation."
     :documentation "Function to filter child headings."))
   "Class for objects that contain children.")
 
-;; TODO highly indirect and delegates down to a really crappy implementation
-;; that nobody else should ever want to use
+;; TODO unnecessary indirection
 (cl-defmethod dslide-next-child ((obj dslide-parent) child)
   "Get the next unfiltered CHILD of OBJ."
   (dslide-next-sibling
@@ -2258,7 +2257,7 @@ PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
     (heading type before &optional pred inclusive info no-recursion)
   "Return HEADING's previous element of TYPE.
 By default, matches only before BEFORE but with optional
-INCLUSIVE, also includes matches at BEFORE.
+INCLUSIVE, also includes matches exactly at BEFORE.
 
 PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 `org-element-map'."
