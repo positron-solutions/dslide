@@ -1159,7 +1159,7 @@ Errors when asked for a marker before one has been set.")
 
 (cl-defgeneric dslide-section-next (obj type
                                     &optional pred reverse-in-place
-                                      info no-recursion)
+                                    peek info no-recursion)
   "Return OBJ's next element of TYPE.
 Only matches elements beginning after the marker stored in the
 action OBJ.  Moves the marker forward to the beginning of the
@@ -1172,28 +1172,29 @@ matches can include elements starting at the action's marker, and
 the marker is moved to the end rather than beginning of an
 element.
 
-The action's marker is moved to the end of the heading if no
-matching element is found.  This allows a subsequent backwards
-step to process the last element.
+Set optional PEEK to non-nil to check for an element without moving the
+marker.  Otherwise, the action's marker is updated.
 
 Optional PRED INFO and NO-RECURSION are the same as for
 `dslide-contents-map'.")
 
 (cl-defmethod dslide-section-next ((obj dslide-action) type
                                    &optional pred reverse-in-place
-                                     info no-recursion)
+                                   peek info no-recursion)
   (if-let ((next (dslide--section-next
                   (dslide-heading obj) type (dslide-marker obj)
                   pred reverse-in-place info no-recursion)))
       (prog1 next
-        (dslide-marker obj (org-element-property
-                            (if reverse-in-place :end :begin) next)))
-    (dslide-marker obj (org-element-property :end (dslide-heading obj)))
+        (unless peek
+          (dslide-marker obj (org-element-property
+                              (if reverse-in-place :end :begin) next))))
+    (unless peek
+      (dslide-marker obj (org-element-property :end (dslide-heading obj))))
     nil))
 
 (cl-defgeneric dslide-section-previous (obj type
-                                        &optional pred reverse-in-place
-                                          info no-recursion)
+                                            &optional pred reverse-in-place
+                                            peek info no-recursion)
   "Return previous element of TYPE.
 Only matches elements beginning before the marker stored in the
 action, OBJ.  Moves the marker backward to the beginning of the
@@ -1204,22 +1205,24 @@ return the same element, meaning your action reverses in-place.
 hiding and revealing list items works this way.  When non-nil,
 matches can include elements starting at the action's marker.
 
-Marker is moved to the beginning of the heading if no matching
-element is found.  This allows actions to differentiate the begin
-state from being at the first matching element.
+Set optional PEEK to non-nil to check for an element without moving the
+marker.  Otherwise, the action's marker is moved to the beginning of the
+element.
 
 Optional PRED INFO and NO-RECURSION are the same as for
 `dslide-contents-map'.")
 
 (cl-defmethod dslide-section-previous ((obj dslide-action) type
                                        &optional pred reverse-in-place
-                                         info no-recursion)
+                                       peek info no-recursion)
   (if-let ((previous (dslide--section-previous
                       (dslide-heading obj) type (dslide-marker obj)
                       pred reverse-in-place info no-recursion)))
       (prog1 previous
-        (dslide-marker obj (org-element-property :begin previous)))
-    (dslide-marker obj (org-element-property :begin (dslide-heading obj)))
+        (unless peek
+          (dslide-marker obj (org-element-property :begin previous))))
+    (unless peek
+      (dslide-marker obj (org-element-property :begin (dslide-heading obj))))
     nil))
 
 (cl-defgeneric dslide-section-map (obj type fun
@@ -1857,7 +1860,7 @@ they can be ignored for the slide's lifecycle.")
             (not (funcall filter child))
             (push (dslide-hide-element child) dslide-overlays))))))
 
-(cl-defgeneric dslide-child-next (obj &optional reverse-in-place)
+(cl-defgeneric dslide-child-next (obj &optional reverse-in-place peek)
   "Return the next direct child heading element.
 Only matches headings beginning after the marker stored in the
 action OBJ.  Moves the marker forward to the beginning of the
@@ -1870,12 +1873,13 @@ matches can include headings starting at the action's marker, and
 the marker is moved to the end rather than beginning of an
 heading.
 
-The action's marker is moved to the end of the heading if no
-matching heading is found.  This allows a subsequent backwards
-step to process the most recently visited heading.")
+Set optional PEEK to non-nil to check for an element without moving the
+marker.  Otherwise, the action's marker is moved to the end of the
+heading if no matching heading is found.  This allows a subsequent
+backwards step to process the most recently visited heading.")
 
 (cl-defmethod dslide-child-next ((obj dslide-slide-action)
-                                 &optional reverse-in-place)
+                                 &optional reverse-in-place peek)
   (let* ((filter (dslide--filter-function dslide--deck))
          (marker (dslide-marker obj))
          (heading (dslide-heading obj))
@@ -1892,12 +1896,17 @@ step to process the most recently visited heading.")
                 nil t)))
     (if next
         (prog1 next
-          (dslide-marker obj (org-element-property
-                              (if reverse-in-place :end :begin) next)))
+          (unless peek
+            (dslide-marker
+             obj (org-element-property
+              (if reverse-in-place :end :begin) next))))
       (prog1 nil
-        (dslide-marker obj (org-element-property :end (dslide-heading obj)))))))
+        (unless peek
+          (dslide-marker obj
+           (org-element-property
+            :end (dslide-heading obj))))))))
 
-(cl-defgeneric dslide-child-previous (obj &optional reverse-in-place)
+(cl-defgeneric dslide-child-previous (obj &optional reverse-in-place peek)
   "Return the previous direct child heading element.
 Only matches child headings beginning before the marker stored in
 the action, OBJ.  Moves the marker backward to the beginning of
@@ -1908,18 +1917,19 @@ return the same heading, meaning your action reverses in-place.
 hiding and revealing list items works this way.  When non-nil,
 matches can include headings starting at the action's marker.
 
-Marker is moved to the beginning of the heading if no matching
-heading is found.  This allows actions to differentiate the begin
-state from being at the first child heading.")
+Set optional PEEK to non-nil to check for an element without moving the
+marker.  Otherwise, the action's marker is moved to the end of the
+heading if no matching heading is found.  This allows a subsequent
+backwards step to process the most recently visited heading.")
 
 (cl-defmethod dslide-child-previous ((obj dslide-slide-action)
-                                     &optional reverse-in-place)
+                                     &optional reverse-in-place peek)
   (let* ((filter (dslide--filter-function dslide--deck))
          (marker (dslide-marker obj))
          (heading (dslide-heading obj))
          (target-level (1+ (org-element-property :level heading)))
          ;; We have to get all the children and find the last match
-         (next (car
+         (previous (car
                 (last
                  (dslide--contents-map
                   heading 'headline
@@ -1931,11 +1941,16 @@ state from being at the first child heading.")
                           (if reverse-in-place #'<= #'<)
                           (org-element-property :begin child) marker)
                          child)))))))
-    (if next
-        (prog1 next
-          (dslide-marker obj (org-element-property :begin next)))
+    (if previous
+        (prog1 previous
+          (unless peek
+            (dslide-marker
+             obj (org-element-property :begin previous))))
       (prog1 nil
-        (dslide-marker obj (org-element-property :begin (dslide-heading obj)))))))
+        (unless peek
+          (dslide-marker
+           obj (org-element-property
+                :begin (dslide-heading obj))))))))
 
 ;; ** Flat Slide Action
 (defclass dslide-slide-action-flat (dslide-slide-action) ()
