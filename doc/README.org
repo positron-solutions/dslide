@@ -30,11 +30,11 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 - Script steps in your presentation with Org babel blocks
 - Incorporate *anything* Emacs does into a presentation
 - Convenient API for quickly writing reliable custom actions for reuse
-** Status 🛠️
-Version 0.5.4 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates and related demonstrations.
-- Stabilizing the API and naming (estimated 98% stable)
-- Gathering user feedback & experience to pinpoint actual use patterns
-- Accepting PR's and issue reports
+** Status 💹
+Version 0.5.5 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates and related demonstrations.
+- Useable
+- Expect markup to become easier as affiliated keywords are adopted.  Will attempt to not break options that currently work.  See release notes.
+- Accepting PR's and issue reports.  Read the manual section on hacking.
 - Some behaviors may be advertised as working already when they are only 90% implemented.  I have no idea what you want.  *File issues*.
 * Installation
 :PROPERTIES:

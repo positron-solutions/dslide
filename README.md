@@ -5,6 +5,7 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 <a href="https://melpa.org/#/dslide"><img src="https://melpa.org/packages/dslide-badge.svg" alt="melpa package"></a> <a href="https://stable.melpa.org/#/dslide"><img src="https://stable.melpa.org/packages/dslide-badge.svg" alt="melpa stable package"></a>
 <a href="https://elpa.nongnu.org/nongnu/dslide.html"><img src="https://elpa.nongnu.org/nongnu/dslide.svg" alt="Non-GNU ELPA"></a>
 
+
 # Present Org Documents 🦄
 
 -   Per-heading configurable behavior
@@ -20,13 +21,13 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 -   Convenient API for quickly writing reliable custom actions for reuse
 
 
-## Status 🛠️
+## Status 💹
 
-Version 0.5.4 👷 Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
+Version 0.5.5 👷 Subscribe to Positron's [YouTube](https://www.youtube.com/@Positron-gv7do) for updates and related demonstrations.
 
--   Stabilizing the API and naming (estimated 98% stable)
--   Gathering user feedback & experience to pinpoint actual use patterns
--   Accepting PR's and issue reports
+-   Useable
+-   Expect markup to become easier as affiliated keywords are adopted. Will attempt to not break options that currently work. See release notes.
+-   Accepting PR's and issue reports. Read the manual section on hacking.
 -   Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you want. **File issues**.
 
 
@@ -57,7 +58,7 @@ Version 0.5.4 👷 Subscribe to Positron's [YouTube](https://www.youtube.com/@Po
 
 ## Try It Out
 
-With just defaults, run `dslide-deck-start` on your existing documents. You can load the examples in the [./test/demo.org](./test/demo.md) file to see a showcase of configuration behavior.
+With just defaults, run `dslide-deck-start` on your existing documents. You can load the examples in the [./test/demo.org](./test/demo.org) file to see a showcase of configuration behavior.
 
 The default keymap uses arrow keys. Left and right are `dslide-deck-forward` and `dslide-deck-backward`. Up is `dslide-deck-start` and will show the contents. Down is `dslide-deck-stop` and will stop the slide show.
 
@@ -94,7 +95,6 @@ The actual display is done in an indirect buffer. Your hooks and customizations 
 
 
 # Table of Contents
-
 - [Creating](#Creating)
   - [Actions](#Actions)
   - [Adding Actions](#Adding-Actions)
@@ -135,14 +135,14 @@ The actual display is done in an indirect buffer. Your hooks and customizations 
   - [Work In Progress 🚧](#Work-In-Progress-🚧)
 - [Acknowledgments](#Acknowledgments)
 
-<a id="orgfdadc3b"></a>
+<a id="orgb1b5d10"></a>
 
 # Creating
 
 Making an org document into a presentation.
 
 
-<a id="orga3ce2c3"></a>
+<a id="org19d036f"></a>
 
 ## Actions
 
@@ -171,7 +171,7 @@ To browse all actions, because they are all EIEIO classes, you can use `eieio-br
 ```
 
 
-<a id="orgd9212a3"></a>
+<a id="orgee7c828"></a>
 
 ## Adding Actions
 
@@ -197,7 +197,7 @@ Regular Org Mode markup is used to add actions to headings.  See more examples i
 ```
 
 
-<a id="org4abaeed"></a>
+<a id="orgf6ce3de"></a>
 
 ## Action Arguments
 
@@ -225,7 +225,7 @@ You can also use "property+" syntax to add to a property, and these accept plist
 🚧 The current plist read implementation splits the string rather than using `read-string` and is therefore not smart enough to parse lists as arguments. However `dslide-action-propertize` demonstrates doing this correctly and shows that it will be possible if needed.
 
 
-<a id="orgd881a9a"></a>
+<a id="org49847bd"></a>
 
 ## Annotating Elements
 
@@ -245,7 +245,7 @@ This is some fancy text
 ```
 
 
-<a id="org7e4b0ed"></a>
+<a id="org5eaf502"></a>
 
 ## Babel Scripting
 
@@ -263,7 +263,7 @@ In the future the babel action may become a default, using the `#+attr_dslide_ba
 #+end_src
 ```
 
-By default blocks only execute going forward, one block per step. You need to label your blocks with [lifecycle](#org2c4832e) methods if you want to perform setup (forward and backward) and teardown. See the `dslide-action-babel` class and examples in [./test/demo.org](./test/demo.md).
+By default blocks only execute going forward, one block per step. You need to label your blocks with [lifecycle](#org4192134) methods if you want to perform setup (forward and backward) and teardown. See the `dslide-action-babel` class and examples in [./test/demo.org](./test/demo.org).
 
 The `#+attr_dslide:` affiliated keyword is used to configure which methods will run the block. Block labels that are understood:
 
@@ -275,7 +275,7 @@ The `#+attr_dslide:` affiliated keyword is used to configure which methods will 
 
 -   `both` runs either direction. It will not repeat in place when reversing. Use separate `forward` and `backward` blocks for that 💡
 
-These methods follow the naming and behavior of dslide's [stateful sequence](#orgb84627e) interface. The babel action is basically delegating stateful sequence calls into the blocks of your org document.
+These methods follow the naming and behavior of dslide's [stateful sequence](#org8a1117e) interface. The babel action is basically delegating stateful sequence calls into the blocks of your org document.
 
 The babel action also understands regular babel options such as `:exports` and `:results`. Exports none will make the block invisible. Results controls whether results will be printed into the buffer or not.
 
@@ -285,7 +285,7 @@ The babel action also understands regular babel options such as `:exports` and `
 See `dslide-push-step` for inserting arbitrary callbacks that can function as steps. Unless your action performs state tracking to decide when to consume `dslide-deck-forward` and `dslide-deck-backward` itself, a callback may be easier. Using `dslide-push-step` is also one way to optionally add a step callback from a babel block.
 
 
-<a id="org7424566"></a>
+<a id="org47b7547"></a>
 
 ## Hiding Markup
 
@@ -297,7 +297,7 @@ Dslide uses a lot of markup that would not look good in a presentation. It also 
 `dslide-action-hide-markup` will also hide todos and tags. You can modifiy this with `dslide-hide-todo` and `dslide-hide-tags`.
 
 
-<a id="orgb36114d"></a>
+<a id="org368819a"></a>
 
 ## Filtering Headings
 
@@ -309,7 +309,7 @@ Use this when your headings are work-in-progress and you run out of time on Frid
 To change the filtering from what is done by `dslide-built-in-filter`, customize `dslide-default-filter` or set `DSLIDE_FILTER` (possibly implemented 🤡, file an issue!).
 
 
-<a id="org64db0cc"></a>
+<a id="org3304433"></a>
 
 ## Header Keywords
 
@@ -331,7 +331,7 @@ Whenever `dslide-breadcrumb-separator` is non-nil, breadcrumbs will be rendered 
 Because breadcrumb text comes from your headings, you may want to set a face on them to prevent various heading faces from leaking into the breadcrumbs.
 
 
-<a id="orga338d6b"></a>
+<a id="org57fb617"></a>
 
 ## File Local Variables
 
@@ -344,14 +344,14 @@ Don't forget that if you need a customize variable only set in a particular pres
 ```
 
 
-<a id="org51dde3e"></a>
+<a id="orgd352517"></a>
 
 # Presenting
 
 How to control and view your presentation.
 
 
-<a id="orgda13709"></a>
+<a id="org293a1b1"></a>
 
 ## Two Button Interface
 
@@ -370,7 +370,7 @@ Many controllers also have a "play" button or similar. It's recommended to map t
 There is likely no good place to bind `dslide-deck-stop`, but it's not critical. You can do everything with just three buttons.
 
 
-<a id="org4087192"></a>
+<a id="org2fe1631"></a>
 
 ## Contents Interface
 
@@ -383,7 +383,7 @@ To enter the contents, call `dslide-deck-start` when a presentation is already a
 -   `dslide-deck-forward` and `dslide-deck-backward` move between top level headings.
 
 
-<a id="org70b08bd"></a>
+<a id="orgab7fcb8"></a>
 
 ## Narrating
 
@@ -407,14 +407,14 @@ This is a comment that only I can see while presenting, only when I look at my b
 You can also switch a window to the base buffer manually. That's almost all `dslide-deck-develop` does.
 
 
-<a id="org33e389e"></a>
+<a id="org7ffcb6c"></a>
 
 ## Cursor Visibility
 
 By default, the cursor is hidden in the presentation buffer using `dslide-cursor-hide`. You can call `dslide-cursor-restore` if you need it.
 
 
-<a id="org76122d6"></a>
+<a id="org4c5c6df"></a>
 
 # Configuring
 
@@ -427,7 +427,7 @@ Many settings can be configured at:
 -   slide level through the property drawer
 
 
-<a id="orgbc27a08"></a>
+<a id="org4effceb"></a>
 
 ## Binding
 
@@ -447,7 +447,7 @@ Once the global minor mode, `dslide-mode` is active, additional bindings in `dsl
 Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the `dslide-deck-start` binding within presentations to enter / exit these branches.
 
 
-<a id="orgf874b47"></a>
+<a id="orgb8e3f41"></a>
 
 ## Hooks
 
@@ -480,7 +480,7 @@ Beware of using the normal `dslide-mode-hook` 😱 because it runs **in the base
 See the `dslide-action-hide-markup` which is by default added to `dslide-default-actions` and hides markup on every slide. The lifecycle of actions and their methods for obtaining the current slide's heading make them very good for per-slide behavior.
 
 
-<a id="org2ba0183"></a>
+<a id="org4a19fdf"></a>
 
 ## Steezing Org
 
@@ -500,14 +500,14 @@ Don't forget built-in `emoji-search` and searching `insert-char`.
 Positron is cheating and also apply custom line-spacing and line-height. While Psionic maintains a custom `org-modern`, using custom spacing everywhere fights with `visual-line-mode` currently.
 
 
-<a id="orga2bd4a7"></a>
+<a id="org872335b"></a>
 
 # Extending
 
 Creating new actions or replacing dslide classes.
 
 
-<a id="orge68f025"></a>
+<a id="orgcbf4651"></a>
 
 ## Creating Actions
 
@@ -522,7 +522,7 @@ First choose your action type:
 Override methods as appropriate, configure a heading to use your action, and you're done. Some actions, such as `dslide-action-propertize` only work when some of the section data is annotated.
 
 
-<a id="org5b6c900"></a>
+<a id="org670149e"></a>
 
 ## A Custom Action
 
@@ -571,7 +571,7 @@ Example code:
 ```
 
 
-<a id="org9cc0b70"></a>
+<a id="orgb3ea329"></a>
 
 ## Default Classes
 
@@ -584,14 +584,14 @@ The deck and slide class as well as actions can be sub-classed. Use the existing
     If you suspect you might need to sub-class the `dslide-slide` or `dslide-deck`, please file an issue because your use case is probably interesting.
 
 
-<a id="org05d20c4"></a>
+<a id="org93a01c9"></a>
 
 # Hacking
 
 This section provides really high-level summary of the code's major design choices to prepare for diving into source.
 
 
-<a id="orge4c1534"></a>
+<a id="orga1c7565"></a>
 
 ## Objects & Ownership
 
@@ -604,7 +604,7 @@ Org mode uses trees. Presentations are linear sequences. We can either traverse 
 
 ### Life Cycles
 
-Owning an object also means out-living it. This is important to understanding the sequence of events. The methods used for the lifecycle are part of dslide's [Stateful Sequence](#orgb84627e). Every lifecyle starts with `dslide-begin` or `dslide-end` (depending on whether we go forward or backward) and ends with `dslide-final`.
+Owning an object also means out-living it. This is important to understanding the sequence of events. The methods used for the lifecycle are part of dslide's [Stateful Sequence](#org8a1117e). Every lifecyle starts with `dslide-begin` or `dslide-end` (depending on whether we go forward or backward) and ends with `dslide-final`.
 
 The state of the slide out-lives the state of its slide action. The slide action out-lives both child slides and section actions. Child slides and section actions life cycles may overlap.
 
@@ -629,7 +629,7 @@ The child and section actions orders can vary depending on the slide action's ch
 6.  slide `dslide-final`
 
 
-<a id="orgb84627e"></a>
+<a id="org8a1117e"></a>
 
 ## Stateful Sequence
 
@@ -643,7 +643,7 @@ Setup and teardown can happen in both directions, so there is `dslide-begin` and
 
 Slides may be disposed of after they no longer make progress. To allow intended cleanup to happen at the right moment, the parent calls `dslide-final`. This can be called at any time after `dslide-end` or `dslide-begin`.
 
-The return values for these methods matter! See [flow control](#orgd67e782).
+The return values for these methods matter! See [flow control](#org810d6ea).
 
 
 ### Flow Control
@@ -659,7 +659,7 @@ Whenever all slides and actions return nil all the way back up to the deck, it l
 The deck object and slide actions frequently create new children from org headings. They call their `dslide-begin` or `dslide-end` methods right after that. If these methods don't indicate progress, the `dslide-forward` or `dslide-back` method will be called.
 
 
-<a id="org4c178a2"></a>
+<a id="org261191c"></a>
 
 ## Instantiating Slides
 
@@ -674,7 +674,7 @@ The default classes and actions can be configured at the document or customize l
 `dslide--make-slide` will look in order for the highest precedence setting and then instantiate the class with that value in the slot.
 
 
-<a id="org07e5d0e"></a>
+<a id="orgd448c75"></a>
 
 ## Display
 
@@ -703,7 +703,7 @@ Peel is the default when an action or slide's `:inline` property is non-nil. If 
 These are just image buffers with the mode line turned off.
 
 
-<a id="org72f800c"></a>
+<a id="org3ee2c32"></a>
 
 ## Element Mapping
 
@@ -715,10 +715,10 @@ It is very common when writing actions to work on only the section or only the c
 
 Frequently we are looking for an element before or after a marker, so shortcuts exist for finding the next or previous element. Section actions typically use `dslide-section-next` and `dslide-section-previous`. Slide actions typically use `dslide-child-next` and `dslide-child-previous` to traverse the child headings.
 
-Mapping and [progress tracking](#org4867e02) are intimately related. Finding the previous or next element is implemented by mapping to find the element beginning before or after a certain point. Careful handling of markers and a consistent scheme for sensing progress enable markers in the buffer to act as progress cursors for a variety of actions.
+Mapping and [progress tracking](#org02bd981) are intimately related. Finding the previous or next element is implemented by mapping to find the element beginning before or after a certain point. Careful handling of markers and a consistent scheme for sensing progress enable markers in the buffer to act as progress cursors for a variety of actions.
 
 
-<a id="org4867e02"></a>
+<a id="org02bd981"></a>
 
 ## Progress Tracking
 
@@ -760,28 +760,28 @@ A very deliberate design choice was to avoid needing to return more than one ele
 If you need more states per element, this kind of implicit state tracking is insufficient and you will have to implement state-tracking. ⚠️ Don't use text properties to store state in buffer text since they will persist in the base buffer between presentation starts if not cleaned up.
 
 
-<a id="org3e6fb7e"></a>
+<a id="org657d926"></a>
 
 # Package Pairings
 
 These are some packages that are likely to find use alongside dslide.
 
 
-<a id="orgc747d0d"></a>
+<a id="org7aa7dae"></a>
 
 ## Org Modern
 
 Bullets and many prettifications of common org markups. The markup that you don't hide looks better with org modern.
 
 
-<a id="org050dc6d"></a>
+<a id="orgb7df131"></a>
 
 ## Org Appear
 
 Never worry about turning on pretty links for a presentation. Edit them by just moving the point inside.
 
 
-<a id="org1bc9f1c"></a>
+<a id="orgd1f2b74"></a>
 
 ## Master of Ceremonies
 
@@ -790,21 +790,21 @@ The [master-of-ceremonies](https://github.com/positron-solutions/master-of-cerem
 Check the full commands by pressing `h` during focus. You can highlight a region, save an expression to playback a code snippet without the buffer open etc.
 
 
-<a id="org58e326b"></a>
+<a id="orgc979afe"></a>
 
 ## Open Broadcaster Software
 
 Sacha Chua has written an OBS plugin integration helpful for video integration [obs-websocket-el](https://github.com/sachac/obs-websocket-el).
 
 
-<a id="org94dd54f"></a>
+<a id="orgdb27933"></a>
 
 ## moom.el
 
 The [moom](https://github.com/takaxp/moom#org-mode-org-tree-slide) package contains some commands for resizing text and repositioning frames.
 
 
-<a id="org2afd75a"></a>
+<a id="org5b034a5"></a>
 
 # Contributing
 
@@ -812,7 +812,7 @@ The [moom](https://github.com/takaxp/moom#org-mode-org-tree-slide) package conta
 -   If you do have time, excellent. Happy to support your PR's and provide context about the architecture and behavior.
 
 
-<a id="orgd3b974b"></a>
+<a id="org75d3e99"></a>
 
 ## Work In Progress 🚧
 
@@ -877,7 +877,7 @@ Especially if slides launch sub-sequences, and they do it from Lisp, this is har
 There's no concrete reason why presentations need to start with Org mode buffers. The deck object could have its org-specific functionality pushed down to an org-mode class. The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
 
 
-<a id="org903f09c"></a>
+<a id="org72a7186"></a>
 
 # Acknowledgments
 
