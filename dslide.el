@@ -1557,7 +1557,8 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   ((kill-buffer
     :initform nil
     :initarg :kill-buffer
-    :documentation "Kill the buffer.  Default nil just buries it.")
+    :documentation "Kill image buffer after display.
+Default nil just buries it.")
    (slide-display
     :initform t
     :initarg :slide-display
@@ -1609,7 +1610,8 @@ Only affects standalone-display.")
                              (org-element-property :end e))))
                (overlay-put overlay 'invisible t)
                (push overlay (oref obj overlays)))))))
-    ;; If just hiding the images, dump the overlays into `dslide-overlays'.
+
+    ;; If not showing in buffer at all, just hide the links
     (dslide-section-map
      obj 'link
      (lambda (e)
@@ -1617,8 +1619,7 @@ Only affects standalone-display.")
                        (1- (org-element-property :begin e))
                        (org-element-property :end e))))
          (overlay-put overlay 'invisible t)
-         (overlay-put overlay 'priority 1000)
-         (push overlay dslide-overlays))))))
+         (push overlay (oref obj overlays)))))))
 
 ;; TODO implementation relies on org link opening.  Does not check for file or
 ;; check that image mode displays the link correctly.
@@ -1626,19 +1627,20 @@ Only affects standalone-display.")
 (cl-defmethod dslide-forward ((obj dslide-action-image))
   ;; When just revealing images without doing standalone display, we can
   ;; reverse in place, hiding and showing the same image when changing
-  ;; directions.  When doing standalone but not reveal, we do not reverse in
-  ;; place at all.  When combining standalone and reveal, the standalone
-  ;; callback implements reverse-in-place by itself.
+  ;; directions.  When doing standalone but not reveal, we use normal progress
+  ;; tracking.  When combining standalone and reveal, the standalone callback
+  ;; implements reverse-in-place by itself.
   (let* ((standalone-display (oref obj standalone-display))
          (slide-display (oref obj slide-display))
-         (in-place (and (eq slide-display 'reveal)
+         (reverse-in-place (and (eq slide-display 'reveal)
                         (null standalone-display))))
-    (when-let ((link (dslide-section-next obj 'link nil in-place)))
+    (when-let ((link (dslide-section-next obj 'link nil reverse-in-place)))
       ;; Show the image standalone
       (when (member standalone-display '(full-frame window t))
         (dslide-push-window-config nil)
         ;; TODO success detection
         (let ((org-link-frame-setup '((file . find-file)))
+              ;; TODO when not full frame, keep same window!
               (display-buffer-overriding-action
                (when (eq standalone-display 'full-frame)
                  '(display-buffer-full-frame))))
@@ -1655,37 +1657,57 @@ Only affects standalone-display.")
                (when (buffer-live-p image-buffer)
                  (if (oref obj kill-buffer)
                      (kill-buffer image-buffer)
-                   (bury-buffer image-buffer)))
+                   (bury-buffer image-buffer)
+                   (switch-to-buffer (oref dslide--deck slide-buffer))))
                ;; If not doing reveal, return nil to not count as a step.
-               ;; If doing reveal, going backwards needs to count as a step.
+               ;; If doing reveal, going forwards needs to count as a step.
                (when (eq slide-display 'reveal)
-                 (eq direction 'backward)))))))
+                 (pcase direction
+                   ('forward t)         ; swallow a forward step
+                   ('backward
+                    ;; In the backwards case of reveal in the forward callback
+                    ;; (🤡), the callback also needs to hide the image and
+                    ;; punch the progress marker.
+                    (set-buffer (oref dslide--deck slide-buffer))
+                    (let ((overlay (make-overlay
+                                    (1- (org-element-property :begin link))
+                                    (org-element-property :end link))))
+                      (overlay-put overlay 'invisible t)
+                      (push overlay (oref obj overlays)))
+                    ;; Punch the progress tracking marker
+                    (dslide-section-previous obj 'link nil reverse-in-place)
+                    t))))))
+          ;; Restore the buffer after we're done
+          (set-buffer (oref dslide--deck slide-buffer))))
 
       ;; When revealing images, if one of our overlays is hiding this image,
       ;; remove it.
-      (when (eq (oref obj slide-display) 'reveal)
+      (when (eq slide-display 'reveal)
         (let ((link-overlays (seq-intersection (oref obj overlays)
                                                (overlays-at (org-element-property
                                                              :begin link)))))
           (oset obj overlays (seq-difference (oref obj overlays) link-overlays))
           (mapc #'delete-overlay link-overlays)))
 
-      (when (or standalone-display in-place)
+      (when (or standalone-display reverse-in-place)
         (org-element-property :end link)))))
 
 (cl-defmethod dslide-backward ((obj dslide-action-image))
   ;; When just revealing images without doing standalone display, we can
   ;; reverse in place, hiding and showing the same image when changing
-  ;; directions.  When doing standalone but not reveal, we do not reverse in
-  ;; place at all.  When combining standalone and reveal, the standalone
-  ;; callback implements reverse-in-place by itself.
+  ;; directions.  When doing standalone but not reveal, we use normal progress
+  ;; tracking.  When combining standalone and reveal, the standalone callback
+  ;; implements reverse-in-place by itself.
   (let* ((standalone-display (oref obj standalone-display))
-         (slide-display (oref obj slide-display)))
-    (when-let ((link (dslide-section-previous obj 'link nil)))
+         (slide-display (oref obj slide-display))
+         (reverse-in-place (and (eq slide-display 'reveal)
+                        (null standalone-display))))
+    (when-let ((link (dslide-section-previous obj 'link nil reverse-in-place)))
       (when (member standalone-display '(full-frame window t))
         (dslide-push-window-config nil)
         ;; TODO success detection
         (let ((org-link-frame-setup '((file . find-file)))
+              ;; TODO when not full frame, keep same window!
               (display-buffer-overriding-action
                (when (eq standalone-display 'full-frame)
                  '(display-buffer-full-frame))))
@@ -1699,21 +1721,39 @@ Only affects standalone-display.")
           (image-transform-fit-to-window)
           (let ((image-buffer (current-buffer)))
             (dslide-push-step
-             (lambda (_)
+             (lambda (direction)
+               ;; TODO this callback can become fragile when the buffer has
+               ;; been manually dismissed
                (when (buffer-live-p image-buffer)
                  (if (oref obj kill-buffer)
                      (kill-buffer image-buffer)
-                   (bury-buffer image-buffer))))))))
+                   (bury-buffer image-buffer)
+                   (switch-to-buffer (oref dslide--deck slide-buffer)))
+                 ;; If not doing reveal, return nil to not count as a step.
+                 ;; If doing reveal, implement reverse in this callback and
+                 ;; interrupt the normal action.
+                 (when (and (eq direction 'backward)
+                            (eq slide-display 'reveal))
+                   (set-buffer (oref dslide--deck slide-buffer))
+                   (let ((overlay (make-overlay
+                                   (1- (org-element-property :begin link))
+                                   (org-element-property :end link))))
+                     (overlay-put overlay 'invisible t)
+                     (push overlay (oref obj overlays)))
+                   t)))))
+          ;; Restore the buffer after we're done
+          (set-buffer (oref dslide--deck slide-buffer))))
+
+      ;;  When revealing images, re-create and store an overlay.
       (when (eq slide-display 'reveal)
+        (set-buffer (oref dslide--deck slide-buffer))
         (let ((overlay (make-overlay
                         (1- (org-element-property :begin link))
                         (org-element-property :end link))))
           (overlay-put overlay 'invisible t)
-          (overlay-put overlay 'priority 1000)
           (push overlay (oref obj overlays))))
 
-      (when (or standalone-display
-                slide-display)
+      (when (or standalone-display slide-display)
         (org-element-property :begin link)))))
 
 (cl-defmethod dslide-final :after ((obj dslide-action-image))
@@ -1736,7 +1776,6 @@ Only affects standalone-display.")
                        (1- (org-element-property :begin e))
                        (org-element-property :end e))))
          (overlay-put overlay 'invisible t)
-         (overlay-put overlay 'priority 1000)
          (push overlay dslide-overlays))))))
 
 ;; * Slide Actions
