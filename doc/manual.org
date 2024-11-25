@@ -19,7 +19,7 @@
 
 * Introduction
 :PROPERTIES:
-:DESCRIPTION: Why You Heart DSL IDE
+:DESCRIPTION: What is Dslide?
 :END:
 Dslide is designed for conducting presentations in Emacs.  Abstractly, a presentation is a scripted sequence of content.  Org mode documents are the primary means of encoding these sequences for dslide.
 
@@ -38,14 +38,14 @@ Granular configurability was the first goal.  Dslide's predecessor, ~org-tree-sl
 
 Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks, because Emacs sits on top of all your other programming tools and sub-processes, so does dslide.  The action system is a framework for attaching reusable, configurable programmed behavior to multiple headings.
 
-High productivity was another goal.  With a decent org configuration, use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to slides.  Dslide respects export settings, allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents, to store and organize information.
+High productivity was another goal.  With a decent org configuration, use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to elements and headings.  Dslide respects export settings, allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents, to store, organize, and publish information.
 ** Strengths
 :PROPERTIES:
 :DESCRIPTION: When Dslide is Perfect
 :END:
-Dslide is particularly good for presentations that are for internal use or intended for closed audiences, where the polish that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
+Dslide is particularly good for presentations that are for internal use or intended for closed audiences, where lavish graphics that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
 
-- Tech demos
+- Tech demos where you need programming tools
 - Early stage startup pitches
 - Conducting team meetings
 * Glossary
@@ -113,13 +113,13 @@ By default, every slide has two actions, configurable in ~dslide-default-actions
 - ~dslide-action-propertize~ for adding text properties to arbitrary elements
 - ~dslide-action-hide-markup~ to hide keywords, todo states, and tags, allowing you to have these things in your source without them cluttering the presentation
 
-Actions must be added to a slide using the slide's property drawer.
+Non-default actions must be added to a slide using the slide's property drawer.  Actions that work by recognizing org elements by type are perhaps a bit dangerous to leave on all the time.
 
 - =DSLIDE_SLIDE_ACTION=: Usually narrows to the slide and creates children from child headings.  Lifecycle encloses the section actions.
-- =DSLIDE_ACTIONS:= Most commonly customized.  You can list multiple actions.  Each one will step through its forward and backward steps.
+- =DSLIDE_ACTIONS:= Most commonly used.  You can list multiple actions.  Each one will step through its forward and backward steps.
 
 #+begin_export html
-Regular Org Mode markup is used to add actions to headings.  See more examples in the [[../test]] directory.
+Regular Org Mode markup is used to add actions to headings.  See more examples in the [[./test]] directory.
 #+end_export
 
 #+begin_src org
@@ -160,9 +160,9 @@ You can also use "property+" syntax to add to a property, and these accept plist
 :PROPERTIES:
 :DESCRIPTION: Telling Actions What and Where
 :END:
-Some actions, such as ~dslide-action-propertize~, can't decide which elements to operate on or what to do with the element.  You can add some meta data to an element using an *affiliated keyword*.
+Some actions, such as ~dslide-action-propertize~, can't decide which elements to operate on or what to do with those elements.  You can add some meta data to an element using an *affiliated keyword*.
 
-⚠️ If you are extending an action and want to create your own affiliated keyword, they  must start with =attr= or else the parser will not consider them affiliated!
+⚠️ If you are extending an action and want to create your own affiliated keyword, they  must start with =attr= or else the org element parser will not consider them affiliated and that property will not be set on the element!
 
 #+begin_src org
   ,* Fancy Text
@@ -182,17 +182,31 @@ Some actions, such as ~dslide-action-propertize~, can't decide which elements to
 #+cindex: scripting babel steps
 You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the ~dslide-action-babel~ action.
 
-By default blocks only execute going forward, one block per step.  You need to label your blocks with lifecycle methods if you want to be able to go forwards and backwards or execute them at the beginning or end of a slide.  See the ~dslide-action-babel~ class and examples in [[file:./test/demo.org][./test/demo.org]].
+In the future the babel action may become a default, using the =#+attr_dslide_babel= affiliated keyword or =:noeval= to decide a block should not be executed.  As of this version of dslide, either add ~dslide-action-babel~ to your ~dslide-default-actions~ or add it to the actions list via the property drawer.
+
+#+begin_src org
+  ,* My Heading With Babel Blocks
+  :PROPERTIES:
+  :DSLIDE_ACTIONS: dslide-action-babel
+  :END:
+  ,#+begin_src elisp
+    (message "Good job!")
+  ,#+end_src
+#+end_src
+
+By default blocks only execute going forward, one block per step.  You need to label your blocks with [[*Life Cycles][lifecycle]] methods if you want to perform setup (forward and backward) and teardown.  See the ~dslide-action-babel~ class and examples in [[file:./test/demo.org][./test/demo.org]].
 
 The =#+attr_dslide:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
 
 - =begin= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
 
-- =final= is only called when no progress can be made or if the presentation is stopped.
+- =final= is called to clean up when no progress can be made or if the presentation is stopped.
 
 - =forward= and =backward= are self-explanatory.  Position your =backward= blocks *above* any block that they undo
 
-- =both= runs either direction.  It will not repeat in place when reversing.  Use seperate =forward= and =backward= blocks for that 💡
+- =both= runs either direction.  It will not repeat in place when reversing.  Use separate =forward= and =backward= blocks for that 💡
+
+These methods follow the naming and behavior of dslide's [[*Stateful Sequence][stateful sequence]] interface.  The babel action is basically delegating stateful sequence calls into the blocks of your org document.
 
 The babel action also understands regular babel options such as =:exports= and =:results=.  Exports none will make the block invisible.  Results controls whether results will be printed into the buffer or not.
 *** Step Callbacks
@@ -218,19 +232,34 @@ Dslide uses a lot of markup that would not look good in a presentation.  It also
 - Any heading with =COMMENT= directly after the stars will be skipped
 - Any heading with the =:noslide:= or =:noexport:= tags will be skipped
 
-Use this when your headings are work-in-progress and you run out of time on Friday before the feature demo meeting.  Have some content that is used only in some exports?  Use =:noslide:=.
+Use this when your headings are work-in-progress and you run out of time on Friday before the feature demo meeting.  Have some content that is only not used in presentations?  Use =:noslide:=.
+
+#+vindex: dslide-default-filter
+To change the filtering from what is done by ~dslide-built-in-filter~, customize ~dslide-default-filter~ or set =DSLIDE_FILTER= (possibly implemented 🤡, file an issue!).
 ** Header Keywords
 :PROPERTIES:
-:DESCRIPTION: Title, Author, Email
+:DESCRIPTION: Title, Author, Breadcumbs
 :END:
 #+vindex: dslide-header
 If ~dslide-header~ is configured, the keywords for the document title, email, and author etc will be used to generate an okay header.
 
 #+begin_src org
-  #+,title:	Domain Specific sLIDEs
+  #+,#+title:	Domain Specific sLIDEs
   ,#+author:	Positron
   ,#+email:	contact@positron.solutions
 #+end_src
+
+#+vindex: dslide-header-email
+You can try customizing with ~dslide-header-email~ and similar variables or just set ~dslide-header-fun~ to complete replace the header with your own device.
+*** Breadcrumbs
+:PROPERTIES:
+:DESCRIPTION: Showing Parent Headings
+:END:
+#+vindex: dslide-breadcrumb-separator
+Whenever ~dslide-breadcrumb-separator~ is non-nil, breadcrumbs will be rendered in the heading, displaying parent headings so the audience an track context.
+
+#+vindex: dslide-breadcrumb-face
+Because breadcrumb text comes from your headings, you may want to set a face on them to prevent various heading faces from leaking into the breadcrumbs.
 ** File Local Variables
 :PROPERTIES:
 :DESCRIPTION: Don't Forget Free Lunch
@@ -284,8 +313,8 @@ To enter the contents, call ~dslide-deck-start~ when a presentation is already a
 :END:
 The presentation you see is a cloned [[info:elisp#Indirect Buffers][indirect buffer]] of your org mode buffer. The Elisp state and overlays are independent. There are two key advantages:
 
-- Any state you create in the presentation will not pollute the org mode buffer you are editing
-- We can display the source for the presentation simultaneously
+- Any state you create in the presentation (besides buffer text and text properties!) will not pollute the org mode buffer you are editing
+- We can display the source for the presentation simultaneously, making one pretty while leaving the other to show us what is hidden
 
 #+findex: dslide-deck-develop
 ~dslide-deck-develop~ will attempt to display both the presentation and source simultaneously.  Whenever the source is visible, highlights will be applied to indicate where the presentation is at.  *This is especially helpful for including presentation notes in comments, which are hidden by default*.
@@ -326,7 +355,7 @@ Once the global minor mode, ~dslide-mode~ is active, additional bindings in ~dsl
 *** Secondary Commands 🚧
 Because you might want to play a video or take a branch in the presentation and then exit that branch, the plan is to overload the ~dslide-deck-start~ binding within presentations to enter / exit these branches.
 ** Hooks
-Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base buffer* ⚠️.  If you remap faces or add a bunch of styling, it will be copied to the indirect buffer but then linger in your base buffer.  Instead, use ~dslide-start-hook~. 💡
+Beware of using the normal ~dslide-mode-hook~ 😱 because it runs *in the base buffer* ⚠️.  If you use that hook to remap faces or add a bunch of styling, state will be copied to the indirect buffer but then linger in your base buffer.  Instead, use ~dslide-start-hook~. 💡
 
 - ~dslide-start-hook~ is run in the indirect buffer after it is set it.  This is what you want.
 - ~dslide-stop-hook~ is run in the base buffer because the indirect buffer is already dead.
@@ -354,7 +383,7 @@ See the ~dslide-action-hide-markup~ which is by default added to ~dslide-default
 :PROPERTIES:
 :DESCRIPTION: Making it Pretty
 :END:
-Not unique to dslide, if you want more professional looking results, you will likely need to make your org a bit prettier.
+This is not unique to dslide, but if you want more professional looking results, you will likely need to make your org a bit prettier.
 
 The setup used for the Positron's YouTube demos is not much more complex than this well-documented setup by [[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][System Crafters]].  Also see Prot's [[https://protesilaos.com/codelog/2020-07-17-emacs-mixed-fonts-org/][further]] documentation on customizing org mode faces and fonts.
 
@@ -369,9 +398,9 @@ Don't forget built-in ~emoji-search~ and searching ~insert-char~.
 Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom ~org-modern~, using custom spacing everywhere fights with ~visual-line-mode~ currently.
 * Extending
 :PROPERTIES:
-:DESCRIPTION: Reusing Dslide Classes
+:DESCRIPTION: Custom Actions
 :END:
-This section is intended to provide an overview for extending dslide classes or hacking on dslide itself.
+Creating new actions or replacing dslide classes.
 ** Creating Actions
 :PROPERTIES:
 :DESCRIPTION: Overview
@@ -380,10 +409,10 @@ Actions are the right choice when you need custom behavior that you want to re-u
 
 First choose your action type:
 
-#+findex: dslide-slide-action
-- Override ~dslide-slide-action~ to create a slide action.  Your action will control the display of the slide and its children, usually controlling the narrow state and adding or removing overlays from children.
 #+findex: dslide-action
 - Override ~dslide-action~ to create an action that works mainly on a heading's section content.
+#+findex: dslide-slide-action
+- Override ~dslide-slide-action~ to create a slide action.  Your action will control the display of the slide and its children, usually controlling the narrow state and adding or removing overlays from children.
 
 Override methods as appropriate, configure a heading to use your action, and you're done.  Some actions, such as ~dslide-action-propertize~ only work when some of the section data is annotated.
 ** A Custom Action
@@ -448,45 +477,85 @@ The deck and slide class as well as actions can be sub-classed.  Use the existin
   If you suspect you might need to sub-class the ~dslide-slide~ or ~dslide-deck~, please file an issue because your use case is probably interesting.
 * Hacking
 :PROPERTIES:
-:DESCRIPTION: High-level Design Summary
+:DESCRIPTION: Understanding the Guts
 :END:
 This section provides really high-level summary of the code's major design choices to prepare for diving into source.
 ** Objects & Ownership
+:PROPERTIES:
+:DESCRIPTION: What Holds What
+:END:
 Org mode uses trees.  Presentations are linear sequences.  We can either traverse the tree or flatten it.  Dslide chose to traverse.  This design allowed implementing features such as ~dslide-slide-action-each-child~.  The children of such a parent slide exist simultaneously.  A consequence of the choice not to flatten is that parents own their children.  The lifecycle of a parent always encompasses its child.
 
 - The deck object is the root of all functionality and many commands delegate through it
 - The deck owns slides, which own actions
 - Slide actions may further own child slides
-** Stateful Sequence
-#+findex: dslide-stateful-sequence
-Presentations are supposed to be linear sequences.  However, they may require setup and teardown.  This is the "stateful" part of a ~dslide-stateful-sequence~.
 
+*** Life Cycles
+:PROPERTIES:
+:DESCRIPTION: What Lives When
+:END:
+Owning an object also means out-living it.  This is important to understanding the sequence of events.  The methods used for the lifecycle are part of dslide's [[*Stateful Sequence][Stateful Sequence]].  Every lifecyle starts with ~dslide-begin~ or ~dslide-end~ (depending on whether we go forward or backward) and ends with ~dslide-final~.
+
+The state of the slide out-lives the state of its slide action.  The slide action out-lives both child slides and section actions.  Child slides and section actions life cycles may overlap.
+
+The child and section actions orders can vary depending on the slide action's choices.  There may be multiple children alive at one time.  The children may complete after, before, or at the same time as the section actions.
+
+*Going forward:*
+
+1. slide ~dslide-begin~
+2.   slide action ~dslide-begin~
+3.     section actions + child slides ~dslide-begin~
+4.     section actions + child slides ~dslide-final~
+5.   slide action ~dslide-final~
+6. slide ~dslide-final~
+
+*Going backward:*
+
+1. slide ~dslide-end~
+2.   slide action ~dslide-end~
+5.     child slides + section actions ~dslide-end~
+6.     child slides + section actions ~dslide-final~
+7.   slide action ~dslide-final~
+8. slide ~dslide-final~
+** Stateful Sequence
+:PROPERTIES:
+:DESCRIPTION: Most Important Interface
+:END:
+#+findex: dslide-stateful-sequence
 #+findex: dslide-forward
 #+findex: dslide-backward
-If all sequences were idempotent, we would just implement ~dslide-forward~ and ~dslide-backward~. The reason this was not done is because those methods would have to differentiate calls to perform setup versus attempting to make progress and counting as steps.  It was extremely tricky, and so setup and teardown were split into three methods.
+Presentations are supposed to be linear sequences.  We want to traverse the sequence, performing the steps, entirely by calling ~dslide-forward~ and ~dslide-backward~.
+
+If all sequences were idempotent, we would only implement ~dslide-forward~ and ~dslide-backward~.  However, sequences often require setup and teardown before carrying out a single step.  This is the "stateful" part.
+
+Implementing this without explicit setup methods crammed too much behavior into ~dslide-forward~ and ~dslide-backward~ while also requiring them to decide if they were attempting to make progress or just performing setup.  It was annoying when building actions.
 
 #+findex: dslide-begin
 #+findex: dslide-end
-This setup and teardown can happen in both directions, so there is ~dslide-begin~ and ~dslide-end~.  The latter commonly calls the former and then advances the state to the end, but some more optimal setups are possible and already in use.
+Setup and teardown can happen in both directions, so there is ~dslide-begin~ and ~dslide-end~.  The latter commonly calls the former and then advances the state to the end, but some more optimal setups are possible and already in use.
 
 #+findex: dslide-final
-Slides may be disposed of after they no longer make progress.  To ensure this finalization happens, the parent calls ~dslide-final~.
-*** Actions
-Actions live on the slide.  They implement stateful sequence.  There are two kinds of actions:
+Slides may be disposed of after they no longer make progress.  To allow intended cleanup to happen at the right moment, the parent calls ~dslide-final~.  This can be called at any time after ~dslide-end~ or ~dslide-begin~.
 
-- Action: A regular action usually works on the section contents.
-- Slide Action: A slide action usually will narrow to its own contents.  It can create new slides by calling ~dslide--make-slide~, where it can override them to prevent them from narrowing.  The slide action is always called before any other action, whether going in forward or reverse.
-** Flow Control
-Decks, slides, and actions implement the ~dslide-stateful-sequence~ interface.  On each call to ~dslide-deck-forward~ or ~dslide-deck-backward~, the deck receives the first call to its ~dslide-forward~ method.
+The return values for these methods matter!  See [[*Flow Control][flow control]].
+*** Flow Control
+:PROPERTIES:
+:DESCRIPTION: Controlling Progress
+:END:
+Decks, slides, and actions implement the ~dslide-stateful-sequence~ interface.  On each call to ~dslide-deck-forward~ or ~dslide-deck-backward~, the deck receives the first call to its ~dslide-forward~ method.  First, the deck will check for any step callbacks.  (These may be added with ~dslide-push-step~ in actions or babel blocks.)  If there are no step callbacks, the deck delegates ~dslide-forward~ to the slide.  The slide may delegate down to an action, which may then further delegate to a child slide and so on.
 
-First, the deck will check for any step callbacks.  These are added with ~dslide-push-step~. The deck delegates this to the slide.  The slide may delegate down to an action, which may delegate to a slide.
+#+cindex: controlling progress
+The return value tells the parent if progress was made.  In the most basic case, each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result.  If the delegate returns nil, it means it was unable to make progress, and so the caller will instead try its own next action.  The deck will find a root level sibling and hydrate it using ~dslide--make-slide~.  A child action would find the next child and hydrate that.
 
-In the most basic case, each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result, indicating that progress was made.  If the delegate returns nil, it means it was unable to make progress, and so the caller will instead try its own next action.
+The moment of calling ~dslide-final~ can vary depending on the situation.  If there is only one slide at a time, ~dslide-final~ is usually called right after the child returns nil.  If the child is one of several, such as with ~dslide-slide-action-inline~, then only after all children complete will they have their ~dslide-final~ called.  If the presentation is quit early or the contents are opened, ~dslide-final~ is also called, possibly before all steps are complete.
 
 Whenever all slides and actions return nil all the way back up to the deck, it looks for a next or previous top-level heading to make into a slide.  If none is found, it indicates that the user is at the beginning or end of the presentation.
 
 The deck object and slide actions frequently create new children from org headings.  They call their ~dslide-begin~ or ~dslide-end~ methods right after that.  If these methods don't indicate progress, the ~dslide-forward~ or ~dslide-back~ method will be called.
 ** Instantiating Slides
+:PROPERTIES:
+:DESCRIPTION: Making Slides From Org Elements
+:END:
 #+findex: dslide--make-slide
 Slides are created by calling ~dslide--make-slide~ with an org element for a heading.  This function interprets the class name and arguments for the new slide and instantiates the object.
 
@@ -497,6 +566,90 @@ The default classes and actions can be configured at the document or customize l
 - Customize variable
 
 ~dslide--make-slide~ will look in order for the highest precedence setting and then instantiate the class with that value in the slot.
+** Display
+:PROPERTIES:
+:DESCRIPTION: Visual Things
+:END:
+How various visual effects are achieved.
+*** Hiding
+:PROPERTIES:
+:DESCRIPTION: With Overlays
+:END:
+The slide buffer, being an indirect clone of the base buffer, does not have independent text properties. For this reason, overlays are typically used to hide content.
+
+Most things that are hidden could be once again revealed.  This is typically accomplished by mutating or deleting the overlay.
+*** Animation
+:PROPERTIES:
+:DESCRIPTION: Timers & Overlays
+:END:
+There are currently two animation types, peel and slide-in:
+
+- Peel uses an overlay that is removed from the content one character at a time.  In order to preserve the flow of the obscured contents, such as when doing inline reveal with content after the reveal, the overlay must either match the background color or use the display property.
+- Slide-in uses an overlay with a =:before-string= text property to insert a newline in order to use the =:line-height= property to slowly remove padding with a timer.
+
+Peel is the default when an action or slide's =:inline= property is non-nil.  If multiple actions try to slide in at once, the result will not be good.  This is visible when combining ~dslide-slide-action-every-child~ and ~dslide-action-item-reveal~
+*** Full Screen Images
+:PROPERTIES:
+:DESCRIPTION: Image Mode Buffer
+:END:
+These are just image buffers with the mode line turned off.
+** Element Mapping
+:PROPERTIES:
+:DESCRIPTION: Working With Org Data
+:END:
+Org's Element API is the foundation on top of which dslide is built.  It's documentation is not currently in a manual.  Here's the web link:  [[https://orgmode.org/worg/dev/org-element-api.html][Org Element API docs]].  By using the element parser, we can avoid the issues that plague regex based implementations.  (The trade-off is more garbage generation.)
+
+Very frequently, we parse a section of the document and map over elements or headings within.  This allows us to treat the document or a part of it as a list.  The mapping functions all eventually delegate to ~dslide--map~ which itself uses ~org-element-map~, narrowed to the targeted region.
+
+It is very common when writing actions to work on only the section or only the children.  For this reason, some shortcuts to map the section or children exist.  Some section actions such as ~dslide-action-hide-markup~ are almost entirely built ~on dslide-section-map~.
+
+Frequently we are looking for an element before or after a marker, so shortcuts exist for finding the next or previous element.  Section actions typically use ~dslide-section-next~ and ~dslide-section-previous~.  Slide actions typically use ~dslide-child-next~ and  ~dslide-child-previous~ to traverse the child headings.
+
+Mapping and [[*Progress Tracking][progress tracking]] are intimately related.  Finding the previous or next element is implemented by mapping to find the element beginning before or after a certain point.  Careful handling of markers and a consistent scheme for sensing progress enable markers in the buffer to act as progress cursors for a variety of actions.
+** Progress Tracking
+:PROPERTIES:
+:DESCRIPTION: Markers and You
+:END:
+#+findex: dslide-heading
+Dslide's predecessor, org-tree-slide, frequently used the point to track state.  This can be fragile and there is also only one point.  To be more robust when the document is changing out from under us, dslide uses markers.
+
+#+findex: dslide-section-next
+#+findex: dslide-section-previous
+Slides keep a reference to the heading in their =:begin= slot and then retrieve it using ~org-element-at-point~.  Actions similarly use a marker in order to keep track of how much of the current heading they have already used.  For convenience, ~dslide-section-next~ and ~dslide-section-previous~ are used to simultaneously find the next element and update the marker, eliminating silly mistakes like forgetting to update the marker.
+
+#+cindex: reversing in place
+There are two schemes in place for tracking progress:
+
+- When viewing a sequence of images, we reverse by going back to the previous image rather than re-showing the current image.  This is the default progress scheme.
+- When showing and hiding elements, we reverse undoing the most recent work.  This means hiding the most recently shown or showing the most recently hidden element.  This is the scheme used when REVERSE-IN-PLACE is non-nil.
+
+⚠️ This section is fiddly and tricky.  Put on your smarty hat.  👷
+
+*Normal Progress*
+
+In short, find the element beginning after (before in reverse) the marker, move the marker to its beginning, and work on that element.  If there is no next element, move as far as you can.
+
+- The heading always begins before the first element.  We can reliably position before all elements by putting the marker at the beginning of the heading.
+- To go forward, we find the first element beginning after the marker and move the marker to its beginning.  We work on that element.  It will be skipped if we immediately go backward again.
+- If there is no next element, we move the marker to the end of the heading, which is after the beginning of the last element.
+- To go backward, we find the first element beginning before the marker and move the marker to its beginning.  We work on that element.  It will be skipped if we immediately go forward again.
+
+*Reverse In Place Progress*
+
+If doing work means the next reverse step should undo that work, you need reversing in place.  We need to slightly tweak our rules to allow two states on each element.  Since every element ends after it begins, we can reliably use the end and beginning positions to differentiate if we already used an element when going forwards or backwards.
+
+A very deliberate design choice was to avoid needing to return more than one element from a mapping call.  This means we always want to find the element we intend to work on e.g. we do not want to find the element to work on and then have to find the next element to update the marker.
+
+- To go forward, we find the first element beginning at or after the marker.  We move the marker to the end of this element and work on this element.
+- To go backward, we find the first element ending at or before the marker.  We move the marker to the beginning of this element and work on this element.
+- Going forward, begin at the beginning of the heading just like normal progress.  The first element will not be skipped.
+- Going backward, begin at the end of the heading.  This is at most the end of the last element, so it won't be skipped.
+
+☢️ Before these two schemes were developed, some actions were easier to implement one way while others were easier the other way.  There was much flip-flopping and radiation sickness from broken actions.  Eventually it was realized that both schemes make perfect sense for the right problems.
+
+⚠️ Org elements can and do overlap.  Lists are one such challenge.  List elements can all end at the same location.  Naively calling ~org-element-at-point~ is a bad idea.  See ~dslide-action-item-reveal~ for higher level interfaces.
+
+If you need more states per element, this kind of implicit state tracking is insufficient and you will have to implement state-tracking.  ⚠️  Don't use text properties to store state in buffer text since they will persist in the base buffer between presentation starts if not cleaned up.
 * Contributing
 :PROPERTIES:
 :DESCRIPTION: Give me hamburgers
@@ -505,6 +658,12 @@ The default classes and actions can be configured at the document or customize l
 - If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
 ** Work In Progress 🚧
 Open issues and give feedback on feature requests.  Contributions welcome.
+*** Affiliated Keyword
+This is the future of dslide.  Currently adding behavior to content can frequently require adding actions to the property drawer and then adding a keyword to the content.  This lacks precision, is unintuitive, and is inconvenient.  ~dslide-action-propertize~ shows the way.  A dispatch system should find all =dslide= prefixed affiliated keywords and activate the actions with the configuration.  This is faster and more concise.  It only requires editing in one place rather than two.
+
+The property drawer will remain in use because headings have slide behavior that doesn't make sense to adjust with affiliated keywords.  For behavior affecting section elements or operating on objects within paragraphs, the affiliated keyword implementation is the right way.
+*** Layout
+The ~master-of-ceremonies~ package and its ~mc-focus~ command implement desirable behaviors such as filling the available space and padding the content to the center of the window.  This behavior could easily be improved and adapted into an action.
 *** Slide Action Precedence
 When a slide is created in ~dslide-make-slide~, it can obtain them from several places:
 - passed in arguments, as slide actions do to prevent children from trying to display themselves
@@ -513,8 +672,8 @@ When a slide is created in ~dslide-make-slide~, it can obtain them from several 
 The order of precedence and capability to override options is still pretty immature.
 *** Secondary Commands
 See the section about bindings for context.  Video play or other situations where the presentation might branch should be supported by overloading the behavior of ~dslide-deck-start~.  I think this command will turn into ~dslide-deck-secondary~ in the ~dslide-mode-map~.
-*** ~dslide-goto~, starting from point
-Since not many actions currently have implemented this very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
+*** Starting From Point
+Since not many actions currently have implemented ~dslide-goto~ very accurately, playing from point is likely not that accurate.  Progress updating in the base buffer is also currently only at the slide level of granularity.
 *** Affiliated Buffers
 There is no tracking whether a buffer is part of the presentation or not.  How would a buffer become one?  Should it be implicit?  Without any sort of tracking, the consequence is that having a presentation open leaves the minor mode bindings hot.  These commands do weird things when run from these situations, especially if running babel scripts, so some kind of first-class buffer affiliation seems necessary.
 *** Non-Graphic Display
@@ -525,9 +684,9 @@ Children with no parents or missing a level are currently not supported and like
 Especially if slides launch sub-sequences, and they do it from Lisp, this is hard.  Buffer slides and also slide actions make it somewhat ambiguous.  Counting trees or tracking the point might be easier.  A ~children~ method for sequences works as long as sequences actually implement it.
 *** Non-Org Sequences
 There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences, which may hydrate and call into sub-sequences, meaning anything is pretty trivially possible.
-* Thanks
+* Acknowledgments
 :PROPERTIES:
-:DESCRIPTION: And Acknowledgements
+:DESCRIPTION: Remembering Org Tree Slide
 :END:
 This package is a direct descendant of Takaaki ISHIKAWA's [[https://github.com/takaxp/org-tree-slide][org-tree-slide]] package.  Many of the ideas and some of the implementations were either inherited or inspired by ideas from that package.  This package would not exist without the inspiration.  Thanks to everyone who contributed on org-tree-slide.
 * Pronunciation
@@ -538,7 +697,7 @@ While it may have been spoken many times before, let it be official that there i
 
 - D-S-L I-D-E: as if it is an IDE for designing DSLs, clearly false and pretentious sounding, but those who keep score lose for being too anxious to win
 - D'slide: perhaps, "the slide"
-- DEEE slide: We are going un un-slide your slide.  Powerpoint is no more.  Emacs has triumphed over the board room at last
+- DEEE slide: We are going un-slide your slide.  Powerpoint is no more.  Emacs has triumphed over the board room at last
 
 Please spread these and other intentionally wrongful pronunciations to protect those who have only ever read the name from persecution by self-annointed in-groups who claim to know the correct way to pronounce this made up word.
 * Indices

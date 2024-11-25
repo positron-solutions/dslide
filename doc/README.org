@@ -105,4 +105,4 @@ Sacha Chua has written an OBS plugin integration helpful for video integration [
 The [[https://github.com/takaxp/moom#org-mode-org-tree-slide][moom]] package contains some commands for resizing text and repositioning frames.
 
 #+include: "manual.org::*Contributing" :minlevel 1
-#+include: "manual.org::*Thanks" :minlevel 1
+#+include: "manual.org::*Acknowledgments" :minlevel 1
