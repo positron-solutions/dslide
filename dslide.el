@@ -2309,8 +2309,8 @@ and NO-RECURSION are described in `org-element-map'."
 (defun dslide--section-next
     (heading type after &optional pred inclusive info no-recursion)
   "Return HEADING's next element of TYPE.
-By default, matches only after AFTER but with optional INCLUSIVE,
-also includes matches at AFTER.
+By default, matches only beginning after AFTER but with optional
+INCLUSIVE, also includes matches beginning exactly at AFTER.
 
 PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 `org-element-map'."
@@ -2321,20 +2321,24 @@ PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
     (dslide--section-map
      heading type combined-pred info t no-recursion)))
 
+;; ⚠️ Check the manual section on progress tracking!  INCLUSIVE was used to
+;; implement reverse-in-place in the action methods.
 (defun dslide--section-previous
     (heading type before &optional pred inclusive info no-recursion)
   "Return HEADING's previous element of TYPE.
-By default, matches only before BEFORE but with optional
-INCLUSIVE, also includes matches exactly at BEFORE.
+By default, matches only beginning before BEFORE but with optional
+INCLUSIVE, also includes matches ending exactly at BEFORE.
 
 PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 `org-element-map'."
   (let* ((combined-pred (dslide-and
                          pred
                          (lambda (e) (funcall (if inclusive #'<= #'<)
-                                         (org-element-property :begin e) before)))))
+                                         (org-element-property
+                                          (if inclusive :end :begin) e)
+                                         before)))))
     ;; We can't map in reverse, so just retrieve all matched elements and
-    ;; return the last one.
+    ;; return the last one matched.
     (car (last (dslide--section-map
                 heading type combined-pred info nil no-recursion)))))
 
