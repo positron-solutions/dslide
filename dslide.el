@@ -1297,17 +1297,13 @@ for `dslide-contents-map'.")
   (dslide-section-map
    obj t                                ; t for all types
    (lambda (e)
-     (when-let ((keywords (org-element-property :attr_dslide_propertize e))
+     (when-let ((props (nreverse (dslide-element-plist
+                                  :attr_dslide_propertize e)))
                 (overlay (make-overlay (org-element-property :post-affiliated e)
                                        (1- (org-element-property :end e)))))
-       (while-let ((keyword (pop keywords))
-                   (offset 0))
-         (while-let ((prop (ignore-error end-of-file
-                             (read-from-string keyword offset)))
-                     (value (ignore-error end-of-file
-                              (read-from-string keyword (cdr prop)))))
-           (overlay-put overlay (car prop) (car value))
-           (setq offset (cdr value))))
+       (while-let ((value (pop props))
+                   (prop (pop props)))
+         (overlay-put overlay prop value))
        (push overlay dslide-overlays)))))
 
 (cl-defmethod dslide-end ((obj dslide-action-propertize))
@@ -2915,6 +2911,30 @@ for commands without visible side effects."
          (display-warning
           '(dslide) (cdr err))))
       (reverse classes-with-args))))
+
+(defun dslide-element-plist (property element)
+  "Return a plist from ELEMENT for PROPERTY.
+PROPERTY can be an affilated keyword property or another property.  The
+only requirement is that the value of PROPERTY must be a string or list
+of strings.  We will attempt to parse the value using `read-from-string'
+and cons the results into a plist.  `plist-get' always returns the first
+key.  It is the user's responsibility not to overload keys and expect
+more than first-key wins behavior."
+  (when-let* ((plist-strings (org-element-property property element))
+              (plist-strings (if (listp plist-strings) plist-strings
+                               (list plist-strings))))
+    (let (result)
+      (while-let ((plist-string (pop plist-strings)))
+        (let ((pos 0))
+          (condition-case nil
+              (while pos
+                (let* ((key (read-from-string plist-string pos))
+                       (val (read-from-string plist-string (cdr key))))
+                  (push (car key) result)
+                  (push (car val) result)
+                  (setq pos (cdr val))))
+            (end-of-file nil))))
+      (nreverse result))))
 
 ;; This should not interpret nil's specially because that should he handled
 ;; upstream by the parse functions
