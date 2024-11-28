@@ -245,6 +245,17 @@ This helps distinguish the breadcrumbs from the slide headline."
   "If non-nil, hide tags in headings."
   :type 'boolean)
 
+;; TODO can also probably be objects.  Use case?
+(defcustom dslide-hide-markup-types '(comment
+                                      comment-block
+                                      drawer
+                                      export-block
+                                      property-drawer
+                                      keyword)
+  "Default types to be hidden by `dslide-action-hide-markup'.
+Can be any element in `org-element-all-elements'."
+  :type '(repeat symbol))
+
 (defcustom dslide-animation-duration 1.0
   "How long slide in takes."
   :type 'number)
@@ -342,17 +353,6 @@ You can configure this per heading by setting the DSLIDE_FILTER
 keyword.  You can configure it for the document default by adding
 an DSLIDE_FILTER keyword."
   :type 'function)
-
-;; TODO can also probably be objects.  Use case?
-(defcustom dslide-hide-markup-types '(comment
-                                      comment-block
-                                      drawer
-                                      export-block
-                                      property-drawer
-                                      keyword)
-  "Default types to be hidden by `dslide-action-hide-markup'.
-Can be any element in `org-element-all-elements'."
-  :type '(repeat symbol))
 
 (defcustom dslide-contents-selection-highlight t
   "Show a highlight on the selected headline.
