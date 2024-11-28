@@ -118,10 +118,6 @@ start with a specific starting function."
   :type 'function)
 
 (defcustom dslide-header t
-  "The status of displaying the slide header."
-  :type 'boolean)
-
-(defcustom dslide-header t
   "Display header in contents buffer.
 When this is disabled, the keywords for title etc will remain
 visible, albeit scrolled away because of how `org-overview'
