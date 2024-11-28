@@ -223,9 +223,14 @@ properties remain unless shadowed."
   :type '(choice (const :tag "Don't display breadcrumbs" nil)
                  (string :tag "Delimiter")))
 
-(defcustom dslide-breadcrumbs-hide-todo-state t
+
+(defcustom dslide-breadcrumb-hide-todo-state t
   "If non-nil, hide TODO states in the breadcrumbs."
   :type 'boolean)
+
+(define-obsolete-variable-alias
+  'dslide-breadcrumbs-hide-todo-state 'dslide-breadcrumb-hide-todo-state
+  "0.5.5")
 
 (defcustom dslide-hide-todo nil
   "If non-nil, hide TODO states in headings."
@@ -2579,7 +2584,7 @@ from existing state cleanup."
         (while (org-up-heading-safe)
           (push (org-get-heading
                  'no-tags
-                 dslide-breadcrumbs-hide-todo-state)
+                 dslide-breadcrumb-hide-todo-state)
                 parents))
         (let ((breadcrumbs (seq-reduce reducer parents nil)))
           (when dslide-breadcrumb-face
