@@ -34,7 +34,7 @@ What dslide primarily adds to Emacs and Org Mode:
 :PROPERTIES:
 :DESCRIPTION: Things Hopefully Achieved
 :END:
-Granular configurability was the first goal.  Dslide's predecessor, ~org-tree-slide~, could only be configured at the level of the entire document, using customize variables.
+Granular configurability was the first goal.  Dslide's predecessor, ~org-tree-slide~, could only be configured at the level of the entire document, using customize variables.  Dslide aims to be configureable over each element of each heading.
 
 Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks, because Emacs sits on top of all your other programming tools and sub-processes, so does dslide.  The action system is a framework for attaching reusable, configurable programmed behavior to multiple headings.
 
@@ -48,17 +48,32 @@ Dslide is particularly good for presentations that are for internal use or inten
 - Tech demos where you need programming tools
 - Early stage startup pitches
 - Conducting team meetings
+* Status
+- Still pre-1.0.  See the [[https://github.com/positron-solutions/dslide/issues/20][version 1.0 feature roadmap]].
+- Expect markup to become easier as affiliated keywords are adopted. Will attempt to not break options that currently work. See release notes when updating.
+- Accepting PR's and issue reports. Read the manual section on [[*Hacking][hacking]]
+- Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you want. File issues.
 * Glossary
 :PROPERTIES:
 :DESCRIPTION: Words We Invented
 :END:
 - =Deck=: an object that is used to relate the display and base buffer and is the root of all sequences.  It's another word for "presentation" or PT.
 - =Slide=: an object that interprets an org heading to hydrate its actions
-- =Action=: an object that responds to ~dslide-deck-forward~ and ~dslide-deck-backward~ calls and implements lifecycle methods to initialize and clean up state
+- =Action=: an object that responds to ~dslide-deck-forward~ and ~dslide-deck-backward~ calls and implements lifecycle methods to initialize and clean up state.
+  #+cindex: slide action
   + =Slide Action=: an action subclass that handles initial display of the slide and creation of child slides from sub-headings.
+  #+cindex: section action
   + =Section Actions=: actions that typically control the display and behavior of a heading's section, the region between the headline and child headings.
-- =Step=: a single call to ~dslide-deck-foward~ or ~dslide-deck-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods
+#+cindex: secondary action
+- =Secondary Action=: 🚧 To do "something else" besides step forwards and backwards, ~dslide-deck-start~ can be temporarily overloaded, allowing presentation controllers with three buttons to control extra behavior.
+- =Step=: a single call to ~dslide-deck-foward~ or ~dslide-deck-backward~, usually delegated down to ~dslide-forward~ and ~dslide-backward~ methods through the deck and slides down to actions.  Actions implement steps.
+#+cindex: element configuration
+- =Element Configuration=: Some actions can be configured per-element.  This is done with an affiliated keyword such as =#+attr_dslide_propertize:= or the parameters of a block.  The value is the configuration for how to work on that element.
+#+cindex: step configuration
+- =Step Configuration=: When the element configuration is used by a step.  The babel block parameters that configure how to use that block as a step are its step configuration.
+#+cindex: contents
 - =Contents=: A view of the folded top-level headings that is used for quickly navigating between headings during a presentation.
+#+cindex: slide buffer
 - =Slide Buffer=: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the *base buffer*.  Check for the =deck: my-presentation.org= buffer name.
   + Indirect buffer and =slide-buffer= are used interchangeably
   + Base buffer or =base-buffer= is used pretty exclusively
@@ -71,8 +86,10 @@ Select org mode terms more frequently used by dslide.  Don't miss [[info:org#Org
 
 - =Element=: org documents are parsed into elements and objects.  Headings, plain lists, and blocks are examples of elements.  See the [[https://orgmode.org/worg/dev/org-element-api.html][org element api]] documentation.  Dslide makes heavy use of org's element parser to implement its features.
 - =Keyword=: A single =#+keyword_style:= line used to specify some option
-- =Affilated keyword=: A =#+attr_keyword_style:= line that directly preceeds an element and is used to add metadata to arbitrary org elements
-- =Property=: Meta data attached to headings. See [[info:org#Property Syntax][Property Syntax (org)]]
+- =Affilated keyword=: A =#+attr_keyword_style:= line that directly precedes an element and is used to add metadata to arbitrary org elements.  It must begin with the =attr= prefix! ⚠️
+- =Parameter=: Babel blocks have parameters.  Whenever an action works mainly on blocks, it can use parameters rather than affiliated keywords.
+- =Property drawer=: Used especially to configure a heading's slide action or how an action affects a heading element (affiliated keywords cannot apply to headings).  Can be used to configure section actions.
+- =Property=: Values in the property drawer.  Meta data attached to headings. See [[info:org#Property Syntax][Property Syntax (org)]]
 * Creating
 :PROPERTIES:
 :DESCRIPTION: Making Org Documents Into Presentations
@@ -292,6 +309,7 @@ The controllers for presenting usually have very few buttons.  Dslide was design
 #+findex: dslide-deck-start
 Many controllers also have a "play" button or similar.  It's recommended to map this to ~dslide-deck-start~.
 
+#+cindex: secondary action
 🚧 It is intended to overload ~dslide-deck-start~ further to implement "secondary" actions that can be triggered non-linearly.
 
 #+findex: dslide-deck-stop
@@ -542,10 +560,10 @@ The return values for these methods matter!  See [[*Flow Control][flow control]]
 :PROPERTIES:
 :DESCRIPTION: Controlling Progress
 :END:
-Decks, slides, and actions implement the ~dslide-stateful-sequence~ interface.  On each call to ~dslide-deck-forward~ or ~dslide-deck-backward~, the deck receives the first call to its ~dslide-forward~ method.  First, the deck will check for any step callbacks.  (These may be added with ~dslide-push-step~ in actions or babel blocks.)  If there are no step callbacks, the deck delegates ~dslide-forward~ to the slide.  The slide may delegate down to an action, which may then further delegate to a child slide and so on.
+Decks, slides, and actions implement the ~dslide-stateful-sequence~ interface.  On each call to ~dslide-deck-forward~ or ~dslide-deck-backward~, the deck receives the first call to its ~dslide-forward~ method.  First, the deck will check for any step callbacks.  (These may be added with ~dslide-push-step~ in actions or babel blocks.)  If there are no step callbacks, the deck delegates ~dslide-forward~ to the slide.  The slide may delegate down to an action, which may then further delegate to a child slide and so on.  Eventually, an action will implement the step.
 
 #+cindex: controlling progress
-The return value tells the parent if progress was made.  In the most basic case, each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result.  If the delegate returns nil, it means it was unable to make progress, and so the caller will instead try its own next action.  The deck will find a root level sibling and hydrate it using ~dslide--make-slide~.  A child action would find the next child and hydrate that.
+The return value tells the parent if progress was made.  In the most basic case, each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nil result.  If the delegate returns nil, it means it was unable to make progress, and so the caller will instead try its own next action.  The deck will find a root level sibling and hydrate it using ~dslide--make-slide~.  A child action would find the next child and hydrate that.
 
 The moment of calling ~dslide-final~ can vary depending on the situation.  If there is only one slide at a time, ~dslide-final~ is usually called right after the child returns nil.  If the child is one of several, such as with ~dslide-slide-action-inline~, then only after all children complete will they have their ~dslide-final~ called.  If the presentation is quit early or the contents are opened, ~dslide-final~ is also called, possibly before all steps are complete.
 
@@ -657,7 +675,7 @@ If you need more states per element, this kind of implicit state tracking is ins
 - Since you likely just need something to magically happen, the recommended option is to place a hamburger in the [[https://github.com/sponsors/positron-solutions][hamburger jar]] and file an issue.
 - If you do have time, excellent.  Happy to support your PR's and provide context about the architecture and behavior.
 ** Work In Progress 🚧
-Open issues and give feedback on feature requests.  Contributions welcome.
+Open issues and give feedback on feature requests.  Contributions welcome.  See the [[https://github.com/positron-solutions/dslide/issues/20][1.0 feature roadmap]].
 *** Affiliated Keyword
 This is the future of dslide.  Currently adding behavior to content can frequently require adding actions to the property drawer and then adding a keyword to the content.  This lacks precision, is unintuitive, and is inconvenient.  ~dslide-action-propertize~ shows the way.  A dispatch system should find all =dslide= prefixed affiliated keywords and activate the actions with the configuration.  This is faster and more concise.  It only requires editing in one place rather than two.
 
@@ -697,7 +715,7 @@ While it may have been spoken many times before, let it be official that there i
 
 - D-S-L I-D-E: as if it is an IDE for designing DSLs, clearly false and pretentious sounding, but those who keep score lose for being too anxious to win
 - D'slide: perhaps, "the slide"
-- DEEE slide: We are going un-slide your slide.  Powerpoint is no more.  Emacs has triumphed over the board room at last
+- DEEE slide: We are going un-slide your slides.  Powerpoint is no more.  Emacs has triumphed over the board room at last
 
 Please spread these and other intentionally wrongful pronunciations to protect those who have only ever read the name from persecution by self-annointed in-groups who claim to know the correct way to pronounce this made up word.
 * Indices

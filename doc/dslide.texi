@@ -764,6 +764,7 @@ Public License instead of this License.  But first@comma{} please read
 
 @menu
 * Introduction::                 What is Dslide?
+* Status::
 * Glossary::                     Words We Invented
 * Creating::                     Making Org Documents Into Presentations
 * Presenting::                   Controlling the Presentation
@@ -915,7 +916,7 @@ Presenter tools such as viewing hidden content invisible to the audience
 @node Design Goals
 @section Design Goals
 
-Granular configurability was the first goal.  Dslide's predecessor@comma{} @code{org-tree-slide}@comma{} could only be configured at the level of the entire document@comma{} using customize variables.
+Granular configurability was the first goal.  Dslide's predecessor@comma{} @code{org-tree-slide}@comma{} could only be configured at the level of the entire document@comma{} using customize variables.  Dslide aims to be configureable over each element of each heading.
 
 Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks@comma{} because Emacs sits on top of all your other programming tools and sub-processes@comma{} so does dslide.  The action system is a framework for attaching reusable@comma{} configurable programmed behavior to multiple headings.
 
@@ -935,6 +936,20 @@ Early stage startup pitches
 Conducting team meetings
 @end itemize
 
+@node Status
+@chapter Status
+
+@itemize
+@item
+Still pre-1.0.  See the @uref{https://github.com/positron-solutions/dslide/issues/20, version 1.0 feature roadmap}.
+@item
+Expect markup to become easier as affiliated keywords are adopted. Will attempt to not break options that currently work. See release notes when updating.
+@item
+Accepting PR's and issue reports. Read the manual section on @ref{Hacking, , hacking}
+@item
+Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you want. File issues.
+@end itemize
+
 @node Glossary
 @chapter Glossary
 
@@ -944,17 +959,42 @@ Conducting team meetings
 @item
 @samp{Slide}: an object that interprets an org heading to hydrate its actions
 @item
-@samp{Action}: an object that responds to @code{dslide-deck-forward} and @code{dslide-deck-backward} calls and implements lifecycle methods to initialize and clean up state
+@samp{Action}: an object that responds to @code{dslide-deck-forward} and @code{dslide-deck-backward} calls and implements lifecycle methods to initialize and clean up state.
+@cindex slide action
 @itemize
 @item
 @samp{Slide Action}: an action subclass that handles initial display of the slide and creation of child slides from sub-headings.
+@end itemize
+@cindex section action
+@itemize
 @item
 @samp{Section Actions}: actions that typically control the display and behavior of a heading's section@comma{} the region between the headline and child headings.
 @end itemize
+@end itemize
+@cindex secondary action
+@itemize
 @item
-@samp{Step}: a single call to @code{dslide-deck-foward} or @code{dslide-deck-backward}@comma{} usually delegated down to @code{dslide-forward} and @code{dslide-backward} methods
+@samp{Secondary Action}: 🚧 To do ``something else'' besides step forwards and backwards@comma{} @code{dslide-deck-start} can be temporarily overloaded@comma{} allowing presentation controllers with three buttons to control extra behavior.
+@item
+@samp{Step}: a single call to @code{dslide-deck-foward} or @code{dslide-deck-backward}@comma{} usually delegated down to @code{dslide-forward} and @code{dslide-backward} methods through the deck and slides down to actions.  Actions implement steps.
+@end itemize
+@cindex element configuration
+@itemize
+@item
+@samp{Element Configuration}: Some actions can be configured per-element.  This is done with an affiliated keyword such as @samp{#+attr_dslide_propertize:} or the parameters of a block.  The value is the configuration for how to work on that element.
+@end itemize
+@cindex step configuration
+@itemize
+@item
+@samp{Step Configuration}: When the element configuration is used by a step.  The babel block parameters that configure how to use that block as a step are its step configuration.
+@end itemize
+@cindex contents
+@itemize
 @item
 @samp{Contents}: A view of the folded top-level headings that is used for quickly navigating between headings during a presentation.
+@end itemize
+@cindex slide buffer
+@itemize
 @item
 @samp{Slide Buffer}: the slides are shown in an indirect buffer that is cloned from your org document buffer.  The source is called the @strong{base buffer}.  Check for the @samp{deck: my-presentation.org} buffer name.
 @itemize
@@ -982,9 +1022,13 @@ Select org mode terms more frequently used by dslide.  Don't miss @ref{Org Synta
 @item
 @samp{Keyword}: A single @samp{#+keyword_style:} line used to specify some option
 @item
-@samp{Affilated keyword}: A @samp{#+attr_keyword_style:} line that directly preceeds an element and is used to add metadata to arbitrary org elements
+@samp{Affilated keyword}: A @samp{#+attr_keyword_style:} line that directly precedes an element and is used to add metadata to arbitrary org elements.  It must begin with the @samp{attr} prefix! ⚠️
 @item
-@samp{Property}: Meta data attached to headings. See @ref{Property Syntax,Property Syntax (org),,org,}
+@samp{Parameter}: Babel blocks have parameters.  Whenever an action works mainly on blocks@comma{} it can use parameters rather than affiliated keywords.
+@item
+@samp{Property drawer}: Used especially to configure a heading's slide action or how an action affects a heading element (affiliated keywords cannot apply to headings).  Can be used to configure section actions.
+@item
+@samp{Property}: Values in the property drawer.  Meta data attached to headings. See @ref{Property Syntax,Property Syntax (org),,org,}
 @end itemize
 
 @node Creating
@@ -1266,6 +1310,7 @@ The controllers for presenting usually have very few buttons.  Dslide was design
 @findex dslide-deck-start
 Many controllers also have a ``play'' button or similar.  It's recommended to map this to @code{dslide-deck-start}.
 
+@cindex secondary action
 🚧 It is intended to overload @code{dslide-deck-start} further to implement ``secondary'' actions that can be triggered non-linearly.
 
 @findex dslide-deck-stop
@@ -1631,10 +1676,10 @@ The return values for these methods matter!  See @ref{Flow Control, , flow contr
 @node Flow Control
 @subsection Flow Control
 
-Decks@comma{} slides@comma{} and actions implement the @code{dslide-stateful-sequence} interface.  On each call to @code{dslide-deck-forward} or @code{dslide-deck-backward}@comma{} the deck receives the first call to its @code{dslide-forward} method.  First@comma{} the deck will check for any step callbacks.  (These may be added with @code{dslide-push-step} in actions or babel blocks.)  If there are no step callbacks@comma{} the deck delegates @code{dslide-forward} to the slide.  The slide may delegate down to an action@comma{} which may then further delegate to a child slide and so on.
+Decks@comma{} slides@comma{} and actions implement the @code{dslide-stateful-sequence} interface.  On each call to @code{dslide-deck-forward} or @code{dslide-deck-backward}@comma{} the deck receives the first call to its @code{dslide-forward} method.  First@comma{} the deck will check for any step callbacks.  (These may be added with @code{dslide-push-step} in actions or babel blocks.)  If there are no step callbacks@comma{} the deck delegates @code{dslide-forward} to the slide.  The slide may delegate down to an action@comma{} which may then further delegate to a child slide and so on.  Eventually@comma{} an action will implement the step.
 
 @cindex controlling progress
-The return value tells the parent if progress was made.  In the most basic case@comma{} each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nill result.  If the delegate returns nil@comma{} it means it was unable to make progress@comma{} and so the caller will instead try its own next action.  The deck will find a root level sibling and hydrate it using @code{dslide--make-slide}.  A child action would find the next child and hydrate that.
+The return value tells the parent if progress was made.  In the most basic case@comma{} each delegate will try all of its actions until one returns non-nil.  The delegate returns the first non-nil result.  If the delegate returns nil@comma{} it means it was unable to make progress@comma{} and so the caller will instead try its own next action.  The deck will find a root level sibling and hydrate it using @code{dslide--make-slide}.  A child action would find the next child and hydrate that.
 
 The moment of calling @code{dslide-final} can vary depending on the situation.  If there is only one slide at a time@comma{} @code{dslide-final} is usually called right after the child returns nil.  If the child is one of several@comma{} such as with @code{dslide-slide-action-inline}@comma{} then only after all children complete will they have their @code{dslide-final} called.  If the presentation is quit early or the contents are opened@comma{} @code{dslide-final} is also called@comma{} possibly before all steps are complete.
 
@@ -1788,7 +1833,7 @@ If you do have time@comma{} excellent.  Happy to support your PR's and provide c
 @node Work In Progress 🚧
 @section Work In Progress 🚧
 
-Open issues and give feedback on feature requests.  Contributions welcome.
+Open issues and give feedback on feature requests.  Contributions welcome.  See the @uref{https://github.com/positron-solutions/dslide/issues/20, 1.0 feature roadmap}.
 
 @menu
 * Affiliated Keyword::
@@ -1880,7 +1925,7 @@ D-S-L I-D-E: as if it is an IDE for designing DSLs@comma{} clearly false and pre
 @item
 D'slide: perhaps@comma{} ``the slide''
 @item
-DEEE slide: We are going un-slide your slide.  Powerpoint is no more.  Emacs has triumphed over the board room at last
+DEEE slide: We are going un-slide your slides.  Powerpoint is no more.  Emacs has triumphed over the board room at last
 @end itemize
 
 Please spread these and other intentionally wrongful pronunciations to protect those who have only ever read the name from persecution by self-annointed in-groups who claim to know the correct way to pronounce this made up word.
