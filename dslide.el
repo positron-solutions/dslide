@@ -714,9 +714,15 @@ Class can be overridden to affect root behaviors.  See
 
     ;; Burn up a step callback until one returns non-nil
     (when-let ((steps (oref obj step-callbacks)))
-      (while (and (not progress)
-                  steps)
-        (setq progress (funcall (pop steps) 'forward)))
+      (while (and steps (not progress))
+        (setq
+         progress
+         (let ((step (pop steps)))
+           (condition-case nil
+               (funcall step 'forward)
+             ((debug error) (delay-warning
+                             '(dslide dslide-step-callback)
+                             "A step callback failed and was removed!"))))))
       (oset obj step-callbacks steps))
 
     (while (not (or progress reached-end))
@@ -775,11 +781,16 @@ Class can be overridden to affect root behaviors.  See
       (delete-overlay (pop dslide--step-overlays)))
 
     ;; Burn up a step callback until one returns non-nil
-    (when-let ((steps (and (slot-boundp obj 'step-callbacks)
-                           (oref obj step-callbacks))))
-      (while (and (not progress)
-                  steps)
-        (setq progress (funcall (pop steps) 'backward)))
+    (when-let ((steps (oref obj step-callbacks)))
+      (while (and steps (not progress))
+        (setq
+         progress
+         (let ((step (pop steps)))
+           (condition-case nil
+               (funcall step 'backward)
+             ((debug error) (delay-warning
+                             '(dslide dslide-step-callback)
+                             "A step callback failed and was removed!"))))))
       (oset obj step-callbacks steps))
 
     (while (not (or progress reached-beginning))
@@ -846,6 +857,16 @@ Class can be overridden to affect root behaviors.  See
        (buffer-live-p (oref obj slide-buffer))
        (eq (oref obj base-buffer) (buffer-base-buffer
                                    (oref obj slide-buffer)))))
+
+(cl-defmethod dslide--cleanup-step-callbacks ((obj dslide-deck))
+  "Run and dispose of all callbacks."
+  (mapc (lambda (f)
+          (condition-case nil
+              (funcall f nil)
+            ((debug error) (delay-warning
+                            '(dslide dslide-step-callback)
+                            "A step callback failed in cleanup!"))))
+        (oref obj step-callbacks)))
 
 (defun dslide-push-window-config (&optional step)
   "Save the window configuration and narrowing for restoration.
@@ -2725,9 +2746,7 @@ and the value of `point-max' should contain a newline somewhere."
              t nil))
   (dslide--delete-overlays)
   (dslide--animation-cleanup)
-  ;; TODO oref & oset outside of class
-  (mapc (lambda (f) (funcall f nil))
-        (oref dslide--deck step-callbacks))
+  (dslide--cleanup-step-callbacks dslide--deck)
   (oset dslide--deck step-callbacks nil)
   (remove-hook 'post-command-hook #'dslide--contents-hl-line t))
 
