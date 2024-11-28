@@ -1,0 +1,16 @@
+#+title:	Dslide News
+#+author:	Positron
+#+email:	contact@positron.solutions
+
+# The top heading is used to generate the Release notes for the Github releases
+# page.  Include changes in this file to avoid having to compile it all at
+# every release.
+
+* v0.5.6
+** Added
+- Breadcrumbs can have a trailing separator appended with ~dslide-breadcrumb-separator-style~.  Default is =append=.  To return to old behavior, configure to ~separate~.
+- News file (this file)
+** Changed
+- Manual Kaizen
+** Fixed
+- When a step callback fails, it will be removed from the deck's list of callbacks, preventing infinite loops.  This respects ~debug-on-error~.
