@@ -223,6 +223,11 @@ properties remain unless shadowed."
   :type '(choice (const :tag "Don't display breadcrumbs" nil)
                  (string :tag "Delimiter")))
 
+(defcustom dslide-breadcrumb-separator-style 'append
+  "Where breadcrumb separators will be used.
+This helps distinguish the breadcrumbs from the slide headline."
+  :type '(choice (const :tag "After each breadcrumb" append)
+                 (const :tag "Only between breadcrumbs" separate)))
 
 (defcustom dslide-breadcrumb-hide-todo-state t
   "If non-nil, hide TODO states in the breadcrumbs."
@@ -2564,10 +2569,22 @@ from existing state cleanup."
 
 (defun dslide--breadcrumbs-reducer (delim)
   (lambda (previous next)
-    (if (not previous) next
-      (let ((props (text-properties-at (1- (length previous)) previous)))
-        (concat previous (apply #'propertize delim props)
-                next)))))
+    (let* ((props (pcase dslide-breadcrumb-separator-style
+                    ('append (text-properties-at (1- (length next))
+                                                 next))
+                    ('separate (when previous
+                                 (text-properties-at
+                                  (1- (length previous)) previous)))
+                    (_ (display-warning '(dslide dslide-breadcrumb)
+                                        "Uknown separators style"))))
+           (delim (apply #'propertize delim props)))
+      (pcase dslide-breadcrumb-separator-style
+        ('append
+         (if (not previous) (concat next delim)
+           (concat previous next delim)))
+        ('separate
+         (if (not previous) next
+           (concat previous delim next)))))))
 
 ;; TODO use element API
 (defun dslide--get-parents (delim)
