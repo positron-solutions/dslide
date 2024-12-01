@@ -116,11 +116,23 @@ Positron is deeply committed to bringing you the finest in:
 [[./images/emacsen4.jpeg]] [[./images/self-care5.jpeg]]
 #+ATTR_HTML: :width 45%
 [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
+** Centered Image
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-image :standalone-display nil
+:END:
+This example uses org's built-in support for displaying images in the buffer, which double as HTML export settings.  The source is in this slide is very simple.
+
+#+attr_html: :width 50% :align center
+[[./images/elpaca.jpg]]
+
+Elpaca is an outstanding package manager.
 ** Standalone Image
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-image :slide-display nil
 :END:
 You can show images without them being visible on the slide.  A way to achieve a similar effect is to have a child heading with no slide action and only images.
+
+# The attr_html line below is just for convenience while editing and doesn't affect the presentation.
 #+ATTR_HTML: :width 50%
 [[./images/yuki-o-yak.jpeg]]
 ** Reveal Images
