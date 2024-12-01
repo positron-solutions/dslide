@@ -48,7 +48,7 @@ Version 0.5.5 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-
 
    ;; using elpaca's with explicit recipe
    (use-package dslide
-       :elpaca (dslide :host github
+       :ensure (dslide :host github
                        :repo "positron-solutions/dslide"))
 
    ;; straight with explicit recipe
