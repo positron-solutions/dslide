@@ -7,6 +7,10 @@
 # every release.
 
 * v0.5.6
+- 🚧 The concept of default actions has been marked experimental.  This is preparation for instantiating actions on-demand rather than per slide.  The action system may undergo some overhaul internally.
+  + Markup will be reduced, not changed
+  + Affiliated keywords such as =#+attr_dslide_propertize:= will be used more
+  + Configuration of actions on the slide property drawer will be made unnecessary and then removed except for slide actions, which have higher association with the slide heading than any elements in the section.
 ** Added
 - Breadcrumbs can have a trailing separator appended with ~dslide-breadcrumb-separator-style~.  Default is =append=.  To return to old behavior, configure to ~separate~.
 - News file (this file)

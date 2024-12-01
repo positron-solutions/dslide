@@ -310,18 +310,21 @@ keyword."
 (defcustom dslide-default-actions '(dslide-action-hide-markup
                                     dslide-action-propertize)
   "Actions that run within the section display action lifecycle.
-It's value is a list of symbol `dslide-action' sub-classes or (CLASS . ARGS)
-forms where ARGS is a plist.  Each subclass will be instantiated
-into an action object.  See the symbol `dslide-action' class and its methods
-to learn about writing custom actions.
+It's value is a list of symbol `dslide-action' sub-classes or (CLASS
+. ARGS) forms where ARGS is a plist.  Each subclass will be instantiated
+into an action object.  See the symbol `dslide-action' class and its
+methods to learn about writing custom actions.
 
 Many section actions are no-op whenever the content doesn't
 contain any elements they act on.  You can add classes to this
 list in order to have default behaviors for some org elements.
 
-You can configure this per-heading by setting the DSLIDE_ACTIONS
-keyword.  You can configure it for the document default by adding
-an DSLIDE_ACTIONS keyword."
+🚧 Experimental.  Actions may be dispatched on-demand in the future
+rather than turned on for each slide.
+
+You can configure actions per-heading by setting the DSLIDE_ACTIONS
+keyword.  You can configure it for the document default by adding an
+DSLIDE_ACTIONS keyword."
   :type '(list function))
 
 (defcustom dslide-default-class 'dslide-slide
