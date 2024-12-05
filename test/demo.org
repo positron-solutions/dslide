@@ -362,13 +362,13 @@ For blocks you want to be visible but are only running for effects, you can use 
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-babel
 :END:
-- You need the ~master-of-ceremonies~ package installed to complete this slide.  Use the contents navigation to skip this slide if you didn't install it.
+- You need the [[https://github.com/positron-solutions/moc][Master of Ceremonies]] package installed to complete this slide.  Use the contents navigation to skip this slide if you didn't install it.
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
 - Run babel against other buffers 😈.
 
 #+attr_dslide: begin
 #+begin_src elisp :results none
-  (require 'master-of-ceremonies)
+  (require moc)
 #+end_src
 #+attr_dslide: final backward
 #+begin_src elisp :results none
@@ -378,19 +378,19 @@ For blocks you want to be visible but are only running for effects, you can use 
 
 #+attr_dslide: both
   #+begin_src elisp :results none
-  (mc-focus "🖊️")
+  (moc-focus :string "🖊️")
   #+end_src
 #+attr_dslide: both
 #+begin_src elisp :results none
-  (mc-focus "🖊️🍍")
+  (moc-focus :string "🖊️🍍")
   #+end_src
 #+attr_dslide: both
 #+begin_src elisp :results none
-  (mc-focus "🖊️🍍🍎")
+  (moc-focus :string "🖊️🍍🍎")
   #+end_src
 #+attr_dslide: both
 #+begin_src elisp :results none
-  (mc-focus "🖊️🍍🍎🖊️")
+  (moc-focus :string "🖊️🍍🍎🖊️")
   #+end_src
 ** Babel is every Feature
 :PROPERTIES:

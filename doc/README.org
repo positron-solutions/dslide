@@ -3,7 +3,7 @@
 #+email:	contact@positron.solutions
 
 #+export_file_name: ../README.md
-#+options: toc:nil broken-links:nil num:nil
+#+options: toc:t broken-links:nil num:nil
 
 #+begin_export html
 <!-- !!!THIS FILE HAS BEEN GENERATED!!! Edit README.org -->
@@ -88,14 +88,18 @@ The actual display is done in an indirect buffer.  Your hooks and customizations
 #+include: "manual.org::*Hacking" :minlevel 1
 * Package Pairings
 These are some packages that are likely to find use alongside dslide.
+** Master of Ceremonies
+- ~moc-dispatch~ is a set of controls for screen recording.
+- ~moc-focus~ shows small excerpts from buffers fullscreen.
+  + It has a transient interface bound to =h=.
+  + You can highlight multiple segements of the excerpt and change display.
+  + It makes text pretty for taking screenshots and for captures.
+  + It generates playback expressions you can even use as slides.
+[[https://github.com/positron-solutions/moc][Master of Ceremonies]] was written as a companion to dslide and was used in almost every single dslide demonstration video.
 ** Org Modern
 Bullets and many prettifications of common org markups.  The markup that you don't hide looks better with org modern.
 ** Org Appear
 Never worry about turning on pretty links for a presentation.  Edit them by just moving the point inside.
-** Master of Ceremonies
-The [[https://github.com/positron-solutions/master-of-ceremonies][master-of-ceremonies]] package is primarily used for its ~moc-focus~ command which isolates small snippets of buffer text to make fullscreen and pretty.  You can save replay these snippets without having access to a source buffer.
-
-Check the full commands by pressing =h= during focus.  You can highlight a region, save an expression to playback a code snippet without the buffer open etc.
 ** Open Broadcaster Software
 Sacha Chua has written an OBS plugin integration helpful for video integration [[https://github.com/sachac/obs-websocket-el][obs-websocket-el]].
 ** moom.el

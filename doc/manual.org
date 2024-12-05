@@ -352,6 +352,8 @@ You can also switch a window to the base buffer manually.  That's almost all ~ds
 #+findex: dslide-cursor-hide
 #+findex: dslide-cursor-restore
 By default, the cursor is hidden in the presentation buffer using ~dslide-cursor-hide~.  You can call ~dslide-cursor-restore~ if you need it.
+
+Another good choice for interactive presentations is to use ~moc-subtle-cursor-mode~ from the [[https://github.com/positron-solutions/moc][Master of Ceremonies]] package.  It is more like having a laser pointer that hides itself automatically.
 * Configuring
 :PROPERTIES:
 :DESCRIPTION: Global Settings
@@ -681,7 +683,9 @@ This is the future of dslide.  Currently adding behavior to content can frequent
 
 The property drawer will remain in use because headings have slide behavior that doesn't make sense to adjust with affiliated keywords.  For behavior affecting section elements or operating on objects within paragraphs, the affiliated keyword implementation is the right way.
 *** Layout
-The ~master-of-ceremonies~ package and its ~mc-focus~ command implement desirable behaviors such as filling the available space and padding the content to the center of the window.  This behavior could easily be improved and adapted into an action.
+A centering action is in the works.
+
+Another option is using the [[https://github.com/positron-solutions/moc][Master of Ceremonies]] package and its ~moc-focus~ command implement desirable behaviors such as filling the available space and padding the content to the center of the window.  This behavior could easily be improved and adapted into an action.
 *** Slide Action Precedence
 When a slide is created in ~dslide-make-slide~, it can obtain them from several places:
 - passed in arguments, as slide actions do to prevent children from trying to display themselves

@@ -1366,6 +1366,8 @@ You can also switch a window to the base buffer manually.  That's almost all @co
 @findex dslide-cursor-restore
 By default@comma{} the cursor is hidden in the presentation buffer using @code{dslide-cursor-hide}.  You can call @code{dslide-cursor-restore} if you need it.
 
+Another good choice for interactive presentations is to use @code{moc-subtle-cursor-mode} from the @uref{https://github.com/positron-solutions/moc, Master of Ceremonies} package.  It is more like having a laser pointer that hides itself automatically.
+
 @node Configuring
 @chapter Configuring
 
@@ -1858,7 +1860,9 @@ The property drawer will remain in use because headings have slide behavior that
 @node Layout
 @subsection Layout
 
-The @code{master-of-ceremonies} package and its @code{mc-focus} command implement desirable behaviors such as filling the available space and padding the content to the center of the window.  This behavior could easily be improved and adapted into an action.
+A centering action is in the works.
+
+Another option is using the @uref{https://github.com/positron-solutions/moc, Master of Ceremonies} package and its @code{moc-focus} command implement desirable behaviors such as filling the available space and padding the content to the center of the window.  This behavior could easily be improved and adapted into an action.
 
 @node Slide Action Precedence
 @subsection Slide Action Precedence
