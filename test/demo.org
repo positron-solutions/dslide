@@ -366,31 +366,34 @@ For blocks you want to be visible but are only running for effects, you can use 
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
 - Run babel against other buffers 😈.
 
+# Master of Ceremonies remains in development.  The :version keys for playback
+# expressions may be updated when you find this demo.
+
 #+attr_dslide: begin
 #+begin_src elisp :results none
-  (require moc)
+  (require 'moc)
 #+end_src
 #+attr_dslide: final backward
 #+begin_src elisp :results none
-  (when-let ((buffer (get-buffer "*MC Focus*")))
+  (when-let ((buffer (get-buffer "*MoC Focus*")))
     (kill-buffer buffer))
 #+end_src
 
 #+attr_dslide: both
   #+begin_src elisp :results none
-  (moc-focus :string "🖊️")
+  (moc-focus :version 0 :text "🖊️")
   #+end_src
 #+attr_dslide: both
 #+begin_src elisp :results none
-  (moc-focus :string "🖊️🍍")
+  (moc-focus :version 0 :text "🖊️🍍")
   #+end_src
 #+attr_dslide: both
 #+begin_src elisp :results none
-  (moc-focus :string "🖊️🍍🍎")
+  (moc-focus :version 0 :text "🖊️🍍🍎")
   #+end_src
 #+attr_dslide: both
 #+begin_src elisp :results none
-  (moc-focus :string "🖊️🍍🍎🖊️")
+  (moc-focus :version 0 :text "🖊️🍍🍎🖊️")
   #+end_src
 ** Babel is every Feature
 :PROPERTIES:
