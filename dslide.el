@@ -1611,7 +1611,7 @@ t - basically the same as calling `org-display-inline-images'.
 reveal - images will be revealed one by one.
 nil - do not show images on the slide.")
    (standalone-display
-    :initform t
+    :initform nil
     :initarg :standalone-display
     :documentation "Show images in their own buffer.
 t - same as window.

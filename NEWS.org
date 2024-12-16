@@ -15,6 +15,7 @@
 ** Added ➕
 ** Changed 🙅
 - Image action is now a default action (although default actions are going away.)
+- Image action defaults =:standalone-display= to =nil=.  If you want fullscreen display, you need to set the option in the property drawer, the way it has been.  This was to support turning the image action on by default.
 - ⚠️ Propertize action now warns on unquoted lists.  Please use quoted lists.  In my opinion, all lists should be considered quoted in org, but this change is consistent with babel parameters being evaluated when unquoted.
 - Yet more manual Kaizen.  Seriously, check it out by installing dslide.
 ** Fixed 💩

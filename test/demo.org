@@ -107,7 +107,7 @@ Positron is deeply committed to bringing you the finest in:
 - Pen 🖊️
 * Image Slides
 :PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-image
+:DSLIDE_ACTIONS: dslide-action-image :standalone-display t
 :END:
 - The action will automatically turn on inline images so you don't have to remember to run ~org-toggle-inline-images~.
 - The image buffer is configured to act as a slide, so it still responds to the keybindings.
@@ -117,9 +117,6 @@ Positron is deeply committed to bringing you the finest in:
 #+ATTR_HTML: :width 45%
 [[./images/before-google3.jpeg]] [[./images/all-software-is-the-same-with-tang.jpeg]]
 ** Centered Image
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-image :standalone-display nil
-:END:
 This example uses org's built-in support for displaying images in the buffer, which double as HTML export settings.  The source is in this slide is very simple.
 
 #+attr_html: :width 50% :align center
@@ -128,7 +125,7 @@ This example uses org's built-in support for displaying images in the buffer, wh
 Elpaca is an outstanding package manager.
 ** Standalone Image
 :PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-image :slide-display nil
+:DSLIDE_ACTIONS: dslide-action-image :slide-display nil :standalone-display t
 :END:
 You can show images without them being visible on the slide.  A way to achieve a similar effect is to have a child heading with no slide action and only images.
 
