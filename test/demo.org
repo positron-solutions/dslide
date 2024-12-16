@@ -164,13 +164,11 @@ This is another case where you can use ~dslide-deck-develop~ to see the comments
 ** TODO Todos and Tags :tag1:tag2:tag3:
 Todos and tags are by default hidden.  Set ~dslide-hide-tags~ and ~dslide-hide-todos~ if you need them visible in a presentation.
 * Fancy Text
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-propertize
-:END:
 Add text properties to an element using the =attr_dslide_propertize= affiliated keyword.  No quoting is required.  Lists will be interpreted as such.
 
-#+attr_dslide_propertize: face (:background "#ddddff" :foreground "#000000" :weight bold :height 2.0)
+#+attr_dslide_propertize: face '(:background "#ddddff" :foreground "#000000" :weight bold :height 1.5)
 This is some fancy text
+
 * Babel Integration
 :PROPERTIES:
 :DSLIDE_ACTIONS: dslide-action-babel

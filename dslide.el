@@ -1331,12 +1331,22 @@ for `dslide-contents-map'.")
   (dslide-section-map
    obj t                                ; t for all types
    (lambda (e)
-     (when-let ((props (nreverse (dslide-element-plist
-                                  :attr_dslide_propertize e)))
+     (when-let ((props (nreverse (dslide-read-affiliated
+                                  e :attr_dslide_propertize nil t)))
                 (overlay (make-overlay (org-element-property :post-affiliated e)
                                        (1- (org-element-property :end e)))))
        (while-let ((value (pop props))
                    (prop (pop props)))
+         (when (listp value)
+           (if (eq (car value) 'quote)
+               (setq value (cdr value))
+             (delay-warning
+              '(dslide dslide-propertize dslide-unquoted)
+              (format "Propertize Unquoted list on %s"
+                      (without-restriction
+                        (line-number-at-pos
+                         (org-element-property :begin e))))
+              :warning)))
          (overlay-put overlay prop value))
        (push overlay dslide-overlays)))))
 
@@ -3000,6 +3010,51 @@ the caller."
          '(dslide)
          (format "Class name not a class: %s" class-name))
         nil))))
+;; XXX the text property action lists are unquoted while babel block lists are
+;; quoted.  It would be better to normalize behavior, unquoted quoted lists
+;; and warning on unquoted lists.
+(defun dslide-read-plist (plist-string &optional start keywords)
+  "Reads PLIST-STRING into a plist.
+Returns a cons of (PLIST-READ . FINAL-STRING-INDEX) to support
+further reading.  When keywords is non-nil, signal
+wrong-type-argument if any keys are not keywords.  Missing
+terminal values will be interpreted as nil."
+  (let ((pos (or start 0))
+        result)
+    (condition-case nil
+        (while pos
+          (let* ((key (read-from-string plist-string pos)))
+            (if (or (null keywords)
+                    (keywordp (car key)))
+                (push (car key) result)
+              (signal 'wrong-type-argument
+                      (format "Symbol is not a keyword: %S" (car key))))
+            (let ((val (read-from-string plist-string (cdr key))))
+              (push (car val) result)
+              (setq pos (cdr val)))))
+      (end-of-file nil))
+    (nreverse result)))
+
+(defun dslide-read-affiliated (element property &optional keywords merged)
+  "Return plist for PROPERTY of ELEMENT.
+Affiliated keywords can have a list of value when several of the
+same affilated keyword annotate an object.  When optional
+KEYWORDS is t, non-keywords will signal wrong-type-argument.
+When optional MERGED is non-nil, return a merged plist.  The
+top-most affiliated keyword is considered the last to be called
+and thus overwrites the inner keywords when merging."
+  (let ((found (org-element-property property element))
+        read)
+    (while-let ((f (pop found)))
+      (let ((plist (dslide-read-plist f 0 keywords)))
+        (if merged
+            (while-let ((key (pop plist)))
+              (push key read)
+              (push (pop plist) read))
+          (push plist read))))
+    ;; Either reverses all keys or reverses the keyword order, making first
+    ;; keys in the outer list first in the result either way.
+    (nreverse read)))
 
 ;; * Contents Highlight Line
 

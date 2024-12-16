@@ -14,6 +14,8 @@
 * v0.6.0 Fighting Spam 💌 :latest:
 ** Added ➕
 ** Changed 🙅
+- ⚠️ Propertize action now warns on unquoted lists.  Please use quoted lists.  In my opinion, all lists should be considered quoted in org, but this change is consistent with babel parameters being evaluated when unquoted.
+- Yet more manual Kaizen.  Seriously, check it out by installing dslide.
 ** Fixed 💩
 * v0.5.6 Let There Be News 🗞️
 - ⛔ The concept of default actions has been marked for deprecation.  This is preparation for instantiating actions on-demand rather than per slide.  The action system may undergo some overhaul internally.
