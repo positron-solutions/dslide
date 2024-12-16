@@ -763,83 +763,90 @@ Public License instead of this License.  But first@comma{} please read
 @end ifnottex
 
 @menu
-* Introduction::                 What is Dslide?
-* Status::
-* Glossary::                     Words We Invented
-* Creating::                     Making Org Documents Into Presentations
-* Presenting::                   Controlling the Presentation
-* Configuring::                  Global Settings
-* Extending::                    Custom Actions
-* Hacking::                      Understanding the Guts
-* Contributing::                 Give me hamburgers
-* Acknowledgments::              Remembering Org Tree Slide
-* Pronunciation::                Butcher it Right
-* Indices::
+* Introduction 🤯::              What is Dslide?
+* Status 🤠::
+* Glossary 🔤::                  Words We Invented
+* Creating ✏️::                   From document to a presentation
+* Presenting 📽️::                 Controlling the Presentation
+* Configuring 🎛️::                Global Settings
+* Extending 🧑‍🏭::               Custom Actions
+* Hacking 🧑‍🔬::                 Understanding the Guts
+* Contributing 🍔::              Give me hamburgers
+* Acknowledgments 🥇::           Remembering Org Tree Slide
+* Pronunciation 👮::             Butcher it Right
+* Indices 📇::
 
 @detailmenu
 --- The Detailed Node Listing ---
 
-Introduction
+Introduction 🤯
 
-* Design Goals::                 Things Hopefully Achieved
-* Strengths::                    When Dslide is Perfect
+* Design Goals 🥅::              Things Hopefully Achieved
+* Strengths 🦾::                 When Dslide is Perfect
 
-Glossary
+Glossary 🔤
 
-* Org Mode Terms::               Ones You Might Not Know
+* Org Mode Terms 🦄::            Ones You Might Not Know
 
-Creating
+Creating ✏️
 
-* Actions::                      Overview
-* Adding Actions::               Making Content Do Stuff
-* Action Arguments::             Tweaking Behavior
-* Annotating Elements::          Telling Actions What and Where
-* Babel Scripting::              Fully Programmable Steps
-* Hiding Markup::                No More Ugly
-* Filtering Headings::           It's Not Done Yet
-* Header Keywords::              Title, Author, Breadcumbs
-* File Local Variables::         Don't Forget Free Lunch
+* Actions 🪄::                   Overview
+* Enabling Actions 🚦::          Making Content Do Stuff
+* Configuring Actions 🎛️::        Tweaking action behavior
+* Babel Scripting 🧑‍💻::         Fully programmable steps
+* Keyboard Macros 🤖::           Acting like you type well while talking
+* Hiding Markup 🥷🏿::           No More Ugly
+* Filtering Headings 🚮::        It's Not Done Yet
+* Header Configuration 🎩::      Title, Author, Breadcumbs
+* File Local Variables 🍦::      Don't forget regular Emacs behaviors
 
-Babel Scripting
+Enabling Actions 🚦
 
-* Step Callbacks::
+* Per-Element::                  Affiliated keyword prefix annotation
+* Keyword::                      The markup is the content
+* Property Drawer::              Actions that don't have any other place
+* Default Actions ⛔::           To be replaced by smart dispatch
 
-Hiding Markup
+Babel Scripting 🧑‍💻
 
-* Hiding Todos and Tags::
+* Controlling Direction ♻️::      When will this block be called?
+* Ignoring Blocks 🙅::           Hey! Don't evaluate that!
+* Visibility 👻::                Hiding blocks and their results
+* Confirming Evaluation 🔏::     Stop asking me!
+* Step Callbacks 👟::            Adding extra steps
 
-Header Keywords
+Header Configuration 🎩
 
-* Breadcrumbs::                  Showing Parent Headings
+* Breadcrumbs 🍞::               Showing Parent Headings
 
-Presenting
+Presenting 📽️
 
 * Two Button Interface::         Its All Forwards and Backwards
 * Contents Interface::           Navigating Faster
-* Narrating::                    And Debugging Live
-* Cursor Visibility::
+* Narrating::                    And debugging live
+* Cursor Visibility 🥷::         Hidden by default
 
-Configuring
+Configuring 🎛️
 
-* Binding::
-* Hooks::
-* Steezing Org::                 Making it Pretty
+* Key Bindings::                 Recommended entry points
+* Hooks::                        Do this after that
+* Steezing Org 🕶️::               Making it Pretty
 
-Binding
+Key Bindings
 
-* Secondary Commands 🚧::
+* Secondary Commands 🚧::        Do something else
 
 Hooks
 
-* Per-Slide Actions::
+* Per-Slide Behavior::           You want actions.  Trust me.
 
-Extending
+Extending 🧑‍🏭
 
 * Creating Actions::             Overview
-* A Custom Action::              Example Class
+* A Custom Action::              Example custom class
 * Default Classes::              Overriding the Guts
 
-Hacking
+Hacking 🧑‍🔬
 
 * Objects & Ownership::          What Holds What
 * Stateful Sequence::            Most Important Interface
@@ -862,7 +869,7 @@ Display
 * Animation::                    Timers & Overlays
 * Full Screen Images::           Image Mode Buffer
 
-Contributing
+Contributing 🍔
 
 * Work In Progress 🚧::
 
@@ -870,7 +877,7 @@ Work In Progress 🚧
 
 * Affiliated Keyword::
 * Layout::
-* Slide Action Precedence::
+* Action Configuration Precedence::
 * Secondary Commands::
 * Starting From Point::
 * Affiliated Buffers::
@@ -879,7 +886,7 @@ Work In Progress 🚧
 * Counting Slides::
 * Non-Org Sequences::
 
-Indices
+Indices 📇
 
 * Command and Function index::
 * Concept index::
@@ -888,10 +895,10 @@ Indices
 @end detailmenu
 @end menu
 
-@node Introduction
-@chapter Introduction
+@node Introduction 🤯
+@chapter Introduction 🤯
 
-Dslide is designed for conducting presentations in Emacs.  Abstractly@comma{} a presentation is a scripted sequence of content.  Org mode documents are the primary means of encoding these sequences for dslide.
+Dslide is conducts presentations in Emacs and can utilize anything and everything that Emacs can do.  Abstractly@comma{} a presentation is a scripted sequence of content.  Org mode documents are the primary means of encoding these sequences for dslide.
 
 What dslide primarily adds to Emacs and Org Mode:
 
@@ -899,7 +906,7 @@ What dslide primarily adds to Emacs and Org Mode:
 @item
 Simplified user interface suitable for a presentation remote controller
 @item
-Data model that adapts Emacs to this interface
+Data model that adapts Emacs to this interface@comma{} including Org babel and keyboard macros
 @item
 Method of attaching reusable@comma{} configurable programmed behavior to org mode content
 @item
@@ -909,49 +916,55 @@ Presenter tools such as viewing hidden content invisible to the audience
 @end itemize
 
 @menu
-* Design Goals::                 Things Hopefully Achieved
-* Strengths::                    When Dslide is Perfect
+* Design Goals 🥅::              Things Hopefully Achieved
+* Strengths 🦾::                 When Dslide is Perfect
 @end menu
 
-@node Design Goals
-@section Design Goals
+@node Design Goals 🥅
+@section Design Goals 🥅
 
-Granular configurability was the first goal.  Dslide's predecessor@comma{} @code{org-tree-slide}@comma{} could only be configured at the level of the entire document@comma{} using customize variables.  Dslide aims to be configureable over each element of each heading.
+Granular configurability was the first goal.  Dslide's predecessor@comma{} @code{org-tree-slide}@comma{} could only be configured at the level of the entire document@comma{} using customize variables.  Dslide aims to be configurable over each element of each heading.
 
-Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  By scripting Emacs via Elisp within org babel blocks@comma{} because Emacs sits on top of all your other programming tools and sub-processes@comma{} so does dslide.  The action system is a framework for attaching reusable@comma{} configurable programmed behavior to multiple headings.
+Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  The action system is a framework for attaching reusable@comma{} configurable programmed behavior to multiple org elements.
 
-High productivity was another goal.  With a decent org configuration@comma{} use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to elements and headings.  Dslide respects export settings@comma{} allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents@comma{} to store@comma{} organize@comma{} and publish information.
+If Emacs does it@comma{} dslide can present it.  As Emacs can use all of your programs and programming tools@comma{} so can dslide.  This includes both scripting through Elisp and command-based keyboard macros.  Dslide aims to integrate with other buffers and Emacs automation seemlessly.
 
-@node Strengths
-@section Strengths
+High productivity was another goal.  By respecting export settings and cleaning up markup@comma{} dslide aims to re-use the same documents you already use for storing@comma{} organizing@comma{} and publishing information.  Dslide adds a bit of flair so that@comma{} with a decent org configuration@comma{} you get a decent result with little extra effort.
 
-Dslide is particularly good for presentations that are for internal use or intended for closed audiences@comma{} where lavish graphics that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
+@node Strengths 🦾
+@section Strengths 🦾
+
+Because dslide has access to all of your programming tools via Emacs@comma{} it is unmatchable by other software at presenting programming tools themselves.  No tool can sell or demonstrate programming or use of raw software tools more effectively than Dslide.
+
+Dslide is also particularly good for presentations that are for internal use or intended for closed audiences@comma{} where lavish graphics that would be directed at end consumers is unneeded and could even be seen as an inappropriate expense of time:
 
 @itemize
 @item
-Tech demos where you need programming tools
+Friday feature demos
+@item
+Stand-ups@comma{} retros@comma{} and other rituals
 @item
 Early stage startup pitches
-@item
-Conducting team meetings
 @end itemize
 
-@node Status
-@chapter Status
+@node Status 🤠
+@chapter Status 🤠
 
 @itemize
 @item
-Still pre-1.0.  See the @uref{https://github.com/positron-solutions/dslide/issues/20, version 1.0 feature roadmap}.
+Still pre-1.0.  See the @uref{https://github.com/positron-solutions/dslide/issues/20, version 1.0 feature roadmap}.  Read the NEWS.org file for changes.
 @item
-Expect markup to become easier as affiliated keywords are adopted. Will attempt to not break options that currently work. See release notes when updating.
+Expect less markup over time.  Old markup should warn.
 @item
-Accepting PR's and issue reports. Read the manual section on @ref{Hacking, , hacking}
+Accepting PR's and issue reports. Read the manual section on @ref{Hacking 🧑‍🔬, , hacking}
 @item
-Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you want. File issues.
+Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you are trying to do. File issues.
 @end itemize
 
-@node Glossary
-@chapter Glossary
+Emojis indicate work-in-progress 🚧@comma{} intended deprecation ⛔@comma{} or experimental features 🧪.
+
+@node Glossary 🔤
+@chapter Glossary 🔤
 
 @itemize
 @item
@@ -959,7 +972,7 @@ Some behaviors may be advertised as working already when they are only 90% imple
 @item
 @samp{Slide}: an object that interprets an org heading to hydrate its actions
 @item
-@samp{Action}: an object that responds to @code{dslide-deck-forward} and @code{dslide-deck-backward} calls and implements lifecycle methods to initialize and clean up state.
+@samp{Action}: an object that responds to @code{dslide-deck-forward} and @code{dslide-deck-backward} calls to add behavior to content.  Actions implements lifecycle methods to initialize and clean up state.
 @cindex slide action
 @itemize
 @item
@@ -1008,11 +1021,11 @@ Base buffer or @samp{base-buffer} is used pretty exclusively
 @end itemize
 
 @menu
-* Org Mode Terms::               Ones You Might Not Know
+* Org Mode Terms 🦄::            Ones You Might Not Know
 @end menu
 
-@node Org Mode Terms
-@section Org Mode Terms
+@node Org Mode Terms 🦄
+@section Org Mode Terms 🦄
 
 Select org mode terms more frequently used by dslide.  Don't miss @ref{Org Syntax,Org Syntax (org),,org,}.
 
@@ -1020,9 +1033,9 @@ Select org mode terms more frequently used by dslide.  Don't miss @ref{Org Synta
 @item
 @samp{Element}: org documents are parsed into elements and objects.  Headings@comma{} plain lists@comma{} and blocks are examples of elements.  See the @uref{https://orgmode.org/worg/dev/org-element-api.html, org element api} documentation.  Dslide makes heavy use of org's element parser to implement its features.
 @item
-@samp{Keyword}: A single @samp{#+keyword_style:} line used to specify some option
+@samp{Keyword}: A single @samp{#+keyword_style:} line used to specify some option.  Dslide uses them to encode some action steps directly.
 @item
-@samp{Affilated keyword}: A @samp{#+attr_keyword_style:} line that directly precedes an element and is used to add metadata to arbitrary org elements.  It must begin with the @samp{attr} prefix! ⚠️
+@samp{Affilated keyword}: A @samp{#+attr_keyword_style:} line that directly precedes an element and is used to add metadata to most org elements@comma{} except headings.  It must begin with the @samp{attr} prefix! ⚠️
 @item
 @samp{Parameter}: Babel blocks have parameters.  Whenever an action works mainly on blocks@comma{} it can use parameters rather than affiliated keywords.
 @item
@@ -1031,44 +1044,53 @@ Select org mode terms more frequently used by dslide.  Don't miss @ref{Org Synta
 @samp{Property}: Values in the property drawer.  Meta data attached to headings. See @ref{Property Syntax,Property Syntax (org),,org,}
 @end itemize
 
-@node Creating
-@chapter Creating
+@node Creating ✏️
+@chapter Creating ✏️
 
-Making an org document into a presentation.
+Documents should ``just work'' and obtain decent results.
+
+@itemize
+@item
+Add behavior to elements by enabling and configuring @ref{Actions 🪄, , actions}
+@item
+Add custom behavior with babel blocks and keyboard macros
+@item
+Create custom actions to use different kinds of data in reusable ways
+@end itemize
 
 @menu
-* Actions::                      Overview
-* Adding Actions::               Making Content Do Stuff
-* Action Arguments::             Tweaking Behavior
-* Annotating Elements::          Telling Actions What and Where
-* Babel Scripting::              Fully Programmable Steps
-* Hiding Markup::                No More Ugly
-* Filtering Headings::           It's Not Done Yet
-* Header Keywords::              Title, Author, Breadcumbs
-* File Local Variables::         Don't Forget Free Lunch
+* Actions 🪄::                   Overview
+* Enabling Actions 🚦::          Making Content Do Stuff
+* Configuring Actions 🎛️::        Tweaking action behavior
+* Babel Scripting 🧑‍💻::         Fully programmable steps
+* Keyboard Macros 🤖::           Acting like you type well while talking
+* Hiding Markup 🥷🏿::           No More Ugly
+* Filtering Headings 🚮::        It's Not Done Yet
+* Header Configuration 🎩::      Title, Author, Breadcumbs
+* File Local Variables 🍦::      Don't forget regular Emacs behaviors
 @end menu
 
-@node Actions
-@section Actions
+@node Actions 🪄
+@section Actions 🪄
 
-By default@comma{} you just get one slide per heading@comma{} a header@comma{} and some animation.  This is not very exciting.  You need to add actions to slides to consume their section content in a more engaging way.
+Actions add behavior to your content.  They can be configured per-slide and in some cases per-element.
 
 There are two kinds of actions:
 @itemize
 @item
-@samp{Slide actions}: mostly responsible for narrowing to a slide and then handling the child headings@comma{} either inline or as separate slides
+@samp{Section actions}: work on the content in the heading's section.  They use the @code{dslide-action} base class and prefix.
 @item
-@samp{Section actions}: work on the content in the heading's section.
+@samp{Slide actions}: display the slide@comma{} usually by narrowing@comma{} and then handle the child headings@comma{} either inline or as independent slides.  They use the @code{dslide-slide-action} base class and prefix.
 @end itemize
 
 To browse all actions@comma{} because they are all EIEIO classes@comma{} you can use @code{eieio-browse} and see the actions descend from @code{dslide-action}.
-
 @example
 +--dslide-stateful-sequence
      +--dslide-action
           +--dslide-action-propertize
           +--dslide-action-image
           +--dslide-action-babel
+          +--dslide-action-kmacro
           +--dslide-action-item-reveal
           +--dslide-action-hide-markup
           +--dslide-slide-action
@@ -1078,152 +1100,252 @@ To browse all actions@comma{} because they are all EIEIO classes@comma{} you can
                +--dslide-slide-action-flat
 @end example
 
-@node Adding Actions
-@section Adding Actions
+@node Enabling Actions 🚦
+@section Enabling Actions 🚦
 
-@vindex dslide-default-actions
-By default@comma{} every slide has two actions@comma{} configurable in @code{dslide-default-actions}:
-@itemize
-@item
-@code{dslide-action-propertize} for adding text properties to arbitrary elements
-@item
-@code{dslide-action-hide-markup} to hide keywords@comma{} todo states@comma{} and tags@comma{} allowing you to have these things in your source without them cluttering the presentation
-@end itemize
+Most actions are enabled by scanning for the right content.  The babel action is used on babel blocks.  The image action is used on image links.  Some actions@comma{} especially slide actions@comma{} must be explicitly enabled.  The markup used to enable actions can also be where they are configured.
 
-Non-default actions must be added to a slide using the slide's property drawer.  Actions that work by recognizing org elements by type are perhaps a bit dangerous to leave on all the time.
+@menu
+* Per-Element::                  Affiliated keyword prefix annotation
+* Keyword::                      The markup is the content
+* Property Drawer::              Actions that don't have any other place
+* Default Actions ⛔::           To be replaced by smart dispatch
+@end menu
 
-@itemize
-@item
-@samp{DSLIDE_SLIDE_ACTION}: Usually narrows to the slide and creates children from child headings.  Lifecycle encloses the section actions.
-@item
-@samp{DSLIDE_ACTIONS:} Most commonly used.  You can list multiple actions.  Each one will step through its forward and backward steps.
-@end itemize
+@node Per-Element
+@subsection Per-Element
+
+Some actions@comma{} such as @code{dslide-action-propertize}@comma{} can't decide which elements to operate on or what to do with those elements.  They are both enabled and configured per-element by using an @strong{affiliated keyword}.
 
 @example
-* Full Screen Images
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-images
-:END:
-#+attr_html: :width 50%
-[[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
+#+attr_dslide_propertize: face '(:foreground "#ff0000")
+This text will be red
 @end example
 
-@node Action Arguments
-@section Action Arguments
+🚧 This is the preferred style of configuration moving forward.
 
-Many actions understand arguments@comma{} allowing tuning of similar behaviors from the same class.
+ℹ️ Affiliated keywords @emph{must} have the @samp{attr} prefix or they will not apply to the content they precede.  Affiliated keywords cannot be attached to headings@comma{} which must use their property drawer to attach data.
 
-To view an action's arguments@comma{} call @code{describe-symbol} on it.  Any slot definition usually has the same @samp{:initarg} and will be understood when added as a plist-style argument.
+@node Keyword
+@subsection Keyword
 
-Configuring the slot is done by adding plist-style properties after the class name:
-
+For some actions@comma{} the configuration @emph{is} the content.  They use a keyword.  The value of the keyword is the content for the action.  As elsewhere@comma{} use plist @samp{:key value} style configuration.
 @example
+#+dslide_kmacro: :keys [134217848 97 110]
+@end example
+
+@node Property Drawer
+@subsection Property Drawer
+
+Some actions run on every element of the heading before you even see the content.  Since there may be no associated content to attach them to@comma{} they can only be configured in the property drawer.  Slide actions are always configured this way.
+@example
+* Inline Children
 :PROPERTIES:
+:DSLIDE_SLIDE_ACTION: dslide-slide-action-child :header nil
 :DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
 :END:
+- You won't believe these animations
+- This is the world's greatest presentation software
+  + But mainly because it integrates with all you programming tools
 @end example
+@itemize
+@item
+@samp{DSLIDE_SLIDE_ACTION}: Accepts one slide action and its @samp{:key value} configuration
+@item
+@samp{DSLIDE_ACTIONS:} Can be used to list multiple action classes and their @samp{:key value} configurations.
+@end itemize
 
-You can also use ``property+'' syntax to add to a property@comma{} and these accept plist arguments too:
+The @code{dslide-action-hide-markup} action only runs when entering a slide@comma{} to hide markup before you see anything. 🚧 It will be configurable in the property drawer.  Right now it checks @code{dslide-hide-markup-types}.
 
+🚧 These actions can currently only be configured in the property drawer but will be configured mainly per-element where possible in 0.7.0:
+
+@itemize
+@item
+@code{dslide-action-image}
+@item
+@code{dslide-action-item-reveal}
+@end itemize
+
+@node Default Actions ⛔
+@subsection Default Actions ⛔
+
+⛔ Every action will be ``default'' in 0.7.0.  This concept still exists but the goal is to remove it.  It has been nearly gotten rid of already.
+
+@vindex dslide-default-actions
+By default@comma{} every slide has five actions@comma{} configurable in @code{dslide-default-actions}.  Non-default actions must be added to a slide using the slide's property drawer.
+
+⚠️ Actions that work by recognizing org elements by type are perhaps a bit dangerous to leave on all the time.  Some actions may both want to work on the same elements.  This is why they are not all on by default.
+
+@node Configuring Actions 🎛️
+@section Configuring Actions 🎛️
+
+Many actions understand configuration options@comma{} allowing tuning of similar behaviors from the same class.
+
+💡 To view an action's default values@comma{} call @code{describe-symbol} on it.  Any slot definition usually has the same @samp{:initarg} and will be understood when used in the configuration.
+
+Configuring is usually done by adding plist-style @samp{:key value} arguments after the class name@comma{} keyword@comma{} or affiliated keyword:
 @example
+* A Headline For a Heading
 :PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:DSLIDE_ACTIONS+: dslide-action-images :full-frame t
+# configuration after a class name
+:DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
 :END:
+
+# A keyword configuration
+#+dslide_kmacro: :frequency 0.08 :jitter 0.5 :keys [134217848 97 110 ]
+
+# An affiliated keyword configuration
+#+attr_dslide_propertize: face '(:background "#ddddff")
+This text will be propertized
 @end example
+🚧 After class names@comma{} the current plist read implementation splits the string rather than using @code{read-string} and is therefore not smart enough to parse lists as arguments.  However @code{dslide-action-propertize} demonstrates doing this correctly and shows that it will be possible if needed.
 
-🚧 The current plist read implementation splits the string rather than using @code{read-string} and is therefore not smart enough to parse lists as arguments.  However @code{dslide-action-propertize} demonstrates doing this correctly and shows that it will be possible if needed.
-
-@node Annotating Elements
-@section Annotating Elements
-
-Some actions@comma{} such as @code{dslide-action-propertize}@comma{} can't decide which elements to operate on or what to do with those elements.  You can add some meta data to an element using an @strong{affiliated keyword}.
-
-⚠️ If you are extending an action and want to create your own affiliated keyword@comma{} they  must start with @samp{attr} or else the org element parser will not consider them affiliated and that property will not be set on the element!
-
-@example
-* Fancy Text
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-propertize
-:END:
-Add text properties to an element using the =attr_dslide_propertize= affiliated keyword.  No quoting is required.  Lists will be interpreted as such.
-
-#+attr_dslide_propertize: face (:background "#ddddff" :foreground "#000000" :weight bold :height 2.0)
-This is some fancy text
-@end example
-
-@node Babel Scripting
-@section Babel Scripting
+@node Babel Scripting 🧑‍💻
+@section Babel Scripting 🧑‍💻
 
 @findex dslide-action-babel
 @cindex scripting babel steps
-You can write custom scripts into your presentation as Org Babel blocks.  These can be executed with the @code{dslide-action-babel} action.
-
-In the future the babel action may become a default@comma{} using the @samp{#+attr_dslide_babel} affiliated keyword or @samp{:noeval} to decide a block should not be executed.  As of this version of dslide@comma{} either add @code{dslide-action-babel} to your @code{dslide-default-actions} or add it to the actions list via the property drawer.
-
+You can write custom scripts into your presentation as Org Babel blocks.  These are executed with the @code{dslide-action-babel} action.  Easy peazy.
 @example
 * My Heading With Babel Blocks
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 #+begin_src elisp
   (message "Good job!")
 #+end_src
 @end example
 
-By default blocks only execute going forward@comma{} one block per step.  You need to label your blocks with @ref{Life Cycles, , lifecycle} methods if you want to perform setup (forward and backward) and teardown.  See the @code{dslide-action-babel} class and examples in @uref{./test/demo.org, ./test/demo.org}.
+@menu
+* Controlling Direction ♻️::      When will this block be called?
+* Ignoring Blocks 🙅::           Hey! Don't evaluate that!
+* Visibility 👻::                Hiding blocks and their results
+* Confirming Evaluation 🔏::     Stop asking me!
+* Step Callbacks 👟::            Adding extra steps
+@end menu
 
-The @samp{#+attr_dslide:} affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
+@node Controlling Direction ♻️
+@subsection Controlling Direction ♻️
+
+By default blocks only execute going forward@comma{} one block per step.  You need to label your blocks with @ref{Life Cycles, , lifecycle} methods if you want to perform setup (can be forward or backward) and teardown.  See the @code{dslide-action-babel} class and examples in @uref{https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org, ./test/demo.org}.
+
+The @samp{:direction} babel block parameter is used to configure which methods will run the block.  Block labels that are understood:
 
 @itemize
-@item
-@samp{begin} and @samp{end} are run when the slide is instantiated@comma{} going forward and backward respectively.  You can have several blocks with these methods@comma{} and they will be run from @strong{top-to-bottom} always@comma{} making it easier to re-use code usually.
-
-@item
-@samp{final} is called to clean up when no progress can be made or if the presentation is stopped.
-
 @item
 @samp{forward} and @samp{backward} are self-explanatory.  Position your @samp{backward} blocks @strong{above} any block that they undo
 
 @item
 @samp{both} runs either direction.  It will not repeat in place when reversing.  Use separate @samp{forward} and @samp{backward} blocks for that 💡
+
+@item
+@samp{begin} and @samp{end} are run when the slide is instantiated@comma{} going forward and backward respectively.  You can have several blocks with these methods@comma{} and they will be run from @strong{top-to-bottom} always@comma{} making it easier to re-use code usually.
+
+@item
+@samp{init} is a combination of @samp{begin} and @samp{end} to make it easier to write.
+
+@item
+@samp{final} is called to clean up when no progress can be made or if the presentation is stopped.
 @end itemize
 
-These methods follow the naming and behavior of dslide's @ref{Stateful Sequence, , stateful sequence} interface.  The babel action is basically delegating stateful sequence calls into the blocks of your org document.
+💡These methods follow the naming and behavior of dslide's @ref{Stateful Sequence, , stateful sequence} interface.  The babel action is basically delegating stateful sequence calls into the blocks of your org document.
+
+The @samp{:direction} parameter goes after the block language.
+@example
+#+begin_src elisp :direction backward
+  (message "I run going backwards@comma{} on `dslide-deck-backward'")
+#+end_src
+@end example
+You can use @samp{[vector]} or @samp{'(quoted list)} syntax to combine methods.
+@example
+#+begin_src elisp :direction [end forward]
+  (message "My configuration is a vector with multiple directions")
+#+end_src
+@end example
+
+@node Ignoring Blocks 🙅
+@subsection Ignoring Blocks 🙅
+
+Use the @samp{:eval} parameter to prevent evaluation of blocks that aren't for your presentation.
+@example
+#+begin_src elisp :eval never
+  (message "Who cares?  I am never evaluated")
+#+end_src
+@end example
+
+@node Visibility 👻
+@subsection Visibility 👻
 
 The babel action also understands regular babel options such as @samp{:exports} and @samp{:results}.  Exports none will make the block invisible.  Results controls whether results will be printed into the buffer or not.
+@example
+# Only the results of this block are visible
+#+begin_src elisp :exports results
+  '(a b c)
+#+end_src
+@end example
+🚧 Some @samp{:exports} and @samp{:results} values are possibly not supported or supported weirdly.  Please@comma{} file issues 💁🍔
 
-@menu
-* Step Callbacks::
-@end menu
+@node Confirming Evaluation 🔏
+@subsection Confirming Evaluation 🔏
 
-@node Step Callbacks
-@subsection Step Callbacks
+@cindex confirming evaluation
+By default@comma{} @code{org-confirm-babel-evaluate} is set to nil.  This will drive you nuts during a presentation.  You should set this to t either in your @code{dslide-start-hook} or in a @ref{File Local Variables 🍦, , file local variable}.
+
+@cindex untrusted source
+☣️ Don't run random people's presentations without checking the source!
+
+@node Step Callbacks 👟
+@subsection Step Callbacks 👟
 
 @findex dslide-push-step
 @cindex pushing steps
-See @code{dslide-push-step} for inserting arbitrary callbacks that can function as steps.  Unless your action performs state tracking to decide when to consume @code{dslide-deck-forward} and @code{dslide-deck-backward} itself@comma{} a callback may be easier.  Using @code{dslide-push-step} is also one way to optionally add a step callback from a babel block.
+You can use @code{dslide-push-step} for inserting arbitrary callbacks that can function as steps.  Like everything else in dslide@comma{} returning non-nil means progress was made and the step should be consumed.  By adding these inside babel blocks@comma{} you can add extra steps that depend on the next direction.
 
-@node Hiding Markup
-@section Hiding Markup
+The callback function should accept a DIRECTION argument.  DIRECTION is forward@comma{} backward@comma{} or nil.  nil just means the presentation is ending or displaying the contents@comma{} so you should clean up instead of attempting to do work.
+@example
+#+begin_src elisp
+  (message "Just doing block things")
+
+  ;; Let's also push a step!
+  (dslide-push-step
+   (lambda (direction)
+     ;; Decide what to do
+     (pcase direction
+       ;; `message' returns non-nil and will function as a padding step
+       (forward (message "Injecting an extra step"))
+       ;; `prog1' nil returns the nil@comma{} so this will not add a step
+       (backward (prog1 nil (message "No step for you!")))
+       ;; The _ catch-all will handle non-directional calls@comma{} such as quitting
+       (_ (prog1 nil (message "Cleaning 💩 up!"))))))
+#+end_src
+
+@end example
+ℹ️ You can also use @code{dslide-push-step} in actions for implementing tricky action behaviors.  The image action uses this currently.
+
+@node Keyboard Macros 🤖
+@section Keyboard Macros 🤖
+
+🧪 Experimental new feature.  Hopefully the configuration argument names are good.  Hopefully.
+
+The @code{dslide-action-kmacro} will run pre-recorded sequences of keystrokes as if you are controlling the computer.  Through @samp{:frequency} and @samp{:jitter}@comma{} it plays back strokes at a human-feeling pace.
+
+By playing back keyboard macros@comma{} you can encode real Emacs workflows as steps in a presentation.  Don't just talk about how your software works.  Use the software with fully reproducible steps that users can understand in a tactile@comma{} human way.
+
+@cindex transcribing keyboard macros as steps
+To record kmacros as presentation steps@comma{} use the @code{dslide-kmacro-transcribe-set-mark} command.  It will save a marker and every time you call @code{kmacro-end-macro}@comma{} it will transcribe that macro as an expression that @code{dslide-action-kmacro} knows how to play back.
+
+🆒 The jitter uses a Laplace distribution to sample a perturbation power.  This power is mapped onto the zero-to-infinity factor range by raising e to the power of jitter.  This is multiplied by @samp{:frequency}@comma{} which is a duration.  As a result@comma{} while the jitter is usually pretty small@comma{} it does have some wild variation@comma{} which does look a bit more human.
+
+@node Hiding Markup 🥷🏿
+@section Hiding Markup 🥷🏿
 
 @findex dslide-action-hide-markup
 @vindex dslide-hide-markup-types
-Dslide uses a lot of markup that would not look good in a presentation.  It also filters it by default using @code{dslide-action-hide-markup}.  You can adjust the types using @code{dslide-hide-markup-types}
-
-@menu
-* Hiding Todos and Tags::
-@end menu
-
-@node Hiding Todos and Tags
-@subsection Hiding Todos and Tags
+Dslide uses a lot of markup that would not look good in a presentation.  It also hides it by default using @code{dslide-action-hide-markup}.  You can adjust the types using @code{dslide-hide-markup-types}
 
 @vindex dslide-hide-todo
 @vindex dslide-hide-tags
-@code{dslide-action-hide-markup} will also hide todos and tags.  You can modifiy this with @code{dslide-hide-todo} and @code{dslide-hide-tags}.
+@code{dslide-action-hide-markup} will also hide todos and tags.  You can modify this with @code{dslide-hide-todo} and @code{dslide-hide-tags}.
 
-@node Filtering Headings
-@section Filtering Headings
+@node Filtering Headings 🚮
+@section Filtering Headings 🚮
 
 @cindex commented headings
 @itemize
@@ -1238,55 +1360,60 @@ Use this when your headings are work-in-progress and you run out of time on Frid
 @vindex dslide-default-filter
 To change the filtering from what is done by @code{dslide-built-in-filter}@comma{} customize @code{dslide-default-filter} or set @samp{DSLIDE_FILTER} (possibly implemented 🤡@comma{} file an issue!).
 
-@node Header Keywords
-@section Header Keywords
+@node Header Configuration 🎩
+@section Header Configuration 🎩
 
 @vindex dslide-header
 If @code{dslide-header} is configured@comma{} the keywords for the document title@comma{} email@comma{} and author etc will be used to generate an okay header.
-
 @example
 #+@comma{}#+title:        Domain Specific sLIDEs
 #+author:        Positron
 #+email:        contact@@positron.solutions
 @end example
-
 @vindex dslide-header-email
-You can try customizing with @code{dslide-header-email} and similar variables or just set @code{dslide-header-fun} to complete replace the header with your own device.
+@cindex replacing the header
+You can try customizing with @code{dslide-header-email} and similar variables or just set @code{dslide-header-fun} to completely replace the header with your own device.  Check its signature!
 
 @menu
-* Breadcrumbs::                  Showing Parent Headings
+* Breadcrumbs 🍞::               Showing Parent Headings
 @end menu
 
-@node Breadcrumbs
-@subsection Breadcrumbs
+@node Breadcrumbs 🍞
+@subsection Breadcrumbs 🍞
 
 @vindex dslide-breadcrumb-separator
 Whenever @code{dslide-breadcrumb-separator} is non-nil@comma{} breadcrumbs will be rendered in the heading@comma{} displaying parent headings so the audience an track context.
 
+@vindex dslide-breadcrumb-separator-style
+@code{dslide-breadcrumb-separator-style} controls whether there is a separator after the terminal breadcrumb.  This can really help distinguish the breadcrumb from the current heading's headline. @samp{append} will have a terminal separator while @samp{separate} will only put them between breadcrumbs.
+
 @vindex dslide-breadcrumb-face
 Because breadcrumb text comes from your headings@comma{} you may want to set a face on them to prevent various heading faces from leaking into the breadcrumbs.
 
-@node File Local Variables
-@section File Local Variables
+@node File Local Variables 🍦
+@section File Local Variables 🍦
 
 Don't forget that if you need a customize variable only set in a particular presentation@comma{} you can use file local variables.  Not every setting needs a keyword or babel block integration.
 
+#+cindex confirming evaluation
+This is also one good way to set @code{org-confirm-babel-evaluate} and other settings that are somewhat risky to leave on generally.
 @example
 # Local Variables:
 # dslide-header: nil
+# org-confirm-babel-evaluate: nil
 # End:
 @end example
 
-@node Presenting
-@chapter Presenting
+@node Presenting 📽️
+@chapter Presenting 📽️
 
 How to control and view your presentation.
 
 @menu
 * Two Button Interface::         Its All Forwards and Backwards
 * Contents Interface::           Navigating Faster
-* Narrating::                    And Debugging Live
-* Cursor Visibility::
+* Narrating::                    And debugging live
+* Cursor Visibility 🥷::         Hidden by default
 @end menu
 
 @node Two Button Interface
@@ -1359,17 +1486,17 @@ This is a comment that only I can see while presenting@comma{} only when I look 
 
 You can also switch a window to the base buffer manually.  That's almost all @code{dslide-deck-develop} does.
 
-@node Cursor Visibility
-@section Cursor Visibility
+@node Cursor Visibility 🥷
+@section Cursor Visibility 🥷
 
 @findex dslide-cursor-hide
 @findex dslide-cursor-restore
-By default@comma{} the cursor is hidden in the presentation buffer using @code{dslide-cursor-hide}.  You can call @code{dslide-cursor-restore} if you need it.
+By default@comma{} the cursor is hidden in the presentation buffer using @code{dslide-cursor-hide}.  Remove it from the @code{dslide-start-hook} to disable this. You can call @code{dslide-cursor-restore} if you just temporarily need a cursor.
 
 Another good choice for interactive presentations is to use @code{moc-subtle-cursor-mode} from the @uref{https://github.com/positron-solutions/moc, Master of Ceremonies} package.  It is more like having a laser pointer that hides itself automatically.
 
-@node Configuring
-@chapter Configuring
+@node Configuring 🎛️
+@chapter Configuring 🎛️
 
 Be sure to check @samp{M-x} @code{customize-group} @samp{dslide} to see all declared custom variables. All of the variables are configured to recommended defaults except hooks@comma{} which would depend on other packages usually.
 
@@ -1384,24 +1511,24 @@ slide level through the property drawer
 @end itemize
 
 @menu
-* Binding::
-* Hooks::
-* Steezing Org::                 Making it Pretty
+* Key Bindings::                 Recommended entry points
+* Hooks::                        Do this after that
+* Steezing Org 🕶️::               Making it Pretty
 @end menu
 
-@node Binding
-@section Binding
+@node Key Bindings
+@section Key Bindings
 
 You likely want to start the mode via @code{dslide-deck-start}.  Once the mode starts@comma{} it creates an indirect buffer to display the slides and then calls @code{dslide-deck-start-function} once the mode is active and everything is initialized@comma{} so you can customize startup behavior.
 
-All commands begin with @code{dslide-deck} 💡
+💡 All top-level presentation commands begin with the @code{dslide-deck} prefix
 @lisp
 (keymap-set org-mode-map "<f5>" #'dslide-deck-start)
 @end lisp
 Once the global minor mode@comma{} @code{dslide-mode} is active@comma{} additional bindings in @code{dslide-mode-map} are active in every buffer so that you can integrate other buffers into your presentation.  (Tracking which buffers are part of a presentation is  still a topic under consideration 🚧)
 
 @menu
-* Secondary Commands 🚧::
+* Secondary Commands 🚧::        Do something else
 @end menu
 
 @node Secondary Commands 🚧
@@ -1441,18 +1568,18 @@ Another option is to use @code{dslide-push-step} to push a callback that will on
 @end lisp
 
 @menu
-* Per-Slide Actions::
+* Per-Slide Behavior::           You want actions.  Trust me.
 @end menu
 
-@node Per-Slide Actions
-@subsection Per-Slide Actions
+@node Per-Slide Behavior
+@subsection Per-Slide Behavior
 
 💡 If you want to do something on each slide or specific slides@comma{} before using hooks@comma{} instead consider using actions.
 
 See the @code{dslide-action-hide-markup} which is by default added to @code{dslide-default-actions} and hides markup on every slide.  The lifecycle of actions and their methods for obtaining the current slide's heading make them very good for per-slide behavior.
 
-@node Steezing Org
-@section Steezing Org
+@node Steezing Org 🕶️
+@section Steezing Org 🕶️
 
 This is not unique to dslide@comma{} but if you want more professional looking results@comma{} you will likely need to make your org a bit prettier.
 
@@ -1474,14 +1601,14 @@ Don't forget built-in @code{emoji-search} and searching @code{insert-char}.
 
 Positron is cheating and also apply custom line-spacing and line-height.  While Psionic maintains a custom @code{org-modern}@comma{} using custom spacing everywhere fights with @code{visual-line-mode} currently.
 
-@node Extending
-@chapter Extending
+@node Extending 🧑‍🏭
+@chapter Extending 🧑‍🏭
 
 Creating new actions or replacing dslide classes.
 
 @menu
 * Creating Actions::             Overview
-* A Custom Action::              Example Class
+* A Custom Action::              Example custom class
 * Default Classes::              Overriding the Guts
 @end menu
 
@@ -1510,7 +1637,7 @@ Override methods as appropriate@comma{} configure a heading to use your action@c
 
 @findex dslide-section-next
 @findex dslide-section-previous
-The @code{dslide-section-next}  and @code{dslide-section-previous} method documentation are very helpful behavior for quickly writing custom actions.  They advance the action's @samp{:marker} forwards and backwards to the next matching element and return that element so we can do something with it.
+The @code{dslide-section-next} and @code{dslide-section-previous} methods are very helpful behavior for quickly writing custom actions.  They advance the action's @samp{:marker} forwards and backwards to the next matching element and return that element so we can do something with it.
 
 @itemize
 @item
@@ -1575,8 +1702,8 @@ The deck and slide class as well as actions can be sub-classed.  Use the existin
 If you suspect you might need to sub-class the @code{dslide-slide} or @code{dslide-deck}@comma{} please file an issue because your use case is probably interesting.
 @end itemize
 
-@node Hacking
-@chapter Hacking
+@node Hacking 🧑‍🔬
+@chapter Hacking 🧑‍🔬
 
 This section provides really high-level summary of the code's major design choices to prepare for diving into source.
 
@@ -1818,8 +1945,8 @@ Going backward@comma{} begin at the end of the heading.  This is at most the end
 
 If you need more states per element@comma{} this kind of implicit state tracking is insufficient and you will have to implement state-tracking.  ⚠️  Don't use text properties to store state in buffer text since they will persist in the base buffer between presentation starts if not cleaned up.
 
-@node Contributing
-@chapter Contributing
+@node Contributing 🍔
+@chapter Contributing 🍔
 
 @itemize
 @item
@@ -1840,7 +1967,7 @@ Open issues and give feedback on feature requests.  Contributions welcome.  See 
 @menu
 * Affiliated Keyword::
 * Layout::
-* Slide Action Precedence::
+* Action Configuration Precedence::
 * Secondary Commands::
 * Starting From Point::
 * Affiliated Buffers::
@@ -1864,8 +1991,8 @@ A centering action is in the works.
 
 Another option is using the @uref{https://github.com/positron-solutions/moc, Master of Ceremonies} package and its @code{moc-focus} command implement desirable behaviors such as filling the available space and padding the content to the center of the window.  This behavior could easily be improved and adapted into an action.
 
-@node Slide Action Precedence
-@subsection Slide Action Precedence
+@node Action Configuration Precedence
+@subsection Action Configuration Precedence
 
 When a slide is created in @code{dslide-make-slide}@comma{} it can obtain them from several places:
 @itemize
@@ -1913,13 +2040,13 @@ Especially if slides launch sub-sequences@comma{} and they do it from Lisp@comma
 
 There's no concrete reason why presentations need to start with Org mode buffers.  The deck object could have its org-specific functionality pushed down to an org-mode class.  The only requirement is to be able to hydrate some stateful sequences@comma{} which may hydrate and call into sub-sequences@comma{} meaning anything is pretty trivially possible.
 
-@node Acknowledgments
-@chapter Acknowledgments
+@node Acknowledgments 🥇
+@chapter Acknowledgments 🥇
 
 This package is a direct descendant of Takaaki ISHIKAWA's @uref{https://github.com/takaxp/org-tree-slide, org-tree-slide} package.  Many of the ideas and some of the implementations were either inherited or inspired by ideas from that package.  This package would not exist without the inspiration.  Thanks to everyone who contributed on org-tree-slide.
 
-@node Pronunciation
-@chapter Pronunciation
+@node Pronunciation 👮
+@chapter Pronunciation 👮
 
 While it may have been spoken many times before@comma{} let it be official that there is no correct way to pronounce DSL IDE@.  Here are some options:
 
@@ -1934,8 +2061,8 @@ DEEE slide: We are going un-slide your slides.  Powerpoint is no more.  Emacs ha
 
 Please spread these and other intentionally wrongful pronunciations to protect those who have only ever read the name from persecution by self-annointed in-groups who claim to know the correct way to pronounce this made up word.
 
-@node Indices
-@chapter Indices
+@node Indices 📇
+@chapter Indices 📇
 
 @menu
 * Command and Function index::
