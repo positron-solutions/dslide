@@ -1,4 +1,4 @@
-;;; dslide.el --- Domain Specific sLIDEs. A presentation framework -*- lexical-binding: t; -*-
+;;; dslide.el --- Domain Specific sLIDEs. Programmable Presentation -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2011-2023 Takaaki ISHIKAWA
 ;; Copyright (C) 2024 Positron
@@ -18,6 +18,9 @@
 ;;             Matus Goljer
 ;;             Boruch Baum
 ;;
+
+;;; Copying:
+
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 3 of the License, or
@@ -225,17 +228,19 @@ properties remain unless shadowed."
 
 (defcustom dslide-breadcrumb-separator-style 'append
   "Where breadcrumb separators will be used.
-This helps distinguish the breadcrumbs from the slide headline."
+This helps distinguish the breadcrumbs from the slide headline.
+Use append to have a terminal breadcrumb or separate to only put
+them between breadcrumbs."
   :type '(choice (const :tag "After each breadcrumb" append)
                  (const :tag "Only between breadcrumbs" separate)))
-
-(defcustom dslide-breadcrumb-hide-todo-state t
-  "If non-nil, hide TODO states in the breadcrumbs."
-  :type 'boolean)
 
 (define-obsolete-variable-alias
   'dslide-breadcrumbs-hide-todo-state 'dslide-breadcrumb-hide-todo-state
   "0.5.5")
+
+(defcustom dslide-breadcrumb-hide-todo-state t
+  "If non-nil, hide TODO states in the breadcrumbs."
+  :type 'boolean)
 
 (defcustom dslide-hide-todo nil
   "If non-nil, hide TODO states in headings."
@@ -267,7 +272,12 @@ Increase if your so-called machine has trouble drawing."
 
 (defcustom dslide-start-hook '(dslide-cursor-hide)
   "Runs after the slide buffer is created but before first slide.
-Buffer is widened and fully visible."
+Buffer is widened and fully visible.  It is intended only to run on the
+first call, which sets up the frame, so your hook functions do not need
+to be idempotent.
+
+🚧 This hook is not experimental.  However, the lifecycle management of
+a deck is somewhat experimental.  Please report issues."
   :type 'hook)
 
 (defcustom dslide-stop-hook nil
@@ -319,13 +329,13 @@ Many section actions are no-op whenever the content doesn't
 contain any elements they act on.  You can add classes to this
 list in order to have default behaviors for some org elements.
 
-🚧 Experimental.  Actions may be dispatched on-demand in the future
-rather than turned on for each slide.
+⛔ Planned deprecation.  Actions will be dispatched on-demand in
+the future rather than turned on for each slide.
 
-You can configure actions per-heading by setting the DSLIDE_ACTIONS
-keyword.  You can configure it for the document default by adding an
-DSLIDE_ACTIONS keyword."
-  :type '(list function))
+You can configure actions per-heading by setting the
+DSLIDE_ACTIONS property.  You can configure it for the document
+default by adding an DSLIDE_ACTIONS keyword."
+  :type '(repeat function))
 
 (defcustom dslide-default-class 'dslide-slide
   "A class to more deeply modify slide behavior.
@@ -450,7 +460,8 @@ between contents and slides.")
 ;;
 ;; `dslide-goto' essentially is just a careful use of forward.  If every forward
 ;; step properly reports its maximum extent of progress, we can use forward and
-;; begin to implement every goto.
+;; begin to implement every goto.  🚧  The design is sound but this is largely
+;; unimplemented and will not be worked on without demand.
 ;;
 ;; Finally, `dslide-forward' and `dslide-backward' should navigate the states
 ;; between begin or end and final.  They just return non-nil until they are
@@ -519,10 +530,10 @@ with the sequence succeeding when run again.  If your sequence
 implements real backward behavior,
 
 All side-effects and states created by steps in the sequence or
-the `dslide-begin' and `dslide-end' methods must be cleaned up or
-otherwise managed or else `dslide-backward' and other sequences
-of running a presentation will be brittle and likely fail when
-re-run.")
+the `dslide-begin' and `dslide-end' methods must be cleaned up
+or otherwise managed or else `dslide-backward' and other
+sequences of running a presentation will be brittle and likely
+fail when re-run.")
 
 (cl-defgeneric dslide-forward (obj)
   "Advance OBJ forward by one step.
@@ -531,6 +542,12 @@ The return value has meaning to the deck:
 - t: progress was made
 
 - a point: progress was made up to a specific buffer location
+
+- an org element: progress was made up to the :start property of
+  the element
+
+- non-nil: ⚠ progress was made, but this value will warn because
+  the callee evedently returned something haphazardly
 
 - nil: no progress could be made.
 
@@ -549,6 +566,12 @@ The return value has meaning to the deck:
 
 - a point: progress was made up to a specific buffer location
 
+- an org element: progress was made up to the :start property of
+  the element
+
+- non-nil: ⚠ progress was made, but this value will warn because
+  the callee evedently returned something haphazardly
+
 - nil: no progress could be made.
 
 For sequences that don't make progress in a buffer, returning t
@@ -564,9 +587,9 @@ This method can usually be implemented on top of
 `dslide-forward' by advancing until POINT is exceeded.  Return
 nil if POINT was not exceeded.  Return non-nil if the sense of
 progress exceeds POINT.  Usually, slide actions will be
-responsible for determining if the POINT belongs to this slide or
-one of its child slides, and the slide will just ask the child
-action.")
+responsible for determining if the POINT belongs to this slide
+or one of its child slides, and the slide will just ask the
+child action.")
 
 ;; ** Stateful Sequence
 (defclass dslide-stateful-sequence () ()
@@ -1079,6 +1102,7 @@ Many optional ARGS.  See code."
                  (or (org-element-property :DSLIDE_FILTER heading)
                      (cdr (assoc-string "DSLIDE_FILTER" keywords))))
                 dslide-default-filter))
+
            (class
             (or (dslide--parse-class-with-args
                  (or (org-element-property :DSLIDE_CLASS heading)
@@ -1257,7 +1281,6 @@ for `dslide-contents-map'.")
 
 ;; ** Hide Markup Action
 ;; TODO allow configuration via plist args
-;; TODO precedence order of default actions
 (defclass dslide-action-hide-markup (dslide-action) ()
   "Hides element based on type.")
 
@@ -1382,7 +1405,7 @@ for `dslide-contents-map'.")
   ((remove-results
     :initform t
     :initarg :remove-results
-    :description "Remove results when entering slides 🚧.
+    :description "Remove results when entering slides 🧪.
 Experimental.  File an issue if you see something weird.  There's
 a lot of behaviors that could potentially react to this option.
 Currently only blocks with results set to replace are removed and
@@ -2725,6 +2748,7 @@ and the value of `point-max' should contain a newline somewhere."
 
 ;; * Assorted Implementation Details
 
+;; TODO finish adding some more ways to get debug information from the slides
 (defun dslide--debug (slide &optional situation)
   (when dslide--debug
     (let* ((heading (dslide-heading slide))
@@ -2771,9 +2795,7 @@ hooks must occur in the deck's :slide-buffer."
 
     ;; TODO check assumed initial conditions
     (let* ((base-buffer (current-buffer))
-           (slide-buffer-name (format "*deck: %s*" (buffer-name
-                                                    base-buffer))))
-
+           (slide-buffer-name (format "*deck: %s*" (buffer-name base-buffer))))
       ;; stale buffers likely indicate an issue
       (when-let ((stale-buffer (get-buffer slide-buffer-name)))
         (display-warning '(dslide dslide--ensure-deck)
@@ -2801,7 +2823,6 @@ hooks must occur in the deck's :slide-buffer."
         (setq dslide--deck deck)
         (display-buffer slide-buffer dslide--display-actions)
         (set-buffer slide-buffer)
-
         (widen)
         (org-fold-show-all)
         ;; Enter the state model
@@ -2903,6 +2924,9 @@ for commands without visible side effects."
 (defun dslide--keyword-symbol-p (string)
   (eq 0 (string-match-p ":\\(?:\\sw\\|\\s_\\)+$" string)))
 
+;; TODO this reads a flattened alist and really only was necessary when
+;; actions needed to be configured per slide, not per element.  However, for
+;; actions that operate mainly via their begin property, we need a trigger
 (defun dslide--parse-classes-with-args (property-data)
   ;; To support org's multiple-value properties, we want to parse a string that
   ;; looks like "class-name :arg val class-name :arg val :arg val", basically a
@@ -3031,6 +3055,7 @@ the caller."
        dslide--deck
        (dslide-deck-live-p dslide--deck)))
 
+;; TODO got a few wandering orefs and osets around here
 (defun dslide-display-slides ()
   (dslide--ensure-slide-buffer t)
   (dslide--cleanup-state)
