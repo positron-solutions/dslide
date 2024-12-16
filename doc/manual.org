@@ -276,6 +276,15 @@ The babel action also understands regular babel options such as =:exports= and =
   ,#+end_src
 #+end_src
 🚧 Some =:exports= and =:results= values are possibly not supported or supported weirdly.  Please, file issues 💁🍔
+*** Confirming Evaluation 🔏
+:PROPERTIES:
+:DESCRIPTION: Stop asking me!
+:END:
+#+cindex: confirming evaluation
+By default, ~org-confirm-babel-evaluate~ is set to nil.  This will drive you nuts during a presentation.  You should set this to t either in your ~dslide-start-hook~ or in a [[File Local Variables 🍦][file local variable]].
+
+#+cindex: untrusted source
+☣️ Don't run random people's presentations without checking the source!
 *** Step Callbacks 👟
 :PROPERTIES:
 :DESCRIPTION: Adding extra steps

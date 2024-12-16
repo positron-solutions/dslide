@@ -172,6 +172,7 @@ By default, blocks will run as steps.
   (message "By default, a block is just a forward step.")
 #+end_src
 
+You may want to set ~org-confirm-babel-evaluate~ to =nil= to avoid being asked at every block during a presentation.  To only set this for dslide presentations, use the ~dslide-start-hook~.  To set it per-file, use a file-local variable, liket his demo does at the end.
 ** Forwards & Backwards
 - The direction of a block can be set using the =:direction= parameter, the same as other babel block parameters
 - Blocks can be marked =forward=, =backward=, or =both= to run via ~dslide-deck-forward~ or ~dslide-deck-backward~.
@@ -441,3 +442,7 @@ The essence of democracy is the resolve of individuals working together to shape
 - This package use used to create videos on Positron's own [[https://www.youtube.com/channel/UCqM0zDcFNdAHj7uQkprLszg/][YouTube ]] channel
 - File issues and request features to give us ideas about usage and need
 - To participate in our effort to accelerate Emacs into this upcoming era of change, become a contributor one of our [[https://github.com/sponsors/positron-solutions][Github Sponsors]].
+
+# Local Variables:
+# org-confirm-babel-evaluate: nil
+# End:
