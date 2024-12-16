@@ -167,25 +167,18 @@ Add text properties to an element using the =attr_dslide_propertize= affiliated 
 This is some fancy text
 
 * Babel Integration
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
-To make your blocks interactive, set the =:DSLIDE_ACTIONS:= property to =dslide-action-babel= in the property drawer.
+By default, blocks will run as steps.
 #+begin_src elisp
   (message "By default, a block is just a forward step.")
 #+end_src
 
 ** Forwards & Backwards
-- Blocks can be marked with the =#+attr_dslide:= affiliated keyword to execute in a certain order.  (unmarked default is forward)
+- The direction of a block can be set using the =:direction= parameter, the same as other babel block parameters
 - Blocks can be marked =forward=, =backward=, or =both= to run via ~dslide-deck-forward~ or ~dslide-deck-backward~.
 - The markup keywords are hidden during presentation by default.  Use ~dslide-deck-develop~ to see both markup and presentation simultaneously. (Executed blocks are highlighted! 💡)
 - Note, if there is no =backward= block, when entering the slide going backward, the slide will begin as if going forward because there is no backward step.
 *** Example
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
-#+attr_dslide: backward
-#+begin_src elisp
+#+begin_src elisp :direction backward
   ;; Called when going backward
   (random 100)
 #+end_src
@@ -196,43 +189,34 @@ To make your blocks interactive, set the =:DSLIDE_ACTIONS:= property to =dslide-
   (random 100)
 #+end_src
 
-#+attr_dslide: both
-#+begin_src elisp
+#+begin_src elisp :direction both
   ;; Called when going either way
   (random 100)
 #+end_src
 
-#+attr_dslide: forward
-#+begin_src elisp
+#+begin_src elisp :direction forward
   ;; An explicitly forward marked block
   (random 100)
 #+end_src
 
-** Begin, End, and Final
-If you need to initialize some code, the =begin= and =end= methods can be used.  To clean up, use a =final= block.
+** Begin, End, Init, and Final
+If you need to initialize some code, the =begin= and =end= methods can be used.  They run when entering the slide going forwards or backwards, respectively.  To run when entering the slide either way, use =init=.  It is just a combination of =begin= and =end=.  To clean up, use a =final= block.  It always runs when leaving a slide.
 
 Enter this slide going backwards to observe the "end" behavior.
 *** Example
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
-#+attr_dslide: begin
-#+begin_src elisp
+#+begin_src elisp :direction begin
   (setq-local my-dslide-var 'beginning)
 #+end_src
 
-#+attr_dslide: both
-#+begin_src elisp
+#+begin_src elisp :direction both
   (message "Entered slide at: %s" my-dslide-var)
 #+end_src
 
-#+attr_dslide: end
-#+begin_src elisp
+#+begin_src elisp :direction end
   (setq-local my-dslide-var 'end)
 #+end_src
 
-#+attr_dslide: final
-#+begin_src elisp
+#+begin_src elisp :direction final
   (kill-local-variable 'my-dslide-var)
 #+end_src
 
@@ -241,11 +225,7 @@ Multiple blocks can have the =begin=, =end=, and =final= method.  They are alway
 
 Go 2-3 steps forwards and then backwards.  This slide also supports starting at the end.  Just go to the next slide and back up.
 *** Example
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
-#+attr_dslide: begin end
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction init
   (setq-local overlays nil)
   (goto-char (point-min))
   (while (re-search-forward "overlay" nil t)
@@ -254,35 +234,29 @@ Go 2-3 steps forwards and then backwards.  This slide also supports starting at 
       (push overlay overlays)))
 #+end_src
 
-#+attr_dslide: backward
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction backward
   (mapc (lambda (o) (overlay-put o 'display nil)) overlays)
 #+end_src
 
-#+attr_dslide: both
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction both
   (mapc (lambda (o) (overlay-put o 'display "🥞")) overlays)
 #+end_src
 
-#+attr_dslide: both
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction both
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞")) overlays)
 #+end_src
 
-#+attr_dslide: forward end
-#+begin_src elisp :results none
+# Use vector syntax [like this] or quoted list syntax '(like this) to provide
+# multiple directions
+#+begin_src elisp :results none :direction [forward end]
   (mapc (lambda (o) (overlay-put o 'display "🥞🥞🥞")) overlays)
 #+end_src
 
-#+attr_dslide: final
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction final
   (mapc #'delete-overlay overlays)
   (makunbound 'overlays)
 #+end_src
 ** Hiding Blocks
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 The babel block header argument =exports= is recognized and controls visibility of the block and its results.  The babel blocks in this slide are not visible at all.  The blocks find and updates the text below:
 
 Can has display?
@@ -290,8 +264,7 @@ Can has display?
 Try forwards and backwards.  There are several hidden steps.
 
 ⚠️ This example also uses =:results none=, not because they would be visible, but because the return type is an overlay that babel can't serialize as output.
-#+attr_dslide: end begin
-#+begin_src elisp :exports none :results none
+#+begin_src elisp :exports none :results none :direction init
   ;; No need to deal with restriction or restore point.
   (org-back-to-heading t)
   (if (re-search-forward "\?" nil t)
@@ -300,63 +273,50 @@ Try forwards and backwards.  There are several hidden steps.
     (error "Ouchie, the document changed!"))
 #+end_src
 
-#+attr_dslide: backward
-#+begin_src elisp :exports none :results none
+#+begin_src elisp :exports none :results none :direction backward
   (overlay-put dslide-can-has-overlay 'after-string nil)
 #+end_src
 
-#+attr_dslide: both
-#+begin_src elisp :exports none :results none
+#+begin_src elisp :exports none :results none :direction both
   (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
                            'face 'error))
 #+end_src
 
-#+attr_dslide: forward end
-#+begin_src elisp :exports none :results none
+# Use vector syntax [like this] or quoted list syntax '(like this) to provide
+# multiple directions
+#+begin_src elisp :exports none :results none :direction '(forward end)
   (overlay-put dslide-can-has-overlay 'after-string
                (propertize "  No display!  Only execute!"
                            'face 'success))
 #+end_src
 
-#+attr_dslide: final
-#+begin_src elisp :exports none :results none
+#+begin_src elisp :exports none :results none :direction final
   (when (bound-and-true-p dslide-can-has-overlay)
     (delete-overlay dslide-can-has-overlay)
     (makunbound 'dslide-can-has-overlay))
 #+end_src
 ** Results Only
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 The babel in this block will show results after being called but the block itself is never visible.
 #+begin_src elisp :exports results
   '(a b c)
 #+end_src
 
 ** Silent Results
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 For blocks you want to be visible but are only running for effects, you can use the built-in babel block header argument =results= and set it to =none=
-#+attr_dslide: both
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction both
   (let* ((block (org-element-at-point))
          (overlay (make-overlay (org-element-property :begin block)
                                 (org-element-property :end block))))
     (overlay-put overlay 'face '(:inverse-video t))
     (setq-local dslide--example-overlay overlay))
 #+end_src
-#+attr_dslide: final
-#+begin_src elisp :results none :exports none
+#+begin_src elisp :results none :exports none :direction final
   (when (bound-and-true-p dslide--example-overlay)
     (delete-overlay dslide--example-overlay)
     (makunbound 'dslide--example-overlay))
 #+end_src
 ** Package Integration
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 - You need the [[https://github.com/positron-solutions/moc][Master of Ceremonies]] package installed to complete this slide.  Use the contents navigation to skip this slide if you didn't install it.
 - Let arbitrary buffers be shown while still completing steps within the slide-show.
 - Run babel against other buffers 😈.
@@ -364,39 +324,28 @@ For blocks you want to be visible but are only running for effects, you can use 
 # Master of Ceremonies remains in development.  The :version keys for playback
 # expressions may be updated when you find this demo.
 
-#+attr_dslide: begin
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction begin
   (require 'moc)
 #+end_src
-#+attr_dslide: final backward
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction final backward
   (when-let ((buffer (get-buffer "*MoC Focus*")))
     (kill-buffer buffer))
 #+end_src
-
-#+attr_dslide: both
-  #+begin_src elisp :results none
+  #+begin_src elisp :results none :direction both
   (moc-focus :version 0 :text "🖊️")
   #+end_src
-#+attr_dslide: both
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction both
   (moc-focus :version 0 :text "🖊️🍍")
   #+end_src
-#+attr_dslide: both
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction both
   (moc-focus :version 0 :text "🖊️🍍🍎")
   #+end_src
-#+attr_dslide: both
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction both
   (moc-focus :version 0 :text "🖊️🍍🍎🖊️")
   #+end_src
 ** Babel is every Feature
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 If a feature seems like it's missing, it can probably be added.  There is a babel block below this paragraph, but if you are viewing this presentation, you won't see it because it has hidden itself with an overlay.  File an issue, but don't be held back.  A quick hunk of [[info:elisp#Top][elisp]] can solve every problem.
-#+attr_dslide: begin end
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction init
   (let* ((block (org-element-at-point))
          (overlay (make-overlay (org-element-property :begin block)
                                 (org-element-property :end block))))
@@ -404,14 +353,10 @@ If a feature seems like it's missing, it can probably be added.  There is a babe
     (push overlay dslide-overlays))
 #+end_src
 ** Babel to Call Processes
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 Not everything can be displayed within Emacs.  However, Emacs launches processes with ease.  Let's use babel to take advantage of this.
 
 The babel block below, which is not visible during the presentation, will call VLC to show the video.  VLC supports some options that make it convenient to integrate into our slideshow without interacting with its window, but if you are using EXWM or the application exposes a local interface such as DBus or a network socket, you can control it that way.
-#+attr_dslide: forward
-#+begin_src elisp :results none
+#+begin_src elisp :results none :direction forward
   (if-let ((vlc (executable-find "vlc"))
            (output (generate-new-buffer "*VLC Output*")))
       (progn
@@ -444,15 +389,11 @@ Positron is cheating and also apply custom line-spacing and line-height.  While 
 ** Bindings
 Bind the command ~dslide-deck-start~ in the ~org-mode-map~.  Any key will do.
 ** Custom Actions
-:PROPERTIES:
-:DSLIDE_ACTIONS: dslide-action-babel
-:END:
 The babel block below is a custom action supporting both forward, each step making a paragraph red when going forward or removing the red when going backward.  Key methods you want to use in your custom actions:
 - ~dslide-section-next~
 - ~dslide-section-previous~
 - ~dslide-section-marker~
-#+attr_dslide: begin end
-#+begin_src elisp elisp :results none
+#+begin_src elisp elisp :results none :direction init
   (defclass dslide-action-red-paragraphs (dslide-action)
     ((overlays :initform nil))
     "Paint the paragraphs red, one by one.")

@@ -215,13 +215,9 @@ Configuring is usually done by adding plist-style =:key value= arguments after t
 :END:
 #+findex: dslide-action-babel
 #+cindex: scripting babel steps
-In the future the babel action may become a default, using the =#+attr_dslide_babel= affiliated keyword or =:noeval= to decide a block should not be executed.  As of this version of dslide, either add ~dslide-action-babel~ to your ~dslide-default-actions~ or add it to the actions list via the property drawer.
 You can write custom scripts into your presentation as Org Babel blocks.  These are executed with the ~dslide-action-babel~ action.  Easy peazy.
 #+begin_src org
   ,* My Heading With Babel Blocks
-  :PROPERTIES:
-  :DSLIDE_ACTIONS: dslide-action-babel
-  :END:
   ,#+begin_src elisp
     (message "Good job!")
   ,#+end_src
@@ -230,21 +226,44 @@ You can write custom scripts into your presentation as Org Babel blocks.  These 
 :PROPERTIES:
 :DESCRIPTION: When will this block be called?
 :END:
+By default blocks only execute going forward, one block per step.  You need to label your blocks with [[*Life Cycles][lifecycle]] methods if you want to perform setup (can be forward or backward) and teardown.  See the ~dslide-action-babel~ class and examples in [[demo.org][./test/demo.org]].
 
-By default blocks only execute going forward, one block per step.  You need to label your blocks with [[*Life Cycles][lifecycle]] methods if you want to perform setup (forward and backward) and teardown.  See the ~dslide-action-babel~ class and examples in [[file:./test/demo.org][./test/demo.org]].
-
-The =#+attr_dslide:= affiliated keyword is used to configure which methods will run the block.  Block labels that are understood:
-
-- =begin= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
-
-- =final= is called to clean up when no progress can be made or if the presentation is stopped.
+The =:direction= babel block parameter is used to configure which methods will run the block.  Block labels that are understood:
 
 - =forward= and =backward= are self-explanatory.  Position your =backward= blocks *above* any block that they undo
 
 - =both= runs either direction.  It will not repeat in place when reversing.  Use separate =forward= and =backward= blocks for that 💡
 
-These methods follow the naming and behavior of dslide's [[*Stateful Sequence][stateful sequence]] interface.  The babel action is basically delegating stateful sequence calls into the blocks of your org document.
+- =begin= and =end= are run when the slide is instantiated, going forward and backward respectively.  You can have several blocks with these methods, and they will be run from *top-to-bottom* always, making it easier to re-use code usually.
 
+- =init= is a combination of =begin= and =end= to make it easier to write.
+
+- =final= is called to clean up when no progress can be made or if the presentation is stopped.
+
+💡These methods follow the naming and behavior of dslide's [[*Stateful Sequence][stateful sequence]] interface.  The babel action is basically delegating stateful sequence calls into the blocks of your org document.
+
+The =:direction= parameter goes after the block language.
+#+begin_src org
+  ,#+begin_src elisp :direction backward
+    (message "I run going backwards, on `dslide-deck-backward'")
+  ,#+end_src
+#+end_src
+You can use =[vector]= or ='(quoted list)= syntax to combine methods.
+#+begin_src org
+  ,#+begin_src elisp :direction [end forward]
+    (message "My configuration is a vector with multiple directions")
+  ,#+end_src
+#+end_src
+*** Ignoring Blocks 🙅
+:PROPERTIES:
+:DESCRIPTION: Hey! Don't evaluate that!
+:END:
+Use the =:eval= parameter to prevent evaluation of blocks that aren't for your presentation.
+#+begin_src org
+  ,#+begin_src elisp :eval never
+    (message "Who cares?  I am never evaluated")
+  ,#+end_src
+#+end_src
 *** Visibility 👻
 :PROPERTIES:
 :DESCRIPTION: Hiding blocks and their results

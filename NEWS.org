@@ -13,7 +13,30 @@
 
 * v0.6.0 Fighting Spam 💌 :latest:
 ** Added ➕
+- Babel blocks, which will now all be executed by default, respect the =:eval= parameter.  Values such as =never= or =never-export= will skip the block.  Other values are equivalent to =yes=.  Values like =query= do *not* ask yet.  Expect that in 0.7.0. 🚧
+  #+begin_src org
+    ,#+begin_src elisp :eval never
+      (message "All blocks are now on by default!  You must opt out!")
+    ,#+end_src
+  #+end_src
+- =init= is now recognized as a direction by babel blocks and counts for both =begin= and =end=.  It always runs when entering a slide, regardless of direction.  It is the counterpart to =final=, which always runs when exiting a slide.
 ** Changed 🙅
+- Babel blocks are no longer configured with =#+attr_dslide:= affiliated keywords.  Instead, =direction= as a normal babel block parameter.  ⚠️ Old style will warn.
+  #+begin_src org
+    ,#+begin_src elisp :dslide backwards
+      (message "The old #+attr_dslide: backward style is no more!")
+    ,#+end_src
+  #+end_src
+  To provide multiple directions, you can use quoted lists and vectors, like so:
+  #+begin_src org
+    ,#+begin_src elisp :dslide '(begin backwards)
+      (message "Lists must be quoted or Org mode tries to evaluate them")
+    ,#+end_src
+
+    ,#+begin_src elisp :dslide [begin backwards]
+      (message "It may be better to just use a vector 💡")
+    ,#+end_src
+  #+end_src
 - Image action is now a default action (although default actions are going away.)
 - Image action defaults =:standalone-display= to =nil=.  If you want fullscreen display, you need to set the option in the property drawer, the way it has been.  This was to support turning the image action on by default.
 - ⚠️ Propertize action now warns on unquoted lists.  Please use quoted lists.  In my opinion, all lists should be considered quoted in org, but this change is consistent with babel parameters being evaluated when unquoted.

@@ -319,6 +319,7 @@ keyword."
 ;; TODO test the use of plist args
 (defcustom dslide-default-actions '(dslide-action-hide-markup
                                     dslide-action-propertize
+                                    dslide-action-babel
                                     dslide-action-image)
   "Actions that run within the section display action lifecycle.
 It's value is a list of symbol `dslide-action' sub-classes or (CLASS
@@ -1424,20 +1425,28 @@ only when entering a slide.  Other options seem to suggest
 results should not be removed or will never be written to the
 buffer anyway."))
   "Execute source blocks as steps.
-By default blocks execute one by one with forward.  You can mark a block to
-be special with the keyword:
+By default blocks execute one by one as individual steps with
+`dslide-deck-forward'.  To run blocks in another direction, set
+a :direction parameter on the block.  You can set a single
+parameter or a vector of parameters.
 
-- #+attr_dslide: begin
+- forward:  The default, only run on `dslide-deck-forward'
 
-- #+attr_dslide: forward
+- backward: Only run on `dslide-deck-backward'
 
-- #+attr_dslide: backward
+- both: Combines forward and backward
 
-- #+attr_dslide: both
+- begin: Runs when the slide is entered going forward
 
-- #+attr_dslide: end
+- end: Runs when the slide is entered going backward
 
-- #+attr_dslide: final
+- init: Combines begin and end, running on every slide entry
+
+- final: Runs on slide exit, regardless of direction
+
+The old #+attr_dslide: style will no longer be used.  This is to allow
+the keyword to be used to configure other actions, which need to be
+allowed to use the first element as the class identifier.
 
 Other than both, which executes in either step direction,
 these keywords correspond to the normal methods of the stateful
@@ -1477,17 +1486,38 @@ steps.")
              ;; seems we do not need to un-hide the results.
              (push overlay dslide-overlays))))))))
 
-(defun dslide--method-block-pred (method-names &optional unnamed)
-  "Return a predicate to match the METHOD-NAMES.
-Optional UNNAMED will return unnamed blocks as well."
+(defun dslide--method-block-pred (methods &optional unnamed)
+  "Return a predicate to match the METHODS.
+Optional UNNAMED will return unnamed blocks as well.  This is
+used when going forward, the default."
   (lambda (block)
-    (if-let* ((all-names (car (org-element-property
-                               :attr_dslide block)))
-              (names (string-split all-names)))
-        (when (seq-intersection method-names names)
-          block)
-      (when unnamed
+    (let* ((deprecated (dslide--old-babel-attr block))
+           (raw-params (org-element-property :parameters block))
+           (params (when raw-params (dslide-read-plist raw-params 0 t)))
+           (found (or (plist-get params :direction) deprecated))
+           (eval (plist-get params :eval))
+           (ignored (member eval '(no never never-export no-export))))
+      (when (and (not ignored)
+                 (or (and (null found) unnamed)
+                     (cond
+                      ((vectorp found) (seq-intersection methods found))
+                      ;; ☢️ This works for quoted lists.  Unquoted lists cannot
+                      ;; be used because org mode, not dslide, tries to
+                      ;; evaluate them like an idiot.
+                      ((listp found) (seq-intersection methods (cadr found)))
+                      ((symbolp found) (member found methods)))))
         block))))
+
+(defun dslide--old-babel-attr (block)
+  "Return directions on blocks that have the old style.
+And warn the user to update so we can deprecate."
+  (when-let ((found (org-element-property :attr_dslide block)))
+    (delay-warning '(dslide dslide-babel dslide-babel-attr-deprecated)
+                   (format "Old style babel configuration found at line %s"
+                           (without-restriction
+                             (line-number-at-pos
+                              (org-element-property :begin block)))))
+    (mapcar #'intern-soft found)))
 
 ;; Executing babel seems to widen and also creates messages, and this would
 ;; result in flashing.  Re-display is inhibited at the deck level to prevent
@@ -1555,19 +1585,19 @@ The affiliated keywords look like:
 
 The possible values for METHOD-NAME correspond to the
 stateful-sequence class methods.  METHOD-NAME is a string."
-  (let ((predicate (dslide--method-block-pred (list method-name))))
+  (let ((predicate (dslide--method-block-pred method-name)))
     (dslide-section-map obj 'src-block predicate)))
 
 (cl-defmethod dslide-forward ((obj dslide-action-babel))
   (when-let* ((predicate (dslide--method-block-pred
-                          '("forward" "both") t))
+                          '(forward both) t))
               (next (dslide-section-next obj 'src-block predicate)))
     (dslide--block-execute next)
     (org-element-property :begin next)))
 
 (cl-defmethod dslide-backward ((obj dslide-action-babel))
   (when-let* ((predicate (dslide--method-block-pred
-                          '("backward" "both")))
+                          '(backward both)))
               (prev (dslide-section-previous obj 'src-block predicate)))
     (dslide--block-execute prev)
     (org-element-property :begin prev)))
@@ -1576,7 +1606,7 @@ stateful-sequence class methods.  METHOD-NAME is a string."
   (when (oref obj remove-results)
     (dslide--clear-all-results obj))
   (dslide--hide-non-exports obj)
-  (when-let ((block-elements (dslide--get-blocks obj "begin")))
+  (when-let ((block-elements (dslide--get-blocks obj '(begin init))))
     (mapc #'dslide--block-execute block-elements)))
 
 (cl-defmethod dslide-end ((obj dslide-action-babel))
@@ -1586,11 +1616,11 @@ stateful-sequence class methods.  METHOD-NAME is a string."
     (dslide--clear-all-results obj))
   (dslide--hide-non-exports obj)
   (dslide-marker obj (org-element-property :end (dslide-heading obj)))
-  (when-let ((block-elements (dslide--get-blocks obj "end")))
+  (when-let ((block-elements (dslide--get-blocks obj '(end init))))
     (mapc #'dslide--block-execute block-elements)))
 
 (cl-defmethod dslide-final :after ((obj dslide-action-babel))
-  (when-let ((block-elements (dslide--get-blocks obj "final")))
+  (when-let ((block-elements (dslide--get-blocks obj '(final))))
     (mapc #'dslide--block-execute block-elements))
   (when (oref obj remove-results)
     (dslide--clear-all-results obj)))
@@ -2969,30 +2999,6 @@ for commands without visible side effects."
          (display-warning
           '(dslide) (cdr err))))
       (reverse classes-with-args))))
-
-(defun dslide-element-plist (property element)
-  "Return a plist from ELEMENT for PROPERTY.
-PROPERTY can be an affilated keyword property or another property.  The
-only requirement is that the value of PROPERTY must be a string or list
-of strings.  We will attempt to parse the value using `read-from-string'
-and cons the results into a plist.  `plist-get' always returns the first
-key.  It is the user's responsibility not to overload keys and expect
-more than first-key wins behavior."
-  (when-let* ((plist-strings (org-element-property property element))
-              (plist-strings (if (listp plist-strings) plist-strings
-                               (list plist-strings))))
-    (let (result)
-      (while-let ((plist-string (pop plist-strings)))
-        (let ((pos 0))
-          (condition-case nil
-              (while pos
-                (let* ((key (read-from-string plist-string pos))
-                       (val (read-from-string plist-string (cdr key))))
-                  (push (car key) result)
-                  (push (car val) result)
-                  (setq pos (cdr val))))
-            (end-of-file nil))))
-      (nreverse result))))
 
 (defun dslide--parse-class (class)
   "Return a class or signal error if CLASS is not a class."
