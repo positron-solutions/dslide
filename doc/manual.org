@@ -331,6 +331,9 @@ The ~dslide-action-kmacro~ will run pre-recorded sequences of keystrokes as if y
 
 By playing back keyboard macros, you can encode real Emacs workflows as steps in a presentation.  Don't just talk about how your software works.  Use the software with fully reproducible steps that users can understand in a tactile, human way.
 
+#+cindex: transcribing keyboard macros as steps
+To record kmacros as presentation steps, use the ~dslide-kmacro-transcribe-set-mark~ command.  It will save a marker and every time you call ~kmacro-end-macro~, it will transcribe that macro as an expression that ~dslide-action-kmacro~ knows how to play back.
+
 🆒 The jitter uses a Laplace distribution to sample a perturbation power.  This power is mapped onto the zero-to-infinity factor range by raising e to the power of jitter.  This is multiplied by =:frequency=, which is a duration.  As a result, while the jitter is usually pretty small, it does have some wild variation, which does look a bit more human.
 ** Hiding Markup 🥷🏿
 :PROPERTIES:

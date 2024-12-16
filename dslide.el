@@ -379,6 +379,20 @@ on in the contents view.  The default is also just a way more
 obvious display style."
   :type 'boolean)
 
+(defcustom dslide-kmacro-transcribe-hook nil
+  "Hook run whenever dslide transcribes a keyboard macro.
+Maybe add a highlight on the recorded macro to make it more
+obvious when a new one was recorded.  I don't know.  It's your
+hook.  I just work here."
+  :type 'hook)
+
+(defcustom dslide-kmacro-transcribe-prompt "Label for transcribed macro: "
+  "Ask for a comment to label newly transcribed macros.
+Transcribed macros can have a comment prepended to make it
+obvious what they do.  Set this prompt to nil if you don't wish
+to be bothered while recording."
+  :type 'string)
+
 (defface dslide-contents-selection-face
   '((t :inherit org-level-1 :inverse-video t :extend t))
   "Face for highlighting the current slide root.")
@@ -404,6 +418,14 @@ See `dslide-base-follows-slide'.")
 
 (defvar dslide--kmacro-timer nil
   "Allow cleanup and prevent macros from running concurrently.")
+
+(defvar dslide--kmacro-transcribe-mark nil
+  "Marker storage for macro transcription.")
+
+(defvar dslide--kmacro-transcribe-last nil
+  "Most recently transcribed keyboard macro.
+Uses eq comparison in case there are two calls to
+`kmacro-end-macro' for the same macro.")
 
 ;; Tell the compiler that these variables exist
 (defvar dslide-mode)
@@ -3067,6 +3089,34 @@ for commands without visible side effects."
     (let ((message-log-max nil))
       (message "%s" feedback))))
 
+(defun dslide--kmacro-transcribe (&rest _)
+  "Records each new kmacro as a new dslide action keyword."
+  (unless dslide--kmacro-transcribe-mark
+    (dslide-kmacro-transcribe-quit))
+  (when-let ((macro last-kbd-macro))
+    ;; TODO seems like kmacro-end-macro is smart enough that we don't need to
+    ;; check this
+    (if (eq macro dslide--kmacro-transcribe-last)
+        (display-warning '(dslide dslide-kmacro)
+                         "Duplicate macro recording detected")
+      (with-current-buffer (marker-buffer dslide--kmacro-transcribe-mark)
+        (goto-char (marker-position dslide--kmacro-transcribe-mark))
+        (when-let ((visible (get-buffer-window (current-buffer) 'visible)))
+          (set-window-point visible (point)))
+        (beginning-of-line)
+        (unless (looking-at-p "^[[:space:]]*$")
+          (user-error "Transcription mark not on emptly line.\
+  Reset and run `kmacro-end-macro'"))
+        (when dslide-kmacro-transcribe-prompt
+          (when-let ((comment (read-string dslide-kmacro-transcribe-prompt)))
+            (insert (format "# %s\n" comment))))
+        ;; TODO add some highlighting of recorded macro
+        (insert (format "#+dslide_kmacro: :keys %S\n\n" macro))
+        (set-marker dslide--kmacro-transcribe-mark (point))
+        (run-hooks 'dslide-kmacro-transcribe-hook))
+      (setq dslide--kmacro-transcribe-last macro)
+      (message "Macro transcribed!"))))
+
 ;; TODO these could check for inheritance from some base class, which would save
 ;; people who write action names in the class property etc.
 (defun dslide--classes (class-names)
@@ -3446,6 +3496,45 @@ Call `dslide-cursor-restore' to revert."
   (setq-local cursor-type (default-value 'cursor-type)))
 
 ;; * User Commands
+
+;;;###autoload
+(defun dslide-kmacro-transcribe-set-mark ()
+  "Sets a current mark for trnascribing macros for plaback.
+Point must be on an empty line, in an org buffer.  Every call to
+`kmacro-end-macro' will check if there is a new macro and insert
+it as a dslide action."
+  (interactive)
+  (unless (derived-mode-p 'org-mode)
+    (user-error "Not org mode"))
+  (unless (save-excursion
+            (beginning-of-line)
+            (looking-at-p "^[[:space:]]*$"))
+    (user-error "Not on an empty line"))
+  (setq dslide--kmacro-transcribe-mark
+        (save-excursion
+          (beginning-of-line)
+          (point-marker)))
+  (push-mark (point))
+  (advice-add #'kmacro-end-macro
+              :after #'dslide--kmacro-transcribe)
+  (message "Transcription ready!"))
+
+;;;###autoload
+(defun dslide-kmacro-transcribe-quit ()
+  "Stop transcribing new macros."
+  (interactive)
+  (unless (or (advice-member-p #'dslide--kmacro-transcribe
+                               #'kmacro-end-macro)
+              dslide--kmacro-transcribe-last
+              dslide--kmacro-transcribe-mark)
+    (user-error "Not transcribing"))
+  (advice-remove #'kmacro-end-macro
+                 #'dslide--kmacro-transcribe)
+  (setq dslide--kmacro-transcribe-last nil)
+  (when dslide--kmacro-transcribe-mark
+    (set-marker dslide--kmacro-transcribe-mark nil))
+  (setq dslide--kmacro-transcribe-mark nil)
+  (message "Transcription stopped."))
 
 ;;;###autoload
 (defun dslide-deck-stop ()

@@ -441,6 +441,7 @@ The essence of democracy is the resolve of individuals working together to shape
 * Keyboard Macros
 /New feature!/  You can play back keyboard macros.
 
+Check the Dslide manual. =M-x info-display-manual dslide=.  There is a new command called ~dslide-kbd-macro-mark-set~ that will transcribe macros whenever you finish recording one.  Each macro will be a step in the presentation.  Pretty gnarly, dude. 🐢
 ** Keyboard Macro Example ✨
 Press ➡️ to run the (invisible) recorded macro 🤠.
 

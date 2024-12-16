@@ -15,6 +15,8 @@
 - New actions (*KMACROS!*) fit a more clear pattern
 ** Added ➕
 - 🧬 Experimental new kmacro action can run keyboard kmacros to script "live demonstrations".  Describe ~dslide-action-kmacro~ to view the documentation.  There is a demo in the usual [] file.  All related functions and variables are under the =dslide-action-kmacro= or =dslide-kmacro= prefixes.
+- 🧬 Experimental keyboard macro recording with ~dslide-kmacro-transcribe-set-mark~, every time you call ~kmacro-end-macro~, dslide will transcribe a macro playback expression into your presentation.  All related commands, functions, and variables are under the =dslide-kmacro-transcribe= prefix
+- ~dslide-deck-present~ is a distinct command from ~dslide-deck-start~.  It will create a new frame instead of showing the presentation in the current frame.  The ~dslide-present-hook~ will be run in this frame when the deck is ready.  If you customize this hook, you can easily separate configuration for development and presentation.
 - Babel blocks, which will now all be executed by default, respect the =:eval= parameter.  Values such as =never= or =never-export= will skip the block.  Other values are equivalent to =yes=.  Values like =query= do *not* ask yet.  Expect that in 0.7.0. 🚧
   #+begin_src org
     ,#+begin_src elisp :eval never
