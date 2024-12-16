@@ -19,6 +19,7 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 ** Programmable Org Presentation 🦄
 - Per-element configurable behavior through extensible actions
 - Script steps in your presentation with *Org babel blocks*
+- Incorporate anything Emacs does with *keyboard macro playback*
 - Convenient API for quickly writing reliable custom actions for reuse
 - Decent out-of-the-box results with existing org documents
 *** Status 💹

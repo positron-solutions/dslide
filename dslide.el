@@ -41,9 +41,10 @@
 ;; DSL IDE creates presentations out of org mode documents.  Every single step
 ;; in a presentation can be individually configured or customized.  Org
 ;; headings and elements are configured with extensible actions.  Custom steps
-;; can be scripted with babel blocks.  Frequent customizations can be made
-;; into custom actions.  DSL IDE achieves a good result with no preparation
-;; but can achieve anything Emacs can display if you need it to.
+;; can be scripted with babel blocks.  Keyboard macros can play back real
+;; command sequences.  Frequent customizations can be made into custom
+;; actions.  DSL IDE achieves a good result with no preparation but can
+;; achieve anything Emacs can display if you need it to.
 ;;
 ;; To try it out, install this package and load the demo.org found in the test
 ;; directory of the repository.  `dslide-deck-start' will begin the
@@ -319,6 +320,7 @@ keyword."
 ;; TODO test the use of plist args
 (defcustom dslide-default-actions '(dslide-action-hide-markup
                                     dslide-action-propertize
+                                    dslide-action-kmacro
                                     dslide-action-babel
                                     dslide-action-image)
   "Actions that run within the section display action lifecycle.
@@ -399,6 +401,9 @@ See `dslide-base-follows-slide'.")
 
 (defvar dslide--animation-timers nil)
 (defvar-local dslide--animation-overlays nil)
+
+(defvar dslide--kmacro-timer nil
+  "Allow cleanup and prevent macros from running concurrently.")
 
 ;; Tell the compiler that these variables exist
 (defvar dslide-mode)
@@ -1853,6 +1858,144 @@ Only affects standalone-display.")
                        (org-element-property :end e))))
          (overlay-put overlay 'invisible t)
          (push overlay dslide-overlays))))))
+
+;; ** Kmacro Action
+
+(defclass dslide-action-kmacro (dslide-action)
+  ((frequency
+    :initform 0.07
+    :initarg :frequency
+    :documentation "Peak duration between keystrokes.
+Peak is not a maximum.  Most durations will be around this value.  Jitter will
+result in some being larger and smaller.")
+   (jitter
+    :initform 0.4
+    :initarg :jitter
+    :documentation "Shape parameter for jitter between keystrokes.
+This simulates a human typing.  The math uses a long-tailed
+Laplace distribution (the only good distribution for serious
+work).  Larger values of jitter will result in more variation in
+frequency.  Values of 0.1 to 1.0 are reasonable.  Must be
+greater than 0.0.  Values of 0.0 will result in no jitter."))
+  "🚧 UNSTABLE! Playback keyboard macros stored in keywords.
+We hope the new format is flexible enough to add features.  But
+we will break it as soon as possible to avoid pain if necessary
+and then advise you how to update inside the NEWS (Release notes
+on Github)
+
+Beware!  Macros run amok will sell your entire stock portfoloio,
+upload all your personal data to pastebin, and confess to
+multiple crimes you probably didn't commit.  They are not
+portable from configuration to configuration.  They are however
+very special in that they replicate how you use Emacs.")
+
+(cl-defmethod dslide-final :after ((_obj dslide-action-kmacro))
+  ;; todo clean up any animation
+  (when dslide--kmacro-timer
+    (cancel-timer dslide--kmacro-timer)
+    (setq dslide--kmacro-timer nil)))
+
+;; Default end method behavior plays all steps forward, which would wreck the
+;; last hope of every nightmare.
+(cl-defmethod dslide-end ((obj dslide-action-kmacro))
+  (dslide-marker obj (org-element-property :end (dslide-heading obj))))
+
+(cl-defmethod dslide-forward ((obj dslide-action-kmacro))
+  ;; TODO Erroring within an action usually allows retry.  Let's find out.  🤠
+  (when dslide--kmacro-timer
+    (user-error "Dslide keyboard macro already running"))
+  (when-let ((keyword (dslide-section-next
+                       obj 'keyword
+                       (lambda (e)
+                         (when (string= (org-element-property :key e)
+                                        "DSLIDE_KMACRO")
+                           e)))))
+    (let* ((value (org-element-property :value keyword))
+           (params (dslide-read-plist value)))
+      ;; TODO warn when direction is wrong.
+      (when (or (eq 'forward (plist-get params :direction))
+                (not (member :direction params)))
+        (dslide--kmacro-reanimate
+         :last-input last-command-event
+         :frequency (or (plist-get params :frequency) (oref obj frequency))
+         :jitter (or (plist-get params :jitter) (oref obj jitter))
+         :index 0
+         :keys (plist-get params :keys))
+        (org-element-property :begin keyword)))))
+
+(cl-defmethod dslide-backward ((obj dslide-action-kmacro))
+  (when dslide--kmacro-timer
+    (user-error "Dslide keboard macro already running"))
+  (when-let ((keyword (dslide-section-next
+                       obj 'keyword
+                       (lambda (e) (when (string= (org-element-property :key e)
+                                             "DSLIDE_KMACRO")
+                                     e)))))
+    (let* ((value (org-element-property :value keyword))
+           (params (dslide-read-plist value)))
+      (when (eq 'backwards (plist-get params :direction))
+        (dslide--kmacro-reanimate
+         :last-input last-command-event
+         :frequency (or (plist-get params :frequency) (oref obj frequency))
+         :jitter (or (plist-get params :jitter) (oref obj jitter))
+         :index 0
+         :keys (plist-get params :keys))
+        (org-element-property :begin keyword)))))
+
+;; ⚠️ The implementation needs to return or else the normal command loop is in
+;; the way of the keys being read and only the last event pops out.  Thanks,
+;; Elisp.  For now, a recursive timer is the only way I've found to make this
+;; work.  Maybe threads will work.  We'll see.
+(defun dslide--kmacro-reanimate (&rest args)
+  "Play keys in ARGS back like the piano man.
+This function recursively calls itself via a timer until it runs
+out of keys in ARGS.  It compares the most recent input with
+`last-input-event' so that it can detect if it has been
+interrupted by some other input event and quit."
+  (let ((frequency (plist-get args :frequency))
+        (jitter (plist-get args :jitter))
+        (keys (plist-get args :keys))
+        (last-input (plist-get args :last-input))
+        (index (plist-get args :index)))
+    (if (eq last-input last-input-event)
+        (if (length> keys index)
+            (let ((k (aref keys index)))
+              (setq unread-command-events (list k))
+              (setq dslide--kmacro-timer
+                    (run-with-timer
+                     (dslide--laplace-jitter frequency jitter)
+                     nil #'dslide--kmacro-reanimate
+                     :last-input k
+                     :keys keys :index (1+ index)
+                     :frequency frequency :jitter jitter)))
+          (setq dslide--kmacro-timer nil))
+      ;; TODO attempt to block unwanted input.  Test other implementations.
+      (setq dslide--kmacro-timer nil)
+      (message "Out-of-band input detected: %s" last-input-event)
+      (message "Aborting playback."))))
+
+(defun dslide--laplace-jitter (freq jitter)
+  "Mutate FREQ by JITTER shape parameter.
+Jitter is the b parameter of the Laplace distribution, the only
+good distribution for serious work.  Larger b causes a fatter
+tail.  In practice, small JITTER will be more predictable, but
+never without some larger variations.
+
+Because the Laplace distribution has a fat tail, you aren't
+forced to choose between good local refinement and good mixing
+speeds and lower auto-correlation.  💡"
+  (cond ((integerp jitter) (error "Jitter was integer: %s" jitter))
+        ((= jitter 0.0) freq)
+        ((< jitter 0.0) (error "Jitter too low: %s" jitter))
+        ;; Elisp has no random float because 💩
+        (t (let* ((p (/ (random 1000000) 1000000.0))
+                  (p (min 0.99 (max 0.01 p))) ; clamp extreme 2%
+                  (sample (if (> p 0.5)
+                              ;; - (self.b * (2.0 - 2.0 * p).ln())
+                              (- (* jitter (log (- 2.0 (* 2.0 p)) float-e)))
+                            ;; self.b * (2.0 * p).ln()
+                            (* jitter (log (* 2.0 p) float-e)))))
+             (* freq (expt float-e sample))))))
 
 ;; * Slide Actions
 ;; A slide action will generally control the restriction, hydrate children, and

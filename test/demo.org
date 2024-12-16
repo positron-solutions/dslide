@@ -438,6 +438,35 @@ Massachusetts, in particular, has always been one of the laboratories of democra
 Democracy depends on an informed citizenry and the social cohesion that those citizens can show even when they disagree.
 
 The essence of democracy is the resolve of individuals working together to shape our institutions and our society in ways that allow all of us to flourish.
+* Keyboard Macros
+/New feature!/  You can play back keyboard macros.
+
+** Keyboard Macro Example ✨
+Press ➡️ to run the (invisible) recorded macro 🤠.
+
+# M-x animate-birthday-present dslide
+#+dslide_kmacro: :frequency 0.09 :jitter 0.4 :keys [134217848 97 110 105 109 97 116 101 45 98 105 114 116 104 100 97 121 45 112 114 101 115 101 110 116 return 100 115 108 105 100 101 return]
+
+🚧 Please try this feature.  Open issues.  Keep in mind that keyboard macros are not very reproducible.  They likely only work on your configuration.  It is a great way to demonstrate using your shell etc while not having to type. 💡
+
+# If the user has M-x remapped, we should at least warn them.
+#+begin_src elisp :direction init :exports none :results none
+  (unless (or (eq (key-binding (kbd "M-x")) #'execute-extended-command)
+              (eq (command-remapping 'execute-extended-command)
+                  (key-binding (kbd "M-x"))))
+    (org-back-to-heading)
+    (re-search-forward "🤠." nil t)
+    (let ((o (make-overlay (1- (point)) (point))))
+      (overlay-put o 'after-string
+                   (propertize "  ⚠️ Your M-x appears remapped!  Press ⬆️ and skip this example." 'face 'warning))
+      (push o dslide-overlays)))
+#+end_src
+
+# Clean up the buffer if it was created
+#+begin_src elisp :direction final :exports none :results none
+  (when-let ((birthday (get-buffer "*A-Present-for-Dslide*")))
+    (kill-buffer birthday))
+#+end_src
 * Enjoy!
 - This package use used to create videos on Positron's own [[https://www.youtube.com/channel/UCqM0zDcFNdAHj7uQkprLszg/][YouTube ]] channel
 - File issues and request features to give us ideas about usage and need

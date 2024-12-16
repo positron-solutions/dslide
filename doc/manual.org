@@ -27,7 +27,7 @@ Dslide is conducts presentations in Emacs and can utilize anything and everythin
 What dslide primarily adds to Emacs and Org Mode:
 
 - Simplified user interface suitable for a presentation remote controller
-- Data model that adapts Emacs to this interface
+- Data model that adapts Emacs to this interface, including Org babel and keyboard macros
 - Method of attaching reusable, configurable programmed behavior to org mode content
 - Extensible framework for creating custom programmed behavior
 - Presenter tools such as viewing hidden content invisible to the audience
@@ -39,8 +39,10 @@ Granular configurability was the first goal.  Dslide's predecessor, ~org-tree-sl
 
 Programmability quickly became primary motivation to develop dslide further.  Org babel blocks can be used as steps of a dslide presentation.  The action system is a framework for attaching reusable, configurable programmed behavior to multiple org elements.
 
-High productivity was another goal.  With a decent org configuration, use basic markup to obtain a decent presentation.  Org mode's properties and keywords are used to attach and configure reusable behavior to elements and headings.  Dslide respects export settings, allowing content to vary between presentation and export.  You can use the presentation org document itself the same way you use other org documents, to store, organize, and publish information.
-** Strengths
+If Emacs does it, dslide can present it.  As Emacs can use all of your programs and programming tools, so can dslide.  This includes both scripting through Elisp and command-based keyboard macros.  Dslide aims to integrate with other buffers and Emacs automation seemlessly.
+
+High productivity was another goal.  By respecting export settings and cleaning up markup, dslide aims to re-use the same documents you already use for storing, organizing, and publishing information.  Dslide adds a bit of flair so that, with a decent org configuration, you get a decent result with little extra effort.
+** Strengths 🦾
 :PROPERTIES:
 :DESCRIPTION: When Dslide is Perfect
 :END:
@@ -102,6 +104,7 @@ Select org mode terms more frequently used by dslide.  Don't miss [[info:org#Org
 Documents should "just work" and obtain decent results.
 
 - Add behavior to elements by enabling and configuring [[Actions 🪄][actions]]
+- Add custom behavior with babel blocks and keyboard macros
 - Create custom actions to use different kinds of data in reusable ways
 ** Actions 🪄
 :PROPERTIES:
@@ -120,6 +123,7 @@ To browse all actions, because they are all EIEIO classes, you can use ~eieio-br
             +--dslide-action-propertize
             +--dslide-action-image
             +--dslide-action-babel
+            +--dslide-action-kmacro
             +--dslide-action-item-reveal
             +--dslide-action-hide-markup
             +--dslide-slide-action
@@ -147,13 +151,13 @@ Some actions, such as ~dslide-action-propertize~, can't decide which elements to
 🚧 This is the preferred style of configuration moving forward.
 
 ℹ️ Affiliated keywords /must/ have the =attr= prefix or they will not apply to the content they precede.  Affiliated keywords cannot be attached to headings, which must use their property drawer to attach data.
+*** Keyword
+:PROPERTIES:
+:DESCRIPTION: The markup is the content
+:END:
+For some actions, the configuration /is/ the content.  They use a keyword.  The value of the keyword is the content for the action.  As elsewhere, use plist =:key value= style configuration.
 #+begin_src org
-  ,* Full Screen Images
-  :PROPERTIES:
-  :DSLIDE_ACTIONS: dslide-action-images
-  :END:
-  ,#+attr_html: :width 50%
-  [[./images/emacsen4.jpeg]] [[./images/before-google3.jpeg]]
+  ,#+dslide_kmacro: :keys [134217848 97 110]
 #+end_src
 *** Property Drawer
 :PROPERTIES:
@@ -205,8 +209,12 @@ Configuring is usually done by adding plist-style =:key value= arguments after t
   :DSLIDE_ACTIONS: dslide-action-item-reveal :inline t
   :END:
 
-  ,#+attr_dslide_propertize: face (:background "#ddddff" :foreground "#000000" :weight bold :height 2.0)
-  This is some fancy text
+  # A keyword configuration
+  ,#+dslide_kmacro: :frequency 0.08 :jitter 0.5 :keys [134217848 97 110 ]
+
+  # An affiliated keyword configuration
+  ,#+attr_dslide_propertize: face '(:background "#ddddff")
+  This text will be propertized
 #+end_src
 🚧 After class names, the current plist read implementation splits the string rather than using ~read-string~ and is therefore not smart enough to parse lists as arguments.  However ~dslide-action-propertize~ demonstrates doing this correctly and shows that it will be possible if needed.
 ** Babel Scripting 🧑‍💻
@@ -313,6 +321,17 @@ The callback function should accept a DIRECTION argument.  DIRECTION is forward,
 
 #+end_src
 ℹ️ You can also use ~dslide-push-step~ in actions for implementing tricky action behaviors.  The image action uses this currently.
+** Keyboard Macros 🤖
+:PROPERTIES:
+:DESCRIPTION: Acting like you type well while talking
+:END:
+🧪 Experimental new feature.  Hopefully the configuration argument names are good.  Hopefully.
+
+The ~dslide-action-kmacro~ will run pre-recorded sequences of keystrokes as if you are controlling the computer.  Through =:frequency= and =:jitter=, it plays back strokes at a human-feeling pace.
+
+By playing back keyboard macros, you can encode real Emacs workflows as steps in a presentation.  Don't just talk about how your software works.  Use the software with fully reproducible steps that users can understand in a tactile, human way.
+
+🆒 The jitter uses a Laplace distribution to sample a perturbation power.  This power is mapped onto the zero-to-infinity factor range by raising e to the power of jitter.  This is multiplied by =:frequency=, which is a duration.  As a result, while the jitter is usually pretty small, it does have some wild variation, which does look a bit more human.
 ** Hiding Markup 🥷🏿
 :PROPERTIES:
 :DESCRIPTION: No More Ugly
