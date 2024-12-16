@@ -318,7 +318,8 @@ keyword."
 
 ;; TODO test the use of plist args
 (defcustom dslide-default-actions '(dslide-action-hide-markup
-                                    dslide-action-propertize)
+                                    dslide-action-propertize
+                                    dslide-action-image)
   "Actions that run within the section display action lifecycle.
 It's value is a list of symbol `dslide-action' sub-classes or (CLASS
 . ARGS) forms where ARGS is a plist.  Each subclass will be instantiated
@@ -1648,25 +1649,24 @@ Only affects standalone-display.")
           (dslide-section-map
            obj 'link
            (lambda (e)
-             (let ((overlay (make-overlay
-                             (1- (org-element-property :begin e))
-                             (org-element-property :end e))))
-               (overlay-put overlay 'invisible t)
-               (push overlay (oref obj overlays)))))))
+             (when (dslide--element-image-p e)
+               (let ((overlay (make-overlay
+                               (1- (org-element-property :begin e))
+                               (org-element-property :end e))))
+                 (overlay-put overlay 'invisible t)
+                 (push overlay (oref obj overlays))))))))
 
     ;; If not showing in buffer at all, just hide the links
     (dslide-section-map
      obj 'link
      (lambda (e)
-       (let ((overlay (make-overlay
-                       (1- (org-element-property :begin e))
-                       (org-element-property :end e))))
-         (overlay-put overlay 'invisible t)
-         (push overlay (oref obj overlays)))))))
+       (when (dslide--element-image-p e)
+         (let ((overlay (make-overlay
+                         (1- (org-element-property :begin e))
+                         (org-element-property :end e))))
+           (overlay-put overlay 'invisible t)
+           (push overlay (oref obj overlays))))))))
 
-;; TODO implementation relies on org link opening.  Does not check for file or
-;; check that image mode displays the link correctly.
-;; TODO make it just a link action?
 (cl-defmethod dslide-forward ((obj dslide-action-image))
   ;; When just revealing images without doing standalone display, we can
   ;; reverse in place, hiding and showing the same image when changing
@@ -1677,7 +1677,8 @@ Only affects standalone-display.")
          (slide-display (oref obj slide-display))
          (reverse-in-place (and (eq slide-display 'reveal)
                         (null standalone-display))))
-    (when-let ((link (dslide-section-next obj 'link nil reverse-in-place)))
+    (when-let ((link (dslide-section-next
+                      obj 'link #'dslide--element-image-p reverse-in-place)))
       ;; Show the image standalone
       (when (member standalone-display '(full-frame window t))
         (dslide-push-window-config nil)
@@ -1718,7 +1719,8 @@ Only affects standalone-display.")
                       (overlay-put overlay 'invisible t)
                       (push overlay (oref obj overlays)))
                     ;; Punch the progress tracking marker
-                    (dslide-section-previous obj 'link nil reverse-in-place)
+                    (dslide-section-previous
+                     obj 'link #'dslide--element-image-p reverse-in-place)
                     t))))))
           ;; Restore the buffer after we're done
           (set-buffer (oref dslide--deck slide-buffer))))
@@ -1745,7 +1747,8 @@ Only affects standalone-display.")
          (slide-display (oref obj slide-display))
          (reverse-in-place (and (eq slide-display 'reveal)
                         (null standalone-display))))
-    (when-let ((link (dslide-section-previous obj 'link nil reverse-in-place)))
+    (when-let ((link (dslide-section-previous
+                      obj 'link #'dslide--element-image-p reverse-in-place)))
       (when (member standalone-display '(full-frame window t))
         (dslide-push-window-config nil)
         ;; TODO success detection
@@ -2467,6 +2470,14 @@ be a list of types or a type from `org-element-all-elements.'"
     (if (listp type)
         (member element-type type)
       (eq element-type type))))
+
+(defun dslide--element-image-p (element)
+  (and (eq 'link (org-element-type element))
+       (when-let ((type (org-element-property :type element)))
+         (and (eq 'file (intern-soft type))
+              (org-file-image-p (org-element-property
+                                 :path element))
+              element))))
 
 ;; TODO cruft
 (defun dslide--heading-p (element)
