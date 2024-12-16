@@ -4,36 +4,27 @@
 
 #+export_file_name: ../README.md
 #+options: toc:t broken-links:nil num:nil
-
+#+link: demo.org https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org
 #+begin_export html
 <!-- !!!THIS FILE HAS BEEN GENERATED!!! Edit README.org -->
 #+end_export
-
+* Domain Specific sLIDEs
 #+begin_export markdown
 https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-968f-5f5b1989a868
 #+end_export
-
 #+begin_export html
 <a href="https://melpa.org/#/dslide"><img src="https://melpa.org/packages/dslide-badge.svg" alt="melpa package"></a> <a href="https://stable.melpa.org/#/dslide"><img src="https://stable.melpa.org/packages/dslide-badge.svg" alt="melpa stable package"></a>
 <a href="https://elpa.nongnu.org/nongnu/dslide.html"><img src="https://elpa.nongnu.org/nongnu/dslide.svg" alt="Non-GNU ELPA"></a>
 #+end_export
-
-* Present Org Documents 🦄
-:PROPERTIES:
-:UNNUMBERED: notoc
-:END:
-- Per-heading configurable behavior
-- Nested or independent child slides
-- Header with breadcrumbs generated from document keywords
-- Actions that consume typical org data in smart ways
-** Fully Programmable  ✨
-- Script steps in your presentation with Org babel blocks
-- Incorporate *anything* Emacs does into a presentation
+** Programmable Org Presentation 🦄
+- Per-element configurable behavior through extensible actions
+- Script steps in your presentation with *Org babel blocks*
 - Convenient API for quickly writing reliable custom actions for reuse
-** Status 💹
-Version 0.5.5 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates and related demonstrations.
-#+include: "manual.org::*Status" :only-contents t
-* Installation
+- Decent out-of-the-box results with existing org documents
+*** Status 💹
+Version 0.6.0 retains bearable yee-haw 🤠.  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates and related demonstrations.
+#+include: "manual.org::*Status 🤠" :only-contents t
+** Installation
 :PROPERTIES:
 :UNNUMBERED: notoc
 :END:
@@ -58,37 +49,39 @@ Version 0.5.5 👷  Subscribe to Positron's [[https://www.youtube.com/@Positron-
 
    ;; or use manual load-path & require, you brave yak shaver
  #+end_src
-** Try It Out
-With just defaults, run ~dslide-deck-start~ on your existing documents.  You can load the examples in the [[file:./test/demo.org][./test/demo.org]] file to see a showcase of configuration behavior.
+*** Try It Out
+[[https://github.com/positron-solutions/dslide.git][Clone]] the repo and then open the [[demo.org][./test/demo.org]] file.  Call ~dslide-deck-start~.  The presentation will explain everything else while demonstrating Dslide.
 
-The default keymap uses arrow keys.  Left and right are ~dslide-deck-forward~ and ~dslide-deck-backward~.  Up is ~dslide-deck-start~ and will show the contents.  Down is ~dslide-deck-stop~ and will stop the slide show.
-* Features
+You will need VLC installed and the [[https://github.com/positron-solutions/moc][Master of Ceremonies]] package to successfully run all examples, but you can skip them in the contents view or start at point on other examples to go around them.
+** Features
 :PROPERTIES:
 :UNNUMBERED: notoc
 :END:
-** Simple User Interface
+*** Simple User Interface
 Fully programmable sequences behind a two-button presentation interface:
 - ~dslide-deck-forward~
 - ~dslide-deck-backward~
-** Contents Navigation
+
+The default ~dslide-mode-map~ uses arrow keys.  Left and right are ~dslide-deck-forward~ and ~dslide-deck-backward~.  Up is ~dslide-deck-start~ and will show the contents.  Down is ~dslide-deck-stop~ and will stop the slide show.
+*** Contents Navigation
 Call ~dslide-contents~ to show a contents overview.  Calling ~dslide-deck-forward~ and ~dslide-deck-backward~ in the contents can quickly move through headings.  Call ~dslide-deck-start~ again to resume the presentation from that point.
-** Narrate While Presenting
+*** Narrate While Presenting
 Check out ~dslide-deck-develop~.  You can see your hidden comments and the approximate progress indications.  Babel actions will highlight blocks as they execute, showing you what just happened.
-** Hide Markup
+*** Hide Markup
 By default, the ~dslide-action-hide-markup~ action is configured in ~dslide-default-actions~.  Looks clean out of the box.  Commented and =:noslide:= or =:noexport:= headings are filtered.  Todos and tags are hidden.
-** Independent Buffer State
+*** Independent Buffer State
 The actual display is done in an indirect buffer.  Your hooks and customizations for presentation will not pollute your editing buffer.  Dirty state will not pile up in your presentation buffer, greatly increasing reliability even if your custom Elisp scripting is sloppy 💩.
 
-#+toc: headlines 2
+#+toc: headlines 3
 
-#+include: "manual.org::*Creating" :minlevel 1
-#+include: "manual.org::*Presenting" :minlevel 1
-#+include: "manual.org::*Configuring" :minlevel 1
-#+include: "manual.org::*Extending" :minlevel 1
-#+include: "manual.org::*Hacking" :minlevel 1
-* Package Pairings
+#+include: "manual.org::*Creating ✏️" :minlevel 2
+#+include: "manual.org::*Presenting 📽️" :minlevel 2
+#+include: "manual.org::*Configuring 🎛️" :minlevel 2
+#+include: "manual.org::*Extending 🧑‍🏭" :minlevel 2
+#+include: "manual.org::*Hacking 🧑‍🔬" :minlevel 2
+** Package Pairings
 These are some packages that are likely to find use alongside dslide.
-** Master of Ceremonies
+*** Master of Ceremonies
 - ~moc-dispatch~ is a set of controls for screen recording.
 - ~moc-focus~ shows small excerpts from buffers fullscreen.
   + It has a transient interface bound to =h=.
@@ -96,14 +89,14 @@ These are some packages that are likely to find use alongside dslide.
   + It makes text pretty for taking screenshots and for captures.
   + It generates playback expressions you can even use as slides.
 [[https://github.com/positron-solutions/moc][Master of Ceremonies]] was written as a companion to dslide and was used in almost every single dslide demonstration video.
-** Org Modern
+*** Org Modern
 Bullets and many prettifications of common org markups.  The markup that you don't hide looks better with org modern.
-** Org Appear
+*** Org Appear
 Never worry about turning on pretty links for a presentation.  Edit them by just moving the point inside.
-** Open Broadcaster Software
+*** Open Broadcaster Software
 Sacha Chua has written an OBS plugin integration helpful for video integration [[https://github.com/sachac/obs-websocket-el][obs-websocket-el]].
-** moom.el
+*** moom.el
 The [[https://github.com/takaxp/moom#org-mode-org-tree-slide][moom]] package contains some commands for resizing text and repositioning frames.
 
-#+include: "manual.org::*Contributing" :minlevel 1
-#+include: "manual.org::*Acknowledgments" :minlevel 1
+#+include: "manual.org::*Contributing 🍔" :minlevel 2
+#+include: "manual.org::*Acknowledgments 🥇" :minlevel 2
