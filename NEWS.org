@@ -12,7 +12,20 @@
 #+export_file_name: RELEASE.md
 
 * v0.6.0 Fighting Spam 💌 :latest:
+- There is less markup (especially for babel)
+- Old actions are easier to use
 - New actions (*KMACROS!*) fit a more clear pattern
+- That pattern has a long-term plan
+** Why Some Changes are Breaking 🤠
+This release captures a lot of the low-hanging fruit of the benefits expected in 0.7.0.  For the most part, what was removed was markup that nobody wanted to write.
+
+0.7.0 will continue in this direction, using less markup and having more of it be similar.  0.7.0 will also make it possible to mix steps from different actions.  That will very nearly bring us to 1.0.
+
+There is a tricky outstanding architectural issue with actions tracking their own progress.  If the changes to custom actions are significant, it will only because it also makes writing new custom actions much, much simpler.
+** More Changes Coming 🧑‍🔧
+⛔ The ~dslide-default-actions~ value will soon go away, becoming deprecated in 0.7.0.  Instead, we will use configurable dispatcher to match elements and set default arguments globally.  The dispatcher will create actions on-demand.
+
+The propertize action is the closest one to working like they will in 0.7.0.  ℹ️ Your custom actions will need to be registered in the dispatcher configuration after 0.7.0.
 ** Added ➕
 - 🧬 Experimental new kmacro action can run keyboard kmacros to script "live demonstrations".  Describe ~dslide-action-kmacro~ to view the documentation.  There is a demo in the usual [] file.  All related functions and variables are under the =dslide-action-kmacro= or =dslide-kmacro= prefixes.
 - 🧬 Experimental keyboard macro recording with ~dslide-kmacro-transcribe-set-mark~, every time you call ~kmacro-end-macro~, dslide will transcribe a macro playback expression into your presentation.  All related commands, functions, and variables are under the =dslide-kmacro-transcribe= prefix
