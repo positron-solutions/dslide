@@ -1859,7 +1859,7 @@ restriction, meaning no progress was made.")
                              &optional with-children)
   (unless (oref obj inline)
     (let* ((heading (dslide-heading obj))
-           (begin (oref obj begin))
+           (begin (org-element-property :begin heading))
            (end (if with-children
                     (org-element-property :end heading)
                   (dslide--section-end heading))))
@@ -2819,22 +2819,20 @@ hooks must occur in the deck's :slide-buffer."
            (slide-buffer-name (format "*deck: %s*" (buffer-name base-buffer))))
       ;; stale buffers likely indicate an issue
       (when-let ((stale-buffer (get-buffer slide-buffer-name)))
+        (kill-buffer slide-buffer-name)
         (display-warning '(dslide dslide--ensure-deck)
-                         "Stale deck buffer was killed")
-        (kill-buffer slide-buffer-name))
-
-      (let* ((class (or (intern-soft (dslide--keyword-value
-                                      "DSLIDE_DECK_CLASS"))
+                         "Stale deck buffer was killed"))
+      (let* ((doc-keywords (org-collect-keywords '("DSLIDE_DECK_CLASS"
+                                                   "DSLIDE_FILTER")))
+             (class (or (dslide--parse-class
+                         (cadr (assoc-string "DSLIDE_DECK_CLASS" doc-keywords)))
                         dslide-default-deck-class
                         'dslide-deck))
-             ;; TODO detect misconfiguration
-             (filter (or (intern-soft (dslide--keyword-value
-                                       "DSLIDE_FILTER"))
-                         #'dslide-built-in-filter))
+             (filter (or (dslide--parse-function
+                          (cadr (assoc-string "DSLIDE_FILTER" doc-keywords)))
+                         dslide-default-filter))
              (window-config (current-window-configuration))
-             (slide-buffer (clone-indirect-buffer
-                            slide-buffer-name
-                            nil))
+             (slide-buffer (clone-indirect-buffer slide-buffer-name nil))
              (deck (apply class
                           :base-buffer base-buffer
                           :slide-buffer slide-buffer
@@ -2887,10 +2885,6 @@ ensure that the slide buffer is visible."
           (display-buffer slide-buffer dslide--display-actions)))
     (set-buffer (oref dslide--deck slide-buffer))))
 
-(defun dslide--keyword-value (key)
-  "Get values like #+KEY from document keywords."
-  (cadr (assoc-string key (org-collect-keywords (list key)))))
-
 (defun dslide--feedback (key)
   "Show feedback message for KEY.
 See `dslide-feedback-messages'.  This provides Explicit feedback
@@ -2942,9 +2936,6 @@ for commands without visible side effects."
                            (format "Only one classes allowed: %s"
                                    (cdr classes-with-args))))))))
 
-(defun dslide--keyword-symbol-p (string)
-  (eq 0 (string-match-p ":\\(?:\\sw\\|\\s_\\)+$" string)))
-
 ;; TODO this reads a flattened alist and really only was necessary when
 ;; actions needed to be configured per slide, not per element.  However, for
 ;; actions that operate mainly via their begin property, we need a trigger
@@ -2960,12 +2951,13 @@ for commands without visible side effects."
           class-with-args)
       (condition-case err
           (while-let ((token (pop tokens))
-                      (class (dslide--class token t)))
+                      (class (dslide--parse-class token)))
             ;; peak for a key to decide if we continue parsing as args go back
             ;; to parsing as class names
             (push class class-with-args)
-            (while-let ((token (car tokens))
-                        (tokenp (dslide--keyword-symbol-p token)))
+            (while-let ((token (intern-soft (car tokens)))
+                        (token (when (keywordp token)
+                                 token)))
               ;; `intern-soft' only creates the symbol if it corresponds to an
               ;; existing class (among other things)
               (push (intern-soft (pop tokens)) class-with-args)
@@ -3002,25 +2994,21 @@ more than first-key wins behavior."
             (end-of-file nil))))
       (nreverse result))))
 
-;; This should not interpret nil's specially because that should he handled
-;; upstream by the parse functions
-(defun dslide--class (class-name &optional signal)
-  "CLASS-NAME is a string or symbol that should be a class name.
-Optional SIGNAL if you want to process `wrong-type-argument' in
-the caller."
-  (let* ((symbol (or (when (symbolp class-name)
-                       class-name)
-                     (intern-soft class-name)))
-         (class (when (get symbol 'cl--class) symbol)))
-    (if (and class symbol)
-        symbol
-      (if signal
-          (signal 'wrong-type-argument
-                  (format "Class name not a class: %s" class-name))
-        (display-warning
-         '(dslide)
-         (format "Class name not a class: %s" class-name))
-        nil))))
+(defun dslide--parse-class (class)
+  "Return a class or signal error if CLASS is not a class."
+  (when-let* ((class (intern-soft class)))
+    ;; signals when `class' is not a class
+    (eieio-class-name (eieio-class-name class))
+    class))
+
+(defun dslide--parse-function (function)
+  "Return function or signal error if FUNCTION is not a function."
+  (when-let* ((fun (intern-soft function)))
+    (if (functionp fun)
+        function
+      (signal 'wrong-type-argument
+              (format "Expected function. Found: %S" function)))))
+
 ;; XXX the text property action lists are unquoted while babel block lists are
 ;; quoted.  It would be better to normalize behavior, unquoted quoted lists
 ;; and warning on unquoted lists.
