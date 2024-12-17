@@ -202,9 +202,8 @@ You may want to set ~org-confirm-babel-evaluate~ to =nil= to avoid being asked a
 
 ** Begin, End, Init, and Final
 If you need to initialize some code, the =begin= and =end= methods can be used.  They run when entering the slide going forwards or backwards, respectively.  To run when entering the slide either way, use =init=.  It is just a combination of =begin= and =end=.  To clean up, use a =final= block.  It always runs when leaving a slide.
-
-Enter this slide going backwards to observe the "end" behavior.
 *** Example
+Enter this slide going backwards to observe the "end" behavior.
 #+begin_src elisp :direction begin
   (setq-local my-dslide-var 'beginning)
 #+end_src
@@ -394,7 +393,7 @@ The babel block below is a custom action supporting both forward, each step maki
 - ~dslide-section-next~
 - ~dslide-section-previous~
 - ~dslide-section-marker~
-#+begin_src elisp elisp :results none :direction init
+#+begin_src elisp :results none :direction init
   (defclass dslide-action-red-paragraphs (dslide-action)
     ((overlays :initform nil))
     "Paint the paragraphs red, one by one.")
