@@ -823,8 +823,14 @@ Presenting 📽️
 
 * Two Button Interface::         Its All Forwards and Backwards
 * Contents Interface::           Navigating Faster
-* Narrating::                    And debugging live
+* Source Following::             Narrating & debugging live
 * Cursor Visibility 🥷::         Hidden by default
+
+Source Following
+
+* Present::                      A frame for slides
+* Develop::                      A window for slides
+* Start Functions::              Kicking things off
 
 Configuring 🎛️
 
@@ -1412,7 +1418,7 @@ How to control and view your presentation.
 @menu
 * Two Button Interface::         Its All Forwards and Backwards
 * Contents Interface::           Navigating Faster
-* Narrating::                    And debugging live
+* Source Following::             Narrating & debugging live
 * Cursor Visibility 🥷::         Hidden by default
 @end menu
 
@@ -1459,8 +1465,10 @@ To enter the contents@comma{} call @code{dslide-deck-start} when a presentation 
 @code{dslide-deck-forward} and @code{dslide-deck-backward} move between top level headings.
 @end itemize
 
-@node Narrating
-@section Narrating
+@node Source Following
+@section Source Following
+
+🚧 The start functions were recently overhauled.  They need user feedback@comma{} both to identify bugs and focus on real uses cases.  @code{dslide-deck-start} should be the most reliable way to start presentations.
 
 The presentation you see is a cloned @ref{Indirect Buffers,indirect buffer,,elisp,} of your org mode buffer. The Elisp state and overlays are independent. There are two key advantages:
 
@@ -1471,11 +1479,9 @@ Any state you create in the presentation (besides buffer text and text propertie
 We can display the source for the presentation simultaneously@comma{} making one pretty while leaving the other to show us what is hidden
 @end itemize
 
-@findex dslide-deck-develop
-@code{dslide-deck-develop} will attempt to display both the presentation and source simultaneously.  Whenever the source is visible@comma{} highlights will be applied to indicate where the presentation is at.  @strong{This is especially helpful for including presentation notes in comments@comma{} which are hidden by default}.
+Using comments and comment blocks@comma{} you can write down prompts or scripts to help you maintain your flow.  Dslide highlights the current progress state@comma{} providing both debugging and narration feedback.
 
 To leave a comment for yourself in the presentation source@comma{} just add a comment block or comment line:
-
 @example
 # This is also a comment
 
@@ -1484,7 +1490,36 @@ This is a comment that only I can see while presenting@comma{} only when I look 
 #+end_comment
 @end example
 
+@menu
+* Present::                      A frame for slides
+* Develop::                      A window for slides
+* Start Functions::              Kicking things off
+@end menu
+
+@node Present
+@subsection Present
+
+@findex dslide-deck-develop
+@code{dslide-deck-present} will display the slide buffer in an entirely new frame.  You can customize this frame via the @code{dslide-deck-present} hook.
+
+By using a frame@comma{} you can resize the frame and use frame specific @code{set-face-attribute} calls.  Because the hook configuration is independent@comma{} your customizations for development and presenting don't have to fight each other.
+
+@node Develop
+@subsection Develop
+
+@findex dslide-deck-develop
+@code{dslide-deck-develop} will attempt to display both the presentation and source simultaneously using a window.
+
+The @code{dslide-deck-develop} hook is only called when using this command.  Because the hook configuration is independent@comma{} your customizations for development and presenting don't have to fight each other.
+
 You can also switch a window to the base buffer manually.  That's almost all @code{dslide-deck-develop} does.
+
+@node Start Functions
+@subsection Start Functions
+
+Dslide can be started by several commands.  @code{dslide-deck-start} is the most obvious.  Writing such a command is as simple as binding @code{dslide-start-function} and then activating the mode.  The reason Dslide does this is to have several start commands that can basically inject their behavior like a user would with a hook except without messing with the user's hooks.
+
+When a start function is bound@comma{} @code{dslide-mode} will create the slide buffer and then run the start function in order to rearrange windows or frames etc.  You can make your own start functions to start dslide in other ways.  Just ask yourself if you want the same hook behavior all the time.  If not@comma{} making a new command that uses a start function is a clean way.
 
 @node Cursor Visibility 🥷
 @section Cursor Visibility 🥷
