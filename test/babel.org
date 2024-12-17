@@ -1,0 +1,73 @@
+#+title:	Babel Tests
+#+author:	Positron
+#+email:	contact@positron.solutions
+* Ignore Block
+#+begin_src elisp :eval never
+  (error "This wasn't supposed to happen")
+#+end_src
+* Detect Direction
+#+begin_src elisp :direction begin
+  (message "I begin")
+#+end_src
+
+#+begin_src elisp :direction backward
+  (message "I can go backwards")
+#+end_src
+
+#+begin_src elisp :direction [forward backward]
+  (message "I am a vector setting for going either way")
+#+end_src
+
+#+begin_src elisp :direction '(forward backward)
+  (message "I am a quoted list setting for going either way")
+#+end_src
+
+#+begin_src elisp :direction forward
+  (message "I can go forwards")
+#+end_src
+
+#+begin_src elisp :direction forward :eval never
+  (message "I can go forwards, but I am never evaluated")
+#+end_src
+
+#+begin_src elisp :direction final
+  (message "I am the end")
+#+end_src
+
+* Warn on Legacy
+#+attr_dslide: begin
+#+begin_src elisp
+  (message "I begin but I do warn")
+#+end_src
+
+#+attr_dslide: backward
+#+begin_src elisp
+  (message "I go backward, but I do warn")
+#+end_src
+
+#+attr_dslide: forward
+#+begin_src elisp
+  (message "I go forward, but I do warn")
+#+end_src
+
+* Hidden
+#+begin_src elisp :exports none
+  (message "I'm hidden")
+#+end_src
+
+* Results Only
+#+begin_src elisp :exports results
+  (message "Im results only")
+#+end_src
+* Push Step
+This block will take one extra step, due to the non-nil return value
+#+begin_src elisp :direction forward
+  (message "I can go forwards")
+  (dslide-push-step
+   (lambda (direction)
+     (prog1 t
+       (message "going %s" direction))))
+#+end_src
+
+* Next Slide
+Did the previous slide take an extra step?

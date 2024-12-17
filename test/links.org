@@ -1,0 +1,18 @@
+#+title:	Link Tests
+#+author:	Positron
+#+email:	contact@positron.solutions
+* An Image
+[[./images/elpaca.jpg]]
+* A Link
+[[https://www.youtube.com/watch?v=NfuiB52K7X8][Pen Pineapple Apple Pen]]
+
+If this is treated as an image, things are bad.
+* An Org Link
+[[orgit-rev:~/.emacs.d/elpaca/repos/dslide/::0da4acfb737eb00c483358f66f14ffe6dcc3be07][~/.emacs.d/elpaca/repos/dslide/ (magit-rev 0da4acf)]]
+This is also not an image and should not be treated as such.
+* Interior Link
+[[An Image]]
+Nope, still not an image.
+* Web Link
+[[https://raw.githubusercontent.com/positron-solutions/dslide/refs/heads/master/test/images/elpaca.jpg]]
+An Image, but hopefully does not explode
