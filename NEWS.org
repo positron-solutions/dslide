@@ -39,19 +39,19 @@ The propertize action is the closest one to working like they will in 0.7.0.  �
   #+end_src
 - =init= is now recognized as a direction by babel blocks and counts for both =begin= and =end=.  It always runs when entering a slide, regardless of direction.  It is the counterpart to =final=, which always runs when exiting a slide.
 ** Changed 🙅
-- Babel blocks are no longer configured with =#+attr_dslide:= affiliated keywords.  Instead, =direction= as a normal babel block parameter.  ⚠️ Old style will warn.
+- Babel blocks are no longer configured with =#+attr_dslide:= affiliated keywords.  Instead, they now read =:direction= as a normal babel block parameter.  ⚠️ Old style will warn.
   #+begin_src org
-    ,#+begin_src elisp :dslide backwards
+    ,#+begin_src elisp :direction backwards
       (message "The old #+attr_dslide: backward style is no more!")
     ,#+end_src
   #+end_src
   To provide multiple directions, you can use quoted lists and vectors, like so:
   #+begin_src org
-    ,#+begin_src elisp :dslide '(begin backwards)
+    ,#+begin_src elisp :direction '(begin backwards)
       (message "Lists must be quoted or Org mode tries to evaluate them")
     ,#+end_src
 
-    ,#+begin_src elisp :dslide [begin backwards]
+    ,#+begin_src elisp :direction [begin backwards]
       (message "It may be better to just use a vector 💡")
     ,#+end_src
   #+end_src
