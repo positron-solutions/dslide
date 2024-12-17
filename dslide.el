@@ -3440,7 +3440,6 @@ each slide show from the contents view."
       nil nil t)
     (goto-char
      (org-element-property :begin (dslide--root-heading-at-point filter)))
-    (recenter)
 
     (if-let ((first (dslide--document-first-heading filter)))
         (narrow-to-region (org-element-property :begin first)
@@ -3454,7 +3453,8 @@ each slide show from the contents view."
 
   (when dslide-contents-selection-highlight
     (add-hook 'post-command-hook #'dslide--contents-hl-line nil t))
-
+  (cl-loop for w in (get-buffer-window-list (current-buffer) nil t)
+           do (scroll-down (window-height w 'ceiling)))
   (dslide--feedback :contents)
   (run-hooks 'dslide-contents-hook))
 
