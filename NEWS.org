@@ -65,6 +65,7 @@ The propertize action is the closest one to working like they will in 0.7.0.  �
 - Window scroll when opening the contents was unreliable.  The call to ~recenter~ was replaced with a ~scroll-down~ to pull the header into view.  *Let me know if this doesn't work for you*.  *Stop just suffering in silence.*
 - ~dslide-deck-stop~ when called in the contents will leave the contents and return to the presentation.  It seemd unintuitive to quite from the contents view.
 - 🚧 ~dslide-deck-develop~ is a bit smarter. It may also be dumber.  There's a lot of states it can be called in.  The happy path seems okay.
+- 🚧 ~dslide-default-actions~ could result in duplicate actions.  This caused issues with images when going in reverse if they were both configured and present in the default actions list.  This entire behavior will go away in 0.7.0.
 * v0.5.6 Let There Be News 🗞️
 - ⛔ The concept of default actions has been marked for deprecation.  This is preparation for instantiating actions on-demand rather than per slide.  The action system may undergo some overhaul internally.
   + Markup will be reduced, not changed

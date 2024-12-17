@@ -1177,10 +1177,14 @@ Many optional ARGS.  See code."
            ;; in an inline child versus an independent slide, even by looking at
            ;; the restriction.
            (section-action-classes
-            (append (dslide--parse-classes-with-args
-                     (or (org-element-property :DSLIDE_ACTIONS heading)
-                         (cdr (assoc-string "DSLIDE_ACTIONS" keywords))))
-                    dslide-default-actions))
+            (let* ((provided (dslide--parse-classes-with-args
+                              (or (org-element-property :DSLIDE_ACTIONS heading)
+                                  (cdr (assoc-string "DSLIDE_ACTIONS"
+                                                     keywords)))))
+                   (cars (mapcar (lambda     (s) (if (symbolp s) s (car s))) provided)))
+              (append provided (seq-difference
+                                dslide-default-actions
+                                cars))))
            (section-actions
             (mapcar
              (lambda (c) (and c (apply (if (consp c) (car c) c)
