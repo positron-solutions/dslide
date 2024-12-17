@@ -272,13 +272,46 @@ Increase if your so-called machine has trouble drawing."
   :type 'number)
 
 (defcustom dslide-start-hook '(dslide-cursor-hide)
-  "Runs after the slide buffer is created but before first slide.
-Buffer is widened and fully visible.  It is intended only to run on the
-first call, which sets up the frame, so your hook functions do not need
-to be idempotent.
+  "Runs when deck is started with `dslide-deck-start'.
+Runs after the slide buffer is created but before first slide
+runs `dslide-begin'.  Buffer is widened and fully visible.
 
-🚧 This hook is not experimental.  However, the lifecycle management of
-a deck is somewhat experimental.  Please report issues."
+It is intended only to run when `dslide-mode' is first enabled,
+so your hook functions do not need to be idempotent.
+
+🚧 This hook is not experimental.  However, the lifecycle
+management of a deck is somewhat experimental.  Please report
+issues."
+  :type 'hook)
+
+(defcustom dslide-present-hook '(dslide-cursor-hide)
+  "Runs when a deck is started with `dslide-deck-present'.
+Runs after the slide buffer is created but before first slide
+calls `dslide-begin'.  Buffer is widened and fully visible.
+
+Use this hook to customize your presentation frame or the slide
+buffer it displays.  It is intended only to run on the first
+call, which sets up the frame, so your hook functions do not
+need to be idempotent.
+
+🚧 This hook was recently added.  Its purpose is clear.  The
+lifecycle management of a deck is somewhat experimental.  Please
+report issues."
+  :type 'hook)
+
+(defcustom dslide-develop-hook '(dslide-cursor-hide)
+  "Runs when a presentation is started with `dslide-deck-develop'.
+Runs after the slide buffer is created but before first slide
+calls `dslide-begin'.  Buffer is widened and fully visible.
+
+Use this hook to set up the slide buffer and window it is
+displayed in.  It is intended only to run on the first call,
+which creates the window, so your hook functions do not need to
+be idempotent.
+
+🚧 This hook was recently added.  Its purpose is clear.  The
+lifecycle management of a deck is somewhat experimental.  Please
+report issues."
   :type 'hook)
 
 (defcustom dslide-stop-hook nil
@@ -297,13 +330,26 @@ affect display in another buffer will not trigger this hook."
   :type 'hook)
 
 (defcustom dslide-after-last-slide-hook '()
-  "Run when forward is called but there is no next slide.
+  "Runs when forward is called but there is no next slide.
 This can either provide feedback or quit immediately etc.
 Consider using `dslide-push-step' and writing a callback that
 only reacts to the `forward' state.  This callback will then only
 run if the user immediately calls `dslide-deck-forward'
 again.  `dslide-deck-stop' is another good choice."
   :type 'hook)
+
+(defcustom dslide-present-frame-parameters nil
+  "Frame parameters used when creating a frame with `dslide-deck-present'.
+These are combined with the `default-frame-alist' parameters See
+the info node `(elisp)Creating Frames'.
+
+Use `dslide-present-hook' to customize the created frame
+further.
+
+It's worth mentioning that you should know about
+`frame-inhibit-implied-resize'.  This can help with the frame
+being resized by resizing text or changing other settings.  ."
+  :type 'alist)
 
 (defcustom dslide-default-slide-action #'dslide-slide-action-child
   "Action class with lifecycle around the section actions.
@@ -449,6 +495,12 @@ between contents and slides.")
 ;; Shouldn't need one per buffer
 (defvar dslide--contents-hl-line-overlay nil
   "Highlights selected heading in contents view.")
+
+(defvar dslide--present-frame nil
+  "If we create a frame, we track a frame.")
+
+(defvar dslide--develop-window-config nil
+  "If we create a window, we track a window.")
 
 (defconst dslide--display-actions
   '(display-buffer-same-window display-buffer-in-previous-window)
@@ -725,6 +777,18 @@ slides and their actions.
 Class can be overridden to affect root behaviors.  See
 `dslide-default-deck-class'")
 
+(defun dslide--slide-buffer-state (&optional update)
+  "Return or set the current slide buffer state.
+Optional UPDATE sets the state.
+
+🚧 It's unclear this needs a slot on the deck.  Such decisions
+are more relevant if running multiple decks becomes a support
+goal again."
+  (if update
+      (oset dslide--deck slide-buffer-state update)
+    (when dslide--deck
+      (oref dslide--deck slide-buffer-state))))
+
 (cl-defmethod dslide-begin ((obj dslide-deck))
   "Initialize the first slide of OBJ."
   (unless (oref obj slide)
@@ -904,10 +968,9 @@ Class can be overridden to affect root behaviors.  See
                (dslide--make-slide
                 (dslide--root-heading-at-point filter base-point))))))))
 
-(cl-defmethod dslide-deck-live-p ((obj dslide-deck))
+;; TODO buffer states
+(cl-defmethod dslide-deck-sane-p ((obj dslide-deck))
   "Check if all of OBJ's buffers are alive or can be recovered."
-  ;; TODO in some circumstances, an indirect buffer might exist, but we should
-  ;; probably kill it if it was created outside the current instance's lifecycle
   (and (buffer-live-p (oref obj base-buffer))
        (buffer-live-p (oref obj slide-buffer))
        (eq (oref obj base-buffer) (buffer-base-buffer
@@ -2964,6 +3027,20 @@ and the value of `point-max' should contain a newline somewhere."
 
 ;; * Assorted Implementation Details
 
+(defun dslide-cursor-hide ()
+  "Hide the cursor completely.
+Call `dslide-cursor-restore' to revert."
+  (interactive)
+  (setq-local blink-cursor-alist '((nil . nil)))
+  (setq-local cursor-type nil))
+
+(defun dslide-cursor-restore ()
+  "Hide the cursor completely.
+Call `dslide-cursor-restore' to revert."
+  (interactive)
+  (setq-local blink-cursor-alist (default-value 'blink-cursor-alist))
+  (setq-local cursor-type (default-value 'cursor-type)))
+
 ;; TODO finish adding some more ways to get debug information from the slides
 (defun dslide--debug (slide &optional situation)
   (when dslide--debug
@@ -2980,105 +3057,6 @@ and the value of `point-max' should contain a newline somewhere."
                  (widen)
                  (buffer-substring-no-properties
                   headline-begin (1- headline-end)))))))
-
-(defun dslide--cleanup-state ()
-  "Clean up states between contents and slides."
-  (when dslide-header
-    (funcall (or dslide-header-fun
-                 #'dslide-make-header)
-             t nil))
-  (dslide--delete-overlays)
-  (dslide--animation-cleanup)
-  (dslide--cleanup-step-callbacks dslide--deck)
-  (oset dslide--deck step-callbacks nil)
-  (remove-hook 'post-command-hook #'dslide--contents-hl-line t))
-
-(defun dslide--ensure-deck ()
-  "Prepare for starting the minor mode.
-Call this when writing commands that could be called before or
-after a deck exists but should create a deck if it does not exist.
-
-In functions that should only be called when a deck is alive and
-associated with the current buffer, use `dslide-live-p'
-and throw an error if it's not live.
-
-This function sets up the deck.  Many operations such as calling
-hooks must occur in the deck's :slide-buffer."
-  (unless (dslide-live-p)
-    ;; Prevent starting within indirect buffers
-    (when (buffer-base-buffer (current-buffer))
-      (error "Buffer is indirect but deck is already live"))
-
-    ;; TODO check assumed initial conditions
-    (let* ((base-buffer (current-buffer))
-           (slide-buffer-name (format "*deck: %s*" (buffer-name base-buffer))))
-      ;; stale buffers likely indicate an issue
-      (when-let ((stale-buffer (get-buffer slide-buffer-name)))
-        (kill-buffer slide-buffer-name)
-        (display-warning '(dslide dslide--ensure-deck)
-                         "Stale deck buffer was killed"))
-      (let* ((doc-keywords (org-collect-keywords '("DSLIDE_DECK_CLASS"
-                                                   "DSLIDE_FILTER")))
-             (class (or (dslide--parse-class
-                         (cadr (assoc-string "DSLIDE_DECK_CLASS" doc-keywords)))
-                        dslide-default-deck-class
-                        'dslide-deck))
-             (filter (or (dslide--parse-function
-                          (cadr (assoc-string "DSLIDE_FILTER" doc-keywords)))
-                         dslide-default-filter))
-             (window-config (current-window-configuration))
-             (slide-buffer (clone-indirect-buffer slide-buffer-name nil))
-             (deck (apply class
-                          :base-buffer base-buffer
-                          :slide-buffer slide-buffer
-                          :window-config window-config
-                          :filter filter
-                          nil)))
-        (setq dslide--deck deck)
-        (display-buffer slide-buffer dslide--display-actions)
-        (set-buffer slide-buffer)
-        (widen)
-        (org-fold-show-all)
-        ;; Enter the state model
-        (dslide--choose-slide deck dslide-start-from)))))
-
-(defun dslide--showing-contents-p ()
-  "Return t if current buffer is displaying contents."
-  (and dslide--deck
-       (eq (current-buffer) (oref dslide--deck slide-buffer))
-       (eq 'contents (oref dslide--deck slide-buffer-state))))
-
-(defun dslide--showing-slides-p ()
-  "Return t if current buffer is displaying contents."
-  (and dslide--deck
-       (eq (current-buffer) (oref dslide--deck slide-buffer))
-       (eq 'slides (oref dslide--deck slide-buffer-state))))
-
-(defun dslide--delete-overlays ()
-  "Delete content overlays."
-  (while dslide-overlays
-    (delete-overlay (pop dslide-overlays)))
-  (while dslide--step-overlays
-    (delete-overlay (pop dslide--step-overlays)))
-  (when dslide--contents-hl-line-overlay
-    (delete-overlay dslide--contents-hl-line-overlay))
-  (setq dslide--contents-hl-line-overlay nil))
-
-(defun dslide--ensure-slide-buffer (&optional display)
-  "Switch to the slide buffer.
-Use this in functions which must run in the slide buffer but
-could be called from another buffer. Optional DISPLAY will also
-ensure that the slide buffer is visible."
-  (unless (dslide-live-p)
-    (error "Live deck not found"))
-  (if display
-      (let ((slide-buffer (oref dslide--deck slide-buffer)))
-        ;; TODO requires further taming if user is using multiple frames, such
-        ;; as displaying some information on a projector and other information
-        ;; on another frame
-        (unless (get-buffer-window slide-buffer)
-          (display-buffer slide-buffer dslide--display-actions)))
-    (set-buffer (oref dslide--deck slide-buffer))))
 
 (defun dslide--feedback (key)
   "Show feedback message for KEY.
@@ -3275,57 +3253,6 @@ and thus overwrites the inner keywords when merging."
     (setf (overlay-end dslide--contents-hl-line-overlay)
           (org-element-property :end element))))
 
-;; * Lifecycle
-
-(defvar-keymap dslide-mode-map
-  :doc "The keymap for `dslide-mode'."
-  "<left>" #'dslide-deck-backward
-  "<right>" #'dslide-deck-forward
-  "<up>" #'dslide-deck-start
-  "<down>" #'dslide-deck-stop)
-
-;;;###autoload
-(define-minor-mode dslide-mode
-  "A presentation tool for Org Mode."
-  :interactive nil
-  :global t
-  (unless (eq 'org-mode (buffer-local-value
-                         'major-mode (current-buffer)))
-    (user-error "Not an org buffer")
-    (dslide-mode -1))
-  (cond (dslide-mode
-         ;; Create the indirect buffer and link it via the deck object.
-         (dslide--ensure-deck)
-         (funcall (or dslide-start-function #'dslide-display-slides))
-         (run-hooks 'dslide-start-hook)
-         (dslide--feedback :start))
-        (t
-         (dslide--stop))))
-
-(defun dslide-live-p ()
-  "Check if a deck is associated so that commands can complete."
-  (and dslide-mode
-       dslide--deck
-       (dslide-deck-live-p dslide--deck)))
-
-;; TODO got a few wandering orefs and osets around here
-(defun dslide-display-slides ()
-  (dslide--ensure-slide-buffer t)
-  (dslide--cleanup-state)
-  (oset dslide--deck slide-buffer-state 'slides)
-  (widen)
-  (org-fold-show-all)
-  (dslide-begin dslide--deck))
-
-(defun dslide-display-develop ()
-  (let ((slide-buffer (oref dslide--deck slide-buffer)))
-    (unless (and (get-buffer-window slide-buffer)
-                 (dslide--showing-slides-p))
-      (dslide-display-slides)))
-  (let ((base-buffer (oref dslide--deck base-buffer)))
-    (unless (get-buffer-window base-buffer)
-      (display-buffer base-buffer 'display-buffer-pop-up-window))))
-
 (defun dslide--base-buffer-highlight-region (beg end &optional face)
   "Pulse region between BEG and END in base buffer.
 Optional FACE defaults to `dslide-highlight'."
@@ -3357,6 +3284,8 @@ Optional FACE defaults to `dslide-highlight'."
     (set-buffer buffer)))
 
 ;; TODO use this to implement `dslide-goto'
+;; TODO accept a range in order to highlight a specific region
+;; TODO highlight ranges and elements
 (defun dslide--follow (progress &optional scroll)
   "Set the base buffer window point to PROGRESS.
 PROGRESS is a slide object, marker, buffer position, org element,
@@ -3399,16 +3328,63 @@ will advance the windows to the current buffer restriction"
               windows))
       (set-buffer (oref dslide--deck slide-buffer)))))
 
-(defun dslide-display-contents ()
-  "Switch to showing contents in the slide buffer.
-This is a valid `dslide-start-function' and will start
-each slide show from the contents view."
-  (dslide--ensure-slide-buffer t)
-  (dslide-final dslide--deck)
-  (dslide--cleanup-state)
-  (oset dslide--deck slide-buffer-state 'contents)
-  (widen)
-  (org-overview)
+;; * Lifecycle Details
+
+;; TODO break into buffer & deck details
+(defun dslide--make-deck-and-slide-buffer ()
+  "Prepare for starting the minor mode.
+Call this when writing commands that could be called before or
+after a deck exists but should create a deck if it does not exist.
+
+In functions that should only be called when a deck is alive and
+associated with the current buffer,
+
+use `dslide-live-p' and throw an error if it's not live.
+
+This function sets up the deck.  Many operations such as calling
+hooks must occur in the deck's :slide-buffer."
+  (unless (dslide-live-p)
+    ;; Prevent starting within indirect buffers
+    (when (buffer-base-buffer (current-buffer))
+      (error "Buffer is indirect but deck is already live"))
+
+    ;; TODO check assumed initial conditions
+    (let* ((base-buffer (current-buffer))
+           (slide-buffer-name (format "*deck: %s*" (buffer-name base-buffer))))
+      ;; stale buffers likely indicate an issue
+      (when-let ((stale-buffer (get-buffer slide-buffer-name)))
+        (kill-buffer slide-buffer-name)
+        (display-warning '(dslide dslide--ensure-deck)
+                         "Stale deck buffer was killed"
+                         :error))
+      (let* ((doc-keywords (org-collect-keywords '("DSLIDE_DECK_CLASS"
+                                                   "DSLIDE_FILTER")))
+             (class (or (dslide--parse-class
+                         (cadr (assoc-string "DSLIDE_DECK_CLASS" doc-keywords)))
+                        dslide-default-deck-class
+                        'dslide-deck))
+             (filter (or (dslide--parse-function
+                          (cadr (assoc-string "DSLIDE_FILTER" doc-keywords)))
+                         dslide-default-filter))
+             (window-config (current-window-configuration))
+             (slide-buffer (clone-indirect-buffer slide-buffer-name nil))
+             (deck (apply class
+                          :base-buffer base-buffer
+                          :slide-buffer slide-buffer
+                          :window-config window-config
+                          :filter filter
+                          nil)))
+        (setq dslide--deck deck)
+        (display-buffer slide-buffer dslide--display-actions)
+        (set-buffer slide-buffer)
+        ;; XXX Really feels like this doesn't belong here
+        (widen)
+        (org-fold-show-all)
+        ;; Enter the state model
+        (dslide--choose-slide deck dslide-start-from)))))
+
+(defun dslide--prepare-contents ()
+  "Sets up overlays and heading for contents view."
   (let ((data (org-element-parse-buffer))
         (filter (dslide--filter-function dslide--deck)))
     ;; hide filtered headings
@@ -3458,6 +3434,184 @@ each slide show from the contents view."
   (dslide--feedback :contents)
   (run-hooks 'dslide-contents-hook))
 
+(defun dslide--delete-overlays ()
+  "Delete content overlays."
+  (while dslide-overlays
+    (delete-overlay (pop dslide-overlays)))
+  (while dslide--step-overlays
+    (delete-overlay (pop dslide--step-overlays)))
+  (when dslide--contents-hl-line-overlay
+    (delete-overlay dslide--contents-hl-line-overlay))
+  (setq dslide--contents-hl-line-overlay nil))
+
+(defun dslide--cleanup-state ()
+  "Clean up states between contents and slides."
+  (when dslide-header
+    (funcall (or dslide-header-fun
+                 #'dslide-make-header)
+             t nil))
+  (dslide--delete-overlays)
+  (dslide--animation-cleanup)
+  (dslide--cleanup-step-callbacks dslide--deck)
+  (oset dslide--deck step-callbacks nil)
+  (remove-hook 'post-command-hook #'dslide--contents-hl-line t))
+
+(defun dslide--contents-active-p ()
+  "Return t if current buffer is displaying contents."
+  (and dslide--deck
+       (eq (current-buffer) (oref dslide--deck slide-buffer))
+       (eq 'contents (dslide--slide-buffer-state))))
+
+(defun dslide--slides-active-p ()
+  "Return t if current buffer is displaying slides."
+  (and dslide--deck
+       (eq (current-buffer) (oref dslide--deck slide-buffer))
+       (eq 'slides (dslide--slide-buffer-state))))
+
+(defun dslide--slide-buffer-visible-p ()
+  "Return t if the slide buffer is visible on any frame."
+  (get-buffer-window-list (oref dslide--deck slide-buffer) 'visible))
+
+(defun dslide--base-buffer-visible-p ()
+  "Return t if the base buffer is visible on any frame."
+  (get-buffer-window-list (oref dslide--deck base-buffer) 'visible))
+
+(defun dslide--ensure-slide-buffer ()
+  "Switch to the slide buffer or error if there is none.
+Use this in functions which must run in the slide buffer but
+could be called from another buffer."
+  (unless (dslide-live-p)
+    (error "Live deck not found"))
+  (set-buffer (oref dslide--deck slide-buffer)))
+
+(defun dslide--display-slide-buffer (&optional another)
+  "Make the slide buffer visible.
+Optional ANOTHER will pop up the buffer instead of whatever the
+normal actions are.  This is used when we have displayed one
+buffer and need to display the other just somehwere else."
+  (let ((slide-buffer (oref dslide--deck slide-buffer)))
+    (unless (dslide--slide-buffer-visible-p)
+      (if another
+          (display-buffer slide-buffer 'display-buffer-pop-up-window)
+        (display-buffer slide-buffer dslide--display-actions)))))
+
+(defun dslide--display-base-buffer (&optional another)
+  "Make the base buffer visible.
+Optional ANOTHER will pop up the buffer instead of whatever the
+normal actions are.  This is used when we have displayed one
+buffer and need to display the other just somehwere else."
+  (let ((base-buffer (oref dslide--deck base-buffer)))
+    (unless (dslide--base-buffer-visible-p)
+      (if another
+          (display-buffer base-buffer 'display-buffer-pop-up-window)
+        (display-buffer base-buffer dslide--display-actions)))))
+
+(defun dslide-live-p ()
+  "Check if a deck is associated so that commands can complete."
+  (and dslide-mode                      ; mode is global
+       dslide--deck                     ; deck is global
+       (dslide-deck-sane-p dslide--deck)))
+
+;; * Lifecycle
+
+(defvar-keymap dslide-mode-map
+  :doc "The keymap for `dslide-mode'."
+  "<left>" #'dslide-deck-backward
+  "<right>" #'dslide-deck-forward
+  "<up>" #'dslide-deck-start
+  "<down>" #'dslide-deck-stop)
+
+;;;###autoload
+(define-minor-mode dslide-mode
+  "A presentation tool for Org Mode."
+  :interactive nil
+  :global t
+  (unless (derived-mode-p 'org-mode)
+    (user-error "Not an org buffer")
+    (dslide-mode -1))
+  (cond (dslide-mode
+         ;; Create the indirect buffer and link it via the deck object.
+         (dslide--make-deck-and-slide-buffer)
+         (funcall (or dslide-start-function #'dslide-display-slides))
+         (run-hooks
+          (pcase dslide-start-function
+            ('dslide-display-develop 'dslide-develop-hook)
+            ('dslide-display-present 'dslide-present-hook)
+            ('dslide-display-slides 'dslide-start-hook)
+            (_ 'dslide-start-hook)))
+         (dslide--feedback :start))
+        (t
+         (dslide--stop))))
+
+;; TODO got a few wandering orefs and osets around here
+(defun dslide-display-slides ()
+  (dslide--ensure-slide-buffer)
+  (dslide--display-slide-buffer)
+  (dslide--cleanup-state)
+  (dslide--slide-buffer-state 'slides)
+  (widen)
+  (org-fold-show-all)
+  (dslide-begin dslide--deck))
+
+(defun dslide-display-contents ()
+  "Switch to showing contents in the slide buffer.
+This is a valid `dslide-start-function' and will start
+each slide show from the contents view."
+  (dslide--ensure-slide-buffer)
+  (dslide--display-slide-buffer)
+  (dslide-final dslide--deck)
+  (dslide--cleanup-state)
+  (dslide--slide-buffer-state 'contents)
+  (widen)
+  (org-overview)
+  (dslide--prepare-contents))
+
+;; TODO not all these cases might be reflected in the calling command 🤡
+(defun dslide-display-develop ()
+  "Start the presentation in another window."
+  (dslide--ensure-slide-buffer)
+  (cond
+   ((and (dslide--slide-buffer-visible-p) (dslide--base-buffer-visible-p))
+    (error "Slides and base buffer already visible"))
+   ((dslide--slide-buffer-visible-p)
+    (setq dslide--develop-window-config (current-window-configuration))
+    (switch-to-buffer (oref dslide--deck base-buffer))
+    (dslide--display-slide-buffer t)
+    (dslide-display-slides))
+   ((dslide--base-buffer-visible-p)
+    (setq dslide--develop-window-config (current-window-configuration))
+    (dslide--display-slide-buffer t)
+    (dslide-display-slides))
+   (t
+    (setq dslide--develop-window-config (current-window-configuration))
+    (dslide--display-base-buffer)
+    (dslide--display-slide-buffer t)
+    (dslide-display-slides)))
+  ;; 🚧 This shouldn't actually be necessary.  The buffer tracking is just
+  ;; dumb enough that, for example, the image action can get lost.
+  (let ((slide-window (get-buffer-window (oref dslide--deck slide-buffer))))
+    (select-window slide-window)))
+
+;; 🚧 This is not the best.  It's getting late and I don't think I can imagine
+;; the cases in which this might run at this point.
+(defun dslide-display-present ()
+  "Raise the presentation frame and display slides."
+  (if (and dslide--present-frame
+           (frame-live-p dslide--present-frame))
+      (progn (if (frame-visible-p dslide--present-frame)
+                 (user-error "Frame visible and raised")
+               (raise-frame dslide--present-frame))
+             (select-frame dslide--present-frame)
+             (dslide-display-slides))
+    (let ((window (selected-window))
+          (frame (make-frame (if (functionp dslide-present-frame-parameters)
+                                 (funcall dslide-present-frame-parameters)
+                               dslide-present-frame-parameters))))
+      (setq dslide--present-frame frame)
+      (select-frame dslide--present-frame)
+      (dslide-display-slides)
+      (set-window-buffer window (oref dslide--deck base-buffer)))))
+
 (defun dslide--stop ()
   "Stop the presentation entirely.
 Kills the indirect buffer, forgets the deck, and displays the
@@ -3479,23 +3633,138 @@ source buffer."
     (when dslide-mode
       (dslide-mode -1))
     (run-hooks 'dslide-stop-hook)
+    (when dslide--present-frame
+      (when (frame-live-p dslide--present-frame)
+            (delete-frame dslide--present-frame))
+      (setq dslide--present-frame nil))
+    (when dslide--develop-window-config
+      (condition-case nil
+          (set-window-configuration
+           dslide--develop-window-config)
+        ((debug error) (delay-warning
+                        '(dslide dslide-quit)
+                        "Could not restore window config"))))
     (dslide--feedback :stop)))
 
-(defun dslide-cursor-hide ()
-  "Hide the cursor completely.
-Call `dslide-cursor-restore' to revert."
-  (interactive)
-  (setq-local blink-cursor-alist '((nil . nil)))
-  (setq-local cursor-type nil))
-
-(defun dslide-cursor-restore ()
-  "Hide the cursor completely.
-Call `dslide-cursor-restore' to revert."
-  (interactive)
-  (setq-local blink-cursor-alist (default-value 'blink-cursor-alist))
-  (setq-local cursor-type (default-value 'cursor-type)))
-
 ;; * User Commands
+
+;;;###autoload
+(defun dslide-deck-stop ()
+  "Stop the presentation.
+It is recommended to not bind this to a controller button unless
+you have five buttons or will use the display button to stop and
+can reliably select displays via other means."
+  (interactive)
+  (unless (dslide-live-p)
+    (user-error "No live presentation"))
+  (if (dslide--contents-active-p)
+      (dslide-deck-start)
+    (dslide--stop)))
+
+;;;###autoload
+(defun dslide-deck-start ()
+  "Start presentation or secondary action.
+Starts the mode if the mode is inactive.  Switches to the
+contents view when a presentation is already active.  Displays
+and selects the slide buffer if it is not currently visible.
+
+It is recommended to bind this in the `org-mode-map'.  It is
+also recommended to bind this to the play button on a
+presentation controller.  Its behavior will be overloaded with a
+secondary action, such as playing a video on the slide, if one
+is available.  The default secondary task is the contents view.
+
+🚧 Secondary actions will be overloaded onto this command
+whenever they are implemented.  Secondary actions allow
+non-linear kinds of steps to exist."
+  (interactive)
+  ;; `dslide-mode' errors if not an org buffer
+  (if (dslide-live-p)
+      ;; If the slide buffer is visible, make it show contents.  If not, make
+      ;; it at least make the slide buffer visible
+      (if (dslide--slide-buffer-visible-p)
+          (progn
+            (dslide--ensure-slide-buffer) ; sets buffer
+            (if (dslide--slides-active-p)
+                ;; TODO check for secondary task here
+                (dslide-display-contents)
+              (dslide--choose-slide dslide--deck 'contents)
+              (dslide-display-slides)))
+        (dslide--ensure-slide-buffer)
+        (dslide--display-slide-buffer))
+    (let ((dslide-start-function #'dslide-display-slides))
+      (dslide-mode 1))))
+
+;;;###autoload
+(defun dslide-deck-develop ()
+  "Show both the base and slide buffer."
+  (interactive)
+  (unless (or (dslide-live-p) (derived-mode-p 'org-mode))
+    (user-error "Not an org buffer and no other live presentation"))
+  (if (dslide-live-p)
+      (dslide-display-develop) ;; show the correct buffers and frames
+    (let ((dslide-start-function #'dslide-display-develop))
+      (dslide-mode 1))))
+
+;;;###autoload
+(defun dslide-deck-present ()
+  "Show slide buffer in new frame.
+This is ideal for starting presentations.  The frame will be created
+with additional frame parameters from `dslide-present-frame-parameters'.
+You may further customize your frame using `dslide-deck-present-hook'.
+It runs in the slide buffer on the new frame.  The intended use is to
+share the new frame while reading the source comments etc in the old
+frame."
+  (interactive)
+  (unless (or (dslide-live-p) (derived-mode-p 'org-mode))
+    (user-error "Not an org buffer and no other live presentation"))
+  (if (dslide-live-p)
+      (dslide-display-present) ;; show the correct buffers and frames
+    (let ((dslide-start-function #'dslide-display-present))
+      (dslide-mode 1))))
+
+;;;###autoload
+(defun dslide-deck-forward ()
+  "Advance slideshow forward."
+  (interactive)
+  ;; TODO this does not display the buffer because we don't have any buffer
+  ;; tracking yet.  Babel integrations with other buffers must take care, as
+  ;; must presenters.
+  (dslide--ensure-slide-buffer)
+  (if (dslide--contents-active-p)
+      (let* ((filter (dslide--filter-function dslide--deck))
+             (current (dslide--root-heading-at-point filter))
+             (next (dslide--next-sibling current filter)))
+        (if next
+            (goto-char (org-element-property :begin next))
+          (message "No more slides!"))
+        (while dslide--step-overlays
+          (delete-overlay (pop dslide--step-overlays)))
+        (dslide--follow (point)))
+    (if (eq (oref dslide--deck base-buffer)
+            (window-buffer (selected-window)))
+        (if-let ((window (get-buffer-window
+                          (oref dslide--deck slide-buffer))))
+            (with-selected-window window
+              (dslide-forward dslide--deck)))
+      (dslide-forward dslide--deck))))
+
+;;;###autoload
+(defun dslide-deck-backward ()
+  "Advance slideshow backward."
+  (interactive)
+  (dslide--ensure-slide-buffer)
+  (if (dslide--contents-active-p)
+      (progn (let* ((filter (dslide--filter-function dslide--deck))
+                    (current (dslide--root-heading-at-point filter))
+                    (previous (dslide--previous-sibling current filter)))
+               (if previous
+                   (goto-char (org-element-property :begin previous))
+                 (message "No previous slide!")))
+             (while dslide--step-overlays
+               (delete-overlay (pop dslide--step-overlays)))
+             (dslide--follow (point)))
+    (dslide-backward dslide--deck)))
 
 ;;;###autoload
 (defun dslide-kmacro-transcribe-set-mark ()
@@ -3535,104 +3804,6 @@ it as a dslide action."
     (set-marker dslide--kmacro-transcribe-mark nil))
   (setq dslide--kmacro-transcribe-mark nil)
   (message "Transcription stopped."))
-
-;;;###autoload
-(defun dslide-deck-stop ()
-  "Stop the presentation.
-It is recommended to not bind this to a controller button unless
-you have five buttons or will use the display button to stop and
-can reliably select displays via other means."
-  (interactive)
-  (dslide--stop))
-
-;; TODO make secondary actions supported
-;;;###autoload
-(defun dslide-deck-start ()
-  "Start presentation or secondary action.
-It is recommended to bind this in the `org-mode-map'.  It starts
-the mode if the mode is inactive.
-
-It is also recommended to bind this to the play button on a
-presentation controller.  Its behavior will be overloaded with a
-secondary action, such as playing a video on the slide, if one is
-available.  The default secondary task is the contents view.
-
-TODO Add support for arbitrary secondary tasks like playing a
-video or custom actions."
-  (interactive)
-  (if (dslide-live-p)
-      (if (get-buffer-window (oref dslide--deck slide-buffer))
-          (progn
-            (dslide--ensure-slide-buffer)
-            (if (dslide--showing-slides-p)
-                ;; TODO check for secondary task here
-                (dslide-display-contents)
-              (dslide--choose-slide dslide--deck 'contents)
-              (dslide-display-slides)))
-        (dslide--ensure-slide-buffer t))
-    (let ((dslide-start-function #'dslide-display-slides))
-      (dslide-mode 1))))
-
-;;;###autoload
-(defun dslide-deck-develop ()
-  "Show both the base and slide buffer."
-  (interactive)
-  (let ((major-mode (buffer-local-value 'major-mode (current-buffer))))
-    (unless (or (dslide-live-p) (derived-mode-p 'org-mode))
-      (user-error "Not an org buffer and no other live presentation"))
-    (if (dslide-live-p)
-        ;;  show the correct buffers
-        (dslide-display-develop)
-      (let ((dslide-start-function #'dslide-display-develop))
-        (dslide-mode 1)))))
-
-;;;###autoload
-(defun dslide-deck-forward ()
-  "Advance slideshow forward."
-  (interactive)
-  ;; TODO this does not display the buffer because we don't have any buffer
-  ;; tracking yet.  Babel integrations with other buffers must take care, as
-  ;; must presenters.
-  (dslide--ensure-slide-buffer)
-  (if (dslide--showing-contents-p)
-      (let* ((filter (dslide--filter-function dslide--deck))
-             (current (dslide--root-heading-at-point filter))
-             (next (dslide--next-sibling current filter)))
-        (if next
-            (goto-char (org-element-property :begin next))
-          (message "No more slides!"))
-        (while dslide--step-overlays
-          (delete-overlay (pop dslide--step-overlays)))
-        (dslide--follow (point)))
-    (dslide--ensure-slide-buffer)
-    (if (eq (oref dslide--deck base-buffer)
-            (window-buffer (selected-window)))
-        (if-let ((window (get-buffer-window
-                          (oref dslide--deck slide-buffer))))
-            (with-selected-window window
-              (dslide-forward dslide--deck)))
-      (dslide-forward dslide--deck))))
-
-;;;###autoload
-(defun dslide-deck-backward ()
-  "Advance slideshow backward."
-  (interactive)
-  ;; TODO this does not display the buffer because we don't have any buffer
-  ;; tracking yet.  Babel integrations with other buffers must take care, as
-  ;; must presenters.
-  (dslide--ensure-slide-buffer)
-  (if (dslide--showing-contents-p)
-      (progn (let* ((filter (dslide--filter-function dslide--deck))
-                    (current (dslide--root-heading-at-point filter))
-                    (previous (dslide--previous-sibling current filter)))
-               (if previous
-                   (goto-char (org-element-property :begin previous))
-                 (message "No previous slide!")))
-             (while dslide--step-overlays
-               (delete-overlay (pop dslide--step-overlays)))
-             (dslide--follow (point)))
-    (dslide--ensure-slide-buffer)
-    (dslide-backward dslide--deck)))
 
 (provide 'dslide)
 

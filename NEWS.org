@@ -27,9 +27,10 @@ There is a tricky outstanding architectural issue with actions tracking their ow
 
 The propertize action is the closest one to working like they will in 0.7.0.  ℹ️ Your custom actions will need to be registered in the dispatcher configuration after 0.7.0.
 ** Added ➕
-- 🧬 Experimental new kmacro action can run keyboard kmacros to script "live demonstrations".  Describe ~dslide-action-kmacro~ to view the documentation.  There is a demo in the usual [] file.  All related functions and variables are under the =dslide-action-kmacro= or =dslide-kmacro= prefixes.
-- 🧬 Experimental keyboard macro recording with ~dslide-kmacro-transcribe-set-mark~, every time you call ~kmacro-end-macro~, dslide will transcribe a macro playback expression into your presentation.  All related commands, functions, and variables are under the =dslide-kmacro-transcribe= prefix
+- 🧪 Experimental new kmacro action can run keyboard kmacros to script "live demonstrations".  Describe ~dslide-action-kmacro~ to view the documentation.  There is a demo in the usual [] file.  All related functions and variables are under the =dslide-action-kmacro= or =dslide-kmacro= prefixes.
+- 🧪 Experimental keyboard macro recording with ~dslide-kmacro-transcribe-set-mark~, every time you call ~kmacro-end-macro~, dslide will transcribe a macro playback expression into your presentation.  All related commands, functions, and variables are under the =dslide-kmacro-transcribe= prefix
 - ~dslide-deck-present~ is a distinct command from ~dslide-deck-start~.  It will create a new frame instead of showing the presentation in the current frame.  The ~dslide-present-hook~ will be run in this frame when the deck is ready.  If you customize this hook, you can easily separate configuration for development and presentation.
+- Development now has its own hook ~dslide-develop-hook~.  Use this for more convenient buffer setup when using the ~dslide-deck-develop~ command to debug your presentation.
 - Babel blocks, which will now all be executed by default, respect the =:eval= parameter.  Values such as =never= or =never-export= will skip the block.  Other values are equivalent to =yes=.  Values like =query= do *not* ask yet.  Expect that in 0.7.0. 🚧
   #+begin_src org
     ,#+begin_src elisp :eval never
@@ -58,9 +59,12 @@ The propertize action is the closest one to working like they will in 0.7.0.  �
 - Image action defaults =:standalone-display= to =nil=.  If you want fullscreen display, you need to set the option in the property drawer, the way it has been.  This was to support turning the image action on by default.
 - ⚠️ Propertize action now warns on unquoted lists.  Please use quoted lists.  In my opinion, all lists should be considered quoted in org, but this change is consistent with babel parameters being evaluated when unquoted.
 - Yet more manual Kaizen.  Seriously, check it out by installing dslide.
+- ~dslide-start-hook~ is *only* called when beginning from ~dslide-deck-start~.  ~dslide-deck-develop~ (and the new ~dslide-deck-present~ command) will not run this hook.  If you use a custom start function, the ~dslide-deck-start~ hook will still run.
 ** Fixed 💩
 - The image action will no longer haphazardly try to display links that don't look like an image.  Remote images, if they were working on your Emacs, may be affected.  File an issue, explain your setup, and workaround by downloading.
 - Window scroll when opening the contents was unreliable.  The call to ~recenter~ was replaced with a ~scroll-down~ to pull the header into view.  *Let me know if this doesn't work for you*.  *Stop just suffering in silence.*
+- ~dslide-deck-stop~ when called in the contents will leave the contents and return to the presentation.  It seemd unintuitive to quite from the contents view.
+- 🚧 ~dslide-deck-develop~ is a bit smarter. It may also be dumber.  There's a lot of states it can be called in.  The happy path seems okay.
 * v0.5.6 Let There Be News 🗞️
 - ⛔ The concept of default actions has been marked for deprecation.  This is preparation for instantiating actions on-demand rather than per slide.  The action system may undergo some overhaul internally.
   + Markup will be reduced, not changed

@@ -435,20 +435,20 @@ To enter the contents, call ~dslide-deck-start~ when a presentation is already a
 - ~dslide-deck-start~ will resume the presentation at that heading
 - ~dslide-deck-stop~ will similarly exit the contents view
 - ~dslide-deck-forward~ and ~dslide-deck-backward~ move between top level headings.
-** Narrating
+** Source Following
 :PROPERTIES:
-:DESCRIPTION: And debugging live
+:DESCRIPTION: Narrating & debugging live
 :END:
+🚧 The start functions were recently overhauled.  They need user feedback, both to identify bugs and focus on real uses cases.  ~dslide-deck-start~ should be the most reliable way to start presentations.
+
 The presentation you see is a cloned [[info:elisp#Indirect Buffers][indirect buffer]] of your org mode buffer. The Elisp state and overlays are independent. There are two key advantages:
 
 - Any state you create in the presentation (besides buffer text and text properties!) will not pollute the org mode buffer you are editing
 - We can display the source for the presentation simultaneously, making one pretty while leaving the other to show us what is hidden
 
-#+findex: dslide-deck-develop
-~dslide-deck-develop~ will attempt to display both the presentation and source simultaneously.  Whenever the source is visible, highlights will be applied to indicate where the presentation is at.  *This is especially helpful for including presentation notes in comments, which are hidden by default*.
+Using comments and comment blocks, you can write down prompts or scripts to help you maintain your flow.  Dslide highlights the current progress state, providing both debugging and narration feedback.
 
 To leave a comment for yourself in the presentation source, just add a comment block or comment line:
-
 #+begin_src org
   # This is also a comment
 
@@ -456,8 +456,31 @@ To leave a comment for yourself in the presentation source, just add a comment b
   This is a comment that only I can see while presenting, only when I look at my base buffer while sharing another frame.
   ,#+end_comment
 #+end_src
+*** Present
+:PROPERTIES:
+:DESCRIPTION: A frame for slides
+:END:
+#+findex: dslide-deck-develop
+~dslide-deck-present~ will display the slide buffer in an entirely new frame.  You can customize this frame via the ~dslide-deck-present~ hook.
+
+By using a frame, you can resize the frame and use frame specific ~set-face-attribute~ calls.  Because the hook configuration is independent, your customizations for development and presenting don't have to fight each other.
+***  Develop
+:PROPERTIES:
+:DESCRIPTION: A window for slides
+:END:
+#+findex: dslide-deck-develop
+~dslide-deck-develop~ will attempt to display both the presentation and source simultaneously using a window.
+
+The ~dslide-deck-develop~ hook is only called when using this command.  Because the hook configuration is independent, your customizations for development and presenting don't have to fight each other.
 
 You can also switch a window to the base buffer manually.  That's almost all ~dslide-deck-develop~ does.
+*** Start Functions
+:PROPERTIES:
+:DESCRIPTION: Kicking things off
+:END:
+Dslide can be started by several commands.  ~dslide-deck-start~ is the most obvious.  Writing such a command is as simple as binding ~dslide-start-function~ and then activating the mode.  The reason Dslide does this is to have several start commands that can basically inject their behavior like a user would with a hook except without messing with the user's hooks.
+
+When a start function is bound, ~dslide-mode~ will create the slide buffer and then run the start function in order to rearrange windows or frames etc.  You can make your own start functions to start dslide in other ways.  Just ask yourself if you want the same hook behavior all the time.  If not, making a new command that uses a start function is a clean way.
 ** Cursor Visibility 🥷
 :PROPERTIES:
 :DESCRIPTION: Hidden by default
