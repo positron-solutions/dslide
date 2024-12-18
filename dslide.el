@@ -21,30 +21,30 @@
 
 ;;; Copying:
 
-;; This program is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 3 of the License, or
-;; (at your option) any later version.
+;; This program is free software: you can redistribute it and/or modify it
+;; under the terms of the GNU General Public License as published by the Free
+;; Software Foundation; either version 3 of the License, or (at your option)
+;; any later version.
 ;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; This program is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+;; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+;; more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
-;; Boston, MA 02110-1301, USA.
+;; You should have received a copy of the GNU General Public License along
+;; with GNU Emacs; see the file COPYING.  If not, write to the Free Software
+;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+;; USA.
 
 ;;; Commentary:
 
 ;; DSL IDE creates presentations out of org mode documents.  Every single step
-;; in a presentation can be individually configured or customized.  Org
-;; headings and elements are configured with extensible actions.  Custom steps
-;; can be scripted with babel blocks.  Keyboard macros can play back real
-;; command sequences.  Frequent customizations can be made into custom
-;; actions.  DSL IDE achieves a good result with no preparation but can
-;; achieve anything Emacs can display if you need it to.
+;; in a presentation can be individually configured, customized, or
+;; programmed.  Org headings and elements are configured with extensible
+;; actions.  Custom steps can be scripted with babel blocks.  Keyboard macros
+;; can play back real command sequences.  Frequent customizations can be made
+;; into custom actions.  DSL IDE achieves a good result with no preparation
+;; but can achieve anything Emacs can display if you need it to.
 ;;
 ;; To try it out, install this package and load the demo.org found in the test
 ;; directory of the repository.  `dslide-deck-start' will begin the
@@ -97,35 +97,34 @@ This happens whether the buffer is visible or not."
   "When starting, begin at `point' `first' slide.
 Any other value is equivalent to `first'.
 
-If the contents are shown first, the point will be on the
-configured slide.
+If the contents are shown first, the point will be on the configured
+slide.
 
-This only has effect when starting the mode or commands that
-implicitly start the mode.
+This only has effect when starting the mode or commands that implicitly
+start the mode.
 
 - `first': Always begin the slideshow from the very first slide.
 
 - `point': the slideshow always begins at the slide under point.
 
-If you just want to navigate slides with the point, you should
-use the contents mode by calling `dslide-deck-start' in a
-presentation that is already started."
+If you just want to navigate slides with the point, you should use the
+contents mode by calling `dslide-deck-start' in a presentation that is
+already started."
   :type '(choice (const :tag "First slide" first)
                  (const :tag "Slide at point" point)))
 
 (defcustom dslide-start-function #'dslide-display-slides
   "When starting the mode, this is the default starting function.
 It should usually call `dslide-display-slides' or
-`dslide-display-contents'.  You can build commands that
-use `let' binding to temporarily set this variable in order to
-start with a specific starting function."
+`dslide-display-contents'.  You can build commands that use `let'
+binding to temporarily set this variable in order to start with a
+custom starting function."
   :type 'function)
 
 (defcustom dslide-header t
   "Display header in contents buffer.
-When this is disabled, the keywords for title etc will remain
-visible, albeit scrolled away because of how `org-overview'
-works."
+When this is disabled, the keywords for title etc will remain visible,
+albeit scrolled away because of how `org-overview' works."
   :type 'boolean)
 
 (defcustom dslide-header-fun nil
@@ -217,9 +216,9 @@ Turn off by setting to nil.  Plist keys and where they are used:
 
 (defcustom dslide-breadcrumb-face '(:inherit org-level-8)
   "Face added to the list of faces for breadcrumbs.
-This can be a face name symbol or an anonymous face spec.  It
-will be added to the face list, meaning it the original face's
-properties remain unless shadowed."
+This can be a face name symbol or an anonymous face spec.  It will be
+added to the face list, meaning it the original face's properties remain
+unless shadowed."
   :type 'face)
 
 (defcustom dslide-breadcrumb-separator " 🢒 "
@@ -229,9 +228,9 @@ properties remain unless shadowed."
 
 (defcustom dslide-breadcrumb-separator-style 'append
   "Where breadcrumb separators will be used.
-This helps distinguish the breadcrumbs from the slide headline.
-Use append to have a terminal breadcrumb or separate to only put
-them between breadcrumbs."
+This helps distinguish the breadcrumbs from the slide headline.  Use
+append to have a terminal breadcrumb or separate to only put them
+between breadcrumbs."
   :type '(choice (const :tag "After each breadcrumb" append)
                  (const :tag "Only between breadcrumbs" separate)))
 
@@ -251,7 +250,6 @@ them between breadcrumbs."
   "If non-nil, hide tags in headings."
   :type 'boolean)
 
-;; TODO can also probably be objects.  Use case?
 (defcustom dslide-hide-markup-types '(comment
                                       comment-block
                                       drawer
@@ -273,45 +271,40 @@ Increase if your so-called machine has trouble drawing."
 
 (defcustom dslide-start-hook '(dslide-cursor-hide)
   "Runs when deck is started with `dslide-deck-start'.
-Runs after the slide buffer is created but before first slide
-runs `dslide-begin'.  Buffer is widened and fully visible.
+Runs after the slide buffer is created but before first slide runs
+`dslide-begin'.  Buffer is widened and fully visible.
 
-It is intended only to run when `dslide-mode' is first enabled,
-so your hook functions do not need to be idempotent.
+It is intended only to run when `dslide-mode' is first enabled, so your
+hook functions do not need to be idempotent.
 
-🚧 This hook is not experimental.  However, the lifecycle
-management of a deck is somewhat experimental.  Please report
-issues."
+🚧 This hook is not experimental.  However, the lifecycle management of
+a deck is somewhat experimental.  Please report issues."
   :type 'hook)
 
 (defcustom dslide-present-hook '(dslide-cursor-hide)
   "Runs when a deck is started with `dslide-deck-present'.
-Runs after the slide buffer is created but before first slide
-calls `dslide-begin'.  Buffer is widened and fully visible.
+Runs after the slide buffer is created but before first slide calls
+`dslide-begin'.  Buffer is widened and fully visible.
 
-Use this hook to customize your presentation frame or the slide
-buffer it displays.  It is intended only to run on the first
-call, which sets up the frame, so your hook functions do not
-need to be idempotent.
+Use this hook to customize your presentation frame or the slide buffer
+it displays.  It is intended only to run on the first call, which sets
+up the frame, so your hook functions do not need to be idempotent.
 
-🚧 This hook was recently added.  Its purpose is clear.  The
-lifecycle management of a deck is somewhat experimental.  Please
-report issues."
+🚧 This hook was recently added.  Its purpose is clear.  The lifecycle
+management of a deck is somewhat experimental.  Please report issues."
   :type 'hook)
 
 (defcustom dslide-develop-hook '(dslide-cursor-hide)
   "Runs when a presentation is started with `dslide-deck-develop'.
-Runs after the slide buffer is created but before first slide
-calls `dslide-begin'.  Buffer is widened and fully visible.
+Runs after the slide buffer is created but before first slide calls
+`dslide-begin'.  Buffer is widened and fully visible.
 
-Use this hook to set up the slide buffer and window it is
-displayed in.  It is intended only to run on the first call,
-which creates the window, so your hook functions do not need to
-be idempotent.
+Use this hook to set up the slide buffer and window it is displayed in.
+It is intended only to run on the first call, which creates the window,
+so your hook functions do not need to be idempotent.
 
-🚧 This hook was recently added.  Its purpose is clear.  The
-lifecycle management of a deck is somewhat experimental.  Please
-report issues."
+🚧 This hook was recently added.  Its purpose is clear.  The lifecycle
+management of a deck is somewhat experimental.  Please report issues."
   :type 'hook)
 
 (defcustom dslide-stop-hook nil
@@ -320,9 +313,9 @@ report issues."
 
 (defcustom dslide-narrow-hook nil
   "Runs whenever the slide buffer restriction is updated.
-Use this hook for behaviors that affect the displayed region.
-Slides and sequences that do not display themselves or only
-affect display in another buffer will not trigger this hook."
+Use this hook for behaviors that affect the displayed region.  Slides
+and sequences that do not display themselves or only affect display in
+another buffer will not trigger this hook."
   :type 'hook)
 
 (defcustom dslide-contents-hook nil
@@ -331,35 +324,34 @@ affect display in another buffer will not trigger this hook."
 
 (defcustom dslide-after-last-slide-hook '()
   "Runs when forward is called but there is no next slide.
-This can either provide feedback or quit immediately etc.
-Consider using `dslide-push-step' and writing a callback that
-only reacts to the `forward' state.  This callback will then only
-run if the user immediately calls `dslide-deck-forward'
-again.  `dslide-deck-stop' is another good choice."
+This can either provide feedback or quit immediately etc.  Consider
+using `dslide-push-step' and writing a callback that only reacts to the
+`forward' state.  This callback will then only run if the user
+immediately calls `dslide-deck-forward' again.  `dslide-deck-stop' is
+another good choice."
   :type 'hook)
 
 (defcustom dslide-present-frame-parameters nil
   "Frame parameters used when creating a frame with `dslide-deck-present'.
-These are combined with the `default-frame-alist' parameters See
-the info node `(elisp)Creating Frames'.
+These are combined with the `default-frame-alist' parameters See the
+info node `(elisp)Creating Frames'.
 
 Use `dslide-present-hook' to customize the created frame
 further.
 
 It's worth mentioning that you should know about
-`frame-inhibit-implied-resize'.  This can help with the frame
-being resized by resizing text or changing other settings.  ."
+`frame-inhibit-implied-resize'.  This can help with the frame being
+resized by resizing text or changing other settings.  ."
   :type 'alist)
 
 (defcustom dslide-default-slide-action #'dslide-slide-action-child
   "Action class with lifecycle around the section actions.
-When stepping forward or backward, it is called before any
-section action.  It's normal purpose is to update the buffer
-restriction before section actions are run.
+When stepping forward or backward, it is called before any section
+action.  It's normal purpose is to update the buffer restriction before
+section actions are run.
 
-You can configure this per-heading by setting the
-SLIDE_ACTION keyword.  You can configure it for
-the document default by adding an SLIDE_ACTION
+You can configure this per-heading by setting the SLIDE_ACTION keyword.
+You can configure it for the document default by adding an SLIDE_ACTION
 keyword."
   :type 'function)
 
@@ -375,68 +367,71 @@ It's value is a list of symbol `dslide-action' sub-classes or (CLASS
 into an action object.  See the symbol `dslide-action' class and its
 methods to learn about writing custom actions.
 
-Many section actions are no-op whenever the content doesn't
-contain any elements they act on.  You can add classes to this
-list in order to have default behaviors for some org elements.
+Many section actions are no-op whenever the content doesn't contain any
+elements they act on.  You can add classes to this list in order to have
+default behaviors for some org elements.
 
-⛔ Planned deprecation.  Actions will be dispatched on-demand in
-the future rather than turned on for each slide.
+⛔ Planned deprecation.  Actions will be dispatched on-demand in the
+future rather than turned on for each slide.
 
-You can configure actions per-heading by setting the
-DSLIDE_ACTIONS property.  You can configure it for the document
-default by adding an DSLIDE_ACTIONS keyword."
+You can configure actions per-heading by setting the DSLIDE_ACTIONS
+property.  You can configure it for the document default by adding an
+DSLIDE_ACTIONS keyword."
   :type '(repeat function))
 
 (defcustom dslide-default-class 'dslide-slide
   "A class to more deeply modify slide behavior.
-Value should be a custom class extending `dslide'.  You can
-override methods if the built-in implementation is insufficient.
-Consider upstreaming changes.
+Value should be a custom class extending `dslide'.  You can override
+methods if the built-in implementation is insufficient.  Consider
+upstreaming changes.
 
-You can configure this per heading by setting the DSLIDE_CLASS
-property.  You can configure it for the document default by
-adding an DSLIDE_CLASS keyword."
+You can configure this per heading by setting the DSLIDE_CLASS property.
+You can configure it for the document default by adding an DSLIDE_CLASS
+keyword."
   :type 'symbol)
+
 
 (defcustom dslide-default-deck-class 'dslide-deck
   "A class to more deeply modify overall deck behavior.
-Value should be a custom class extending symbol `dslide-deck'.
-Use this to modify the root-level behaviors, including switching
-to children and finding siblings.  You can configure this for the
-document by adding the DSLIDE_ROOT_CLASS keyword."
+Value should be a custom class extending symbol `dslide-deck'.  Use this
+to modify the root-level behaviors, including switching to children and
+finding siblings.  You can configure this for the document by adding the
+DSLIDE_ROOT_CLASS keyword.
+
+🚧 This exists, but is likely very rarely used or tested."
   :type 'symbol)
 
 (defcustom dslide-default-filter #'dslide-built-in-filter
   "A function used to call next on children.
-The function used as actions should accept an org element, a
-`headline' type element and return it if it is a valid heading or
-return nil if it should be skipped.
+The function used as actions should accept an org element, a `headline'
+type element and return the element if it is a valid heading or return
+nil if it should be skipped.
 
-You can configure this per heading by setting the DSLIDE_FILTER
-keyword.  You can configure it for the document default by adding
-an DSLIDE_FILTER keyword."
+You can configure this per heading by setting the DSLIDE_FILTER keyword.
+You can configure it for the document default by adding an DSLIDE_FILTER
+keyword."
   :type 'function)
 
 (defcustom dslide-contents-selection-highlight t
   "Show a highlight on the selected headline.
-This is useful if you have some subtle cursor feature enabled for
-your presentation and wouldn't otherwise know what line you are
-on in the contents view.  The default is also just a way more
-obvious display style."
+This is useful if you have some subtle cursor feature enabled for your
+presentation and wouldn't otherwise know what line you are on in the
+contents view.  The default is also just a way more obvious display
+style."
   :type 'boolean)
 
 (defcustom dslide-kmacro-transcribe-hook nil
   "Hook run whenever dslide transcribes a keyboard macro.
-Maybe add a highlight on the recorded macro to make it more
-obvious when a new one was recorded.  I don't know.  It's your
-hook.  I just work here."
+Maybe add a highlight on the recorded macro to make it more obvious when
+a new one was recorded.  I don't know.  It's your hook.  I just work
+here."
   :type 'hook)
 
 (defcustom dslide-kmacro-transcribe-prompt "Label for transcribed macro: "
   "Ask for a comment to label newly transcribed macros.
-Transcribed macros can have a comment prepended to make it
-obvious what they do.  Set this prompt to nil if you don't wish
-to be bothered while recording."
+Transcribed macros can have a comment prepended to make it obvious what
+they do.  Set this prompt to nil if you don't wish to be bothered while
+recording."
   :type 'string)
 
 (defface dslide-contents-selection-face
@@ -531,18 +526,18 @@ between contents and slides.")
 ;; - `dslide-end'
 ;; - `dslide-final'
 ;;
-;; `dslide-end' is essentially begin for going in reverse.  Usually this is the
-;; same as calling begin and then stepping forward until no more progress is
-;; made.  However doing it this way would be unable to avoid extra work and
+;; `dslide-end' is essentially begin for going in reverse.  Usually this is
+;; the same as calling begin and then stepping forward until no more progress
+;; is made.  However doing it this way would be unable to avoid extra work and
 ;; could even create headaches when implementing sequences that shouldn't use
-;; reverse to un-execute the forwards steps or in cases where implementing this
-;; is too complex to pay off to the user.  For these reasons, the implementation
-;; of `dslide-end' is left up to the user.
+;; reverse to un-execute the forwards steps or in cases where implementing
+;; this is too complex to pay off to the user.  For these reasons, the
+;; implementation of `dslide-end' is left up to the user.
 ;;
-;; `dslide-goto' essentially is just a careful use of forward.  If every forward
-;; step properly reports its maximum extent of progress, we can use forward and
-;; begin to implement every goto.  🚧  The design is sound but this is largely
-;; unimplemented and will not be worked on without demand.
+;; `dslide-goto' essentially is just a careful use of forward.  If every
+;; forward step properly reports its maximum extent of progress, we can use
+;; forward and begin to implement every goto.  🚧 The design is sound but this
+;; is largely unimplemented and will not be worked on without demand.
 ;;
 ;; Finally, `dslide-forward' and `dslide-backward' should navigate the states
 ;; between begin or end and final.  They just return non-nil until they are
@@ -554,67 +549,63 @@ between contents and slides.")
 ;; after it has called the sub-sequence's `dslide-final'.
 ;;
 ;; Sub-sequences currently don't have any first-class extensible support for
-;; entering or exiting the sub-sequence.  Such cooperation is present in limited
-;; amounts to limit coupling the parent and child sequences.
+;; entering or exiting the sub-sequence.  Such cooperation is present in
+;; limited amounts to limit coupling the parent and child sequences.
 ;;
 ;; A lazy implementer can forego methods by delegating them to simpler
-;; idempotent methods, such as using an idempotent begin for backward.  With
-;; a maximum of six methods and a minimum of two, just begin and forward, you
+;; idempotent methods, such as using an idempotent begin for backward.  With a
+;; maximum of six methods and a minimum of two, just begin and forward, you
 ;; have enough behavior to properly fit the user interface.
 
 (cl-defgeneric dslide-begin (obj)
   "Set up the initial state of OBJ when going forward.
 The sequence is being entered from its beginning.
 
-Return values are ignored.  `dslide-begin' always counts as a
-step because it's a result of a nil return from
-`dslide-deck-forward'.
+Return values are ignored.  `dslide-begin' always counts as a step
+because it's a result of a nil return from `dslide-deck-forward'.
 
-This method should work together with `dslide-end' and
-`dslide-final' to ensure consistently valid state for
-`dslide-deck-forward' and `dslide-deck-backward'.")
+This method should work together with `dslide-end' and `dslide-final' to
+ensure consistently valid state for `dslide-deck-forward' and
+`dslide-deck-backward'.")
 
 (cl-defgeneric dslide-end (obj)
   "Set up the initial state of OBJ when going backward.
 The sequence is being entered from the end.
 
-Return values are ignored.  `dslide-end' always counts as a step
-because it's a result of a nil return from
-`dslide-deck-backward'.
+Return values are ignored.  `dslide-end' always counts as a step because
+it's a result of a nil return from `dslide-deck-backward'.
 
-The first job of this method is to perform setup, possibly by
-just calling begin since they likely have similar side-effects.
+The first job of this method is to perform setup, possibly by just
+calling begin since they likely have similar side-effects.
 
-Second, this method should reach the state that is equivalent to
-if the user called forward until no more progress could be made.
+Second, this method should reach the state that is equivalent to if the
+user called forward until no more progress could be made.
 
 The default implementation calls `dslide-begin' and then calls
 `dslide-forward' until no more progress can be made.  If this is
 inappropriate, it should be overridden.
 
 In cases where you don't need a real backward implementation or
-progressing backwards would have no sensible behavior, you can
-delegate this to `dslide-begin' and possibly delegate
-`dslide-deck-backward' to `dslide-deck-forward', resulting in a
-sequence that always starts at the beginning and always proceeds
-to the end.  For a single step sequence that has identical effect
-in both directions, this is appropriate.
+progressing backwards would have no sensible behavior, you can delegate
+this to `dslide-begin' and possibly delegate `dslide-deck-backward' to
+`dslide-deck-forward', resulting in a sequence that always starts at the
+beginning and always proceeds to the end.  For a single step sequence
+that has identical effect in both directions, this is appropriate.
 
-This method should work together with `dslide-end' and
-`dslide-final' to ensure consistently valid state for
-`dslide-deck-forward' and `dslide-deck-backward'")
+This method should work together with `dslide-end' and `dslide-final' to
+ensure consistently valid state for `dslide-deck-forward' and
+`dslide-deck-backward'")
 
 (cl-defgeneric dslide-final (obj)
   "Clean up any remaining state of OBJ.
-Implement this method to clean up any state that would interfere
-with the sequence succeeding when run again.  If your sequence
-implements real backward behavior,
+Implement this method to clean up any state that would interfere with
+the sequence succeeding when run again.  If your sequence implements
+real backward behavior,
 
-All side-effects and states created by steps in the sequence or
-the `dslide-begin' and `dslide-end' methods must be cleaned up
-or otherwise managed or else `dslide-backward' and other
-sequences of running a presentation will be brittle and likely
-fail when re-run.")
+All side-effects and states created by steps in the sequence or the
+`dslide-begin' and `dslide-end' methods must be cleaned up or otherwise
+managed or else `dslide-backward' and other sequences of running a
+presentation will be brittle and likely fail when re-run.")
 
 (cl-defgeneric dslide-forward (obj)
   "Advance OBJ forward by one step.
@@ -632,12 +623,12 @@ The return value has meaning to the deck:
 
 - nil: no progress could be made.
 
-For sequences that don't make progress in a buffer, returning t
-is fine.  Returning a point of progress is necessary for the
-default implementation of `dslide-goto'.
+For sequences that don't make progress in a buffer, returning t is fine.
+Returning a point of progress is necessary for the default
+implementation of `dslide-goto'.
 
-⚠ Every sequence repeated calls to of `dslide-forward' should
-return nil at some point or else infinite loops will result.")
+⚠ Every sequence repeated calls to of `dslide-forward' should return nil
+at some point or else infinite loops will result.")
 
 (cl-defgeneric dslide-backward (obj)
   "Advance OBJ backward by one step.
@@ -655,22 +646,21 @@ The return value has meaning to the deck:
 
 - nil: no progress could be made.
 
-For sequences that don't make progress in a buffer, returning t
-is fine.  Returning a point of progress is necessary for the
-default implementation of `dslide-goto'.
+For sequences that don't make progress in a buffer, returning t is fine.
+Returning a point of progress is necessary for the default
+implementation of `dslide-goto'.
 
-⚠ Every sequence of repeated calls to `dslide-backward' should
-return nil at some point or else infinite loops will result.")
+⚠ Every sequence of repeated calls to `dslide-backward' should return
+nil at some point or else infinite loops will result.")
 
 (cl-defgeneric dslide-goto (obj point)
   "Advance OBJ forward beyond POINT.
-This method can usually be implemented on top of
-`dslide-forward' by advancing until POINT is exceeded.  Return
-nil if POINT was not exceeded.  Return non-nil if the sense of
-progress exceeds POINT.  Usually, slide actions will be
-responsible for determining if the POINT belongs to this slide
-or one of its child slides, and the slide will just ask the
-child action.")
+This method can usually be implemented on top of `dslide-forward' by
+advancing until POINT is exceeded.  Return nil if POINT was not
+exceeded.  Return non-nil if the sense of progress exceeds POINT.
+Usually, slide actions will be responsible for determining if the POINT
+belongs to this slide or one of its child slides, and the slide will
+just ask the child action.")
 
 ;; ** Stateful Sequence
 (defclass dslide-stateful-sequence () ()
@@ -680,20 +670,19 @@ This is an abstract class.
 The sequence can be traversed forwards and backward.  `begin' and
 `foward' are conjugates of `end' and 'backward'.
 
-Because the sequence steps may rely on some setup and should
-perform necessary teardown, the stateful sequence provides `begin'
-`end' and `final' methods.
+Because the sequence steps may rely on some setup and should perform
+necessary teardown, the stateful sequence provides `begin' `end' and
+`final' methods.
 
 It can also be indexed by high-level navigation commands.  The
-implementation of `dslide-goto' Sequences can run as
-sub-sequences, where one sequence calls into another.  🚧 This
-capability is largely unimplemented, but compatible with existing
-work.
+implementation of `dslide-goto' Sequences can run as sub-sequences,
+where one sequence calls into another.  🚧 This capability is largely
+unimplemented, but compatible with existing work.
 
-Classes that wish to implement the stateful sequence interface
-just need to support a few methods and then rely on the generic
-implementations for the rest, unless they want to optimize or
-simplify their implementation."
+Classes that wish to implement the stateful sequence interface just need
+to support a few methods and then rely on the generic implementations
+for the rest, unless they want to optimize or simplify their
+implementation."
   :abstract t)
 
 (cl-defmethod dslide-begin ((_ dslide-stateful-sequence)))
@@ -720,7 +709,7 @@ simplify their implementation."
             (setq advanced progress)))))))
 
 ;; ** Parent
-;; TODO this class is kind of half-baked.  It was intended to wrap up the
+;; 🚧 this class is kind of half-baked.  It was intended to wrap up the
 ;; filtering functionality and needing to find next and previous children.
 ;; Needs actual usage to become mature.
 (defclass dslide-parent ()
@@ -747,9 +736,8 @@ simplify their implementation."
   ((slide
     :initform nil
     :documentation "The active sequence or slide.
-This is probably a `dslide-slide' object, but anything
-that implements `dslide-stateful-sequence' will probably
-work as well.")
+This is probably a `dslide-slide' object, but anything that implements
+`dslide-stateful-sequence' will probably work as well.")
    (base-buffer
     :initform nil :initarg :base-buffer
     :documentation "Source of the slide deck.")
@@ -759,7 +747,8 @@ work as well.")
    (window-config
     :initform nil :initarg :window-config
     :documentation"Window configuration for restoring after stop.")
-   ;; TODO this implementation doesn't work if more indirect buffers are used.
+   ;; TODO the number of deck states is likely to grow with buffer tracking
+   ;; moving into the deck object.
    (slide-buffer-state
     :initform nil
     :documentation "Initiated by display actions to `contents' or `slides'.")
@@ -770,9 +759,9 @@ FORM is just a list as steps will always be run before any
 sequence ends or makes progress.."))
 
   "Root sequence that dispatches commands to slides.
-Holds states such as those needed when switching between slides
-and contents.  Is responsible for picking root headings and hydrating them into
-slides and their actions.
+Holds states such as those needed when switching between slides and
+contents.  Is responsible for picking root headings and hydrating them
+into slides and their actions.
 
 Class can be overridden to affect root behaviors.  See
 `dslide-default-deck-class'")
@@ -811,12 +800,12 @@ goal again."
 ;; backward commands.  They delegate out to slides, which may telescope into
 ;; their children in order to make progress.
 ;;
-;; It make require several trips through the behavior to consume callbacks that
-;; are run for effect or are no-op, things that don't count as steps or are
-;; slides that decide at runtime to be skipped.
+;; It make require several trips through the behavior to consume callbacks
+;; that are run for effect or are no-op, things that don't count as steps or
+;; are slides that decide at runtime to be skipped.
 ;;
-;; In short, loop through whatever next steps and callbacks were pushed onto the
-;; stack.  When one of them makes progress, we're done.
+;; In short, loop through whatever next steps and callbacks were pushed onto
+;; the stack.  When one of them makes progress, we're done.
 
 (cl-defmethod dslide-forward ((obj dslide-deck))
   (unless (oref obj slide)
@@ -884,9 +873,9 @@ goal again."
     ;; already
     (error "No slide was set"))
 
-  ;; Going backward is almost the same as going forward.  The big difference is
-  ;; that when a slide is instantiated, it needs to be sent to its end.  Usually
-  ;; the default implementation, which calls forward until progress is
+  ;; Going backward is almost the same as going forward.  The big difference
+  ;; is that when a slide is instantiated, it needs to be sent to its end.
+  ;; Usually the default implementation, which calls forward until progress is
   ;; exhausted, is fine.  Certain actions with side-effects may not like this,
   ;; and they should implement an actual `dslide-end' method as well as
   ;; idempotent `dslide-begin' and `dslide-final' if any support for going
@@ -1001,13 +990,12 @@ FUN is a function of a single optional argument, `forward' or
 `backward'.  nil indicates that the callback is being cleaned up,
 usually to quit the presentation or change to contents.
 
-The return value is interpreted as progress, so return non-nil if
-you want FUN to count as a step or nil if FUN is only run for
-effects.
+The return value is interpreted as progress, so return non-nil if you
+want FUN to count as a step or nil if FUN is only run for effects.
 
-If you need multiple steps, consider adding steps inside of FUN
-for recursive dynamic steps rather than adding a lot of steps at
-once, which requires the functions to be removed or return nil."
+If you need multiple steps, consider adding steps inside of FUN for
+recursive dynamic steps rather than adding a lot of steps at once, which
+requires the functions to be removed or return nil."
   (unless (dslide-live-p)
     (error "No active deck"))
   (push fun (oref dslide--deck step-callbacks)))
@@ -1017,10 +1005,10 @@ once, which requires the functions to be removed or return nil."
   ((slide-action
     :initform nil :initarg :slide-action
     :documentation "Outermost action that sets up for section actions.
-Typically narrows, shows the header, creates slides from child
-headings etc.  Because narrowing and children are necessarily
-coupled, the slide action controls how children slides are
-created.  See `dslide-default-slide-action'.")
+Typically narrows, shows the header, creates slides from child headings
+etc.  Because narrowing and children are necessarily coupled, the slide
+action controls how child slides are created.  See
+`dslide-default-slide-action'.")
    (section-actions
     :initform nil :initarg :section-actions
     :documentation "Typical actions that work on the section.
@@ -1030,10 +1018,9 @@ Live within slide action lifecycle.  See
     :initform nil :initarg :begin
     :documentation "Marker for retrieving this heading's org element."))
   "Stores and coordinates the actions of a heading.
-The life-cycles of actions that run for a heading overlap, and
-the slide object coordinates this overlap.  It delegates the
-`stateful-sequence' calls into the actions in the appropriate
-order.")
+The life-cycles of actions that run for a heading overlap, and the slide
+object coordinates this overlap.  It delegates the `stateful-sequence'
+calls into the actions in the appropriate order.")
 
 (cl-defmethod dslide-begin ((obj dslide-slide))
   (let* ((slide-action (oref obj slide-action))
@@ -1046,17 +1033,17 @@ order.")
   (let* ((slide-action (oref obj slide-action))
          (progress (dslide-end slide-action)))
     ;; Fairly certain the ordering of slide and section actions won't normally
-    ;; matter for `dslide-end', but this ordering matches the situation that would
-    ;; occur if the user just called `dslide-forward' repeatedly, and we want the
-    ;; end state to be as close to "normal" as possible.
+    ;; matter for `dslide-end', but this ordering matches the situation that
+    ;; would occur if the user just called `dslide-forward' repeatedly, and we
+    ;; want the end state to be as close to "normal" as possible.
     (mapc #'dslide-end (reverse (oref obj section-actions)))
     (if slide-action progress
       (dslide-backward obj))))
 
 (cl-defmethod dslide-final ((obj dslide-slide))
-  ;; The order that these are called shouldn't matter.  No use case for coupling
-  ;; different finals, but the guarantee is that the lifecycle of the slide
-  ;; actions encompass the section actions
+  ;; The order that these are called shouldn't matter.  No use case for
+  ;; coupling different finals, but the guarantee is that the lifecycle of the
+  ;; slide actions encompass the section actions
   (mapc #'dslide-final (oref obj section-actions))
   (when-let ((slide-action (oref obj slide-action)))
     (dslide-final slide-action))
@@ -1101,9 +1088,17 @@ order.")
     found))
 
 ;; `dslide--make-slide' is very critical to the user-facing configuration and
-;; hacker-facing capabilities and API.  Slides are hydrated from org mode
-;; headings.  We can pretty much divide the likely user needs into either what
-;; to do with the section and what to do with the child headings.
+;; hacker-facing capabilities and API.  This is the entry point for how data
+;; gets into slides and then their actions.
+;;
+;; 🚧 The change to action creation on-demand will mean we don't instantiate
+;; actions yet, but this class will still need to parse the action
+;; configurations for the slide and merge with configuration automatically
+;; passed down from parents.
+;;
+;; Slides are hydrated from org mode headings.  We can pretty much divide the
+;; likely user needs into either what to do with the section and what to do
+;; with the child headings.
 ;;
 ;; The contents needs to be narrowed to, and this narrowing must be performed
 ;; both forwards and backwards.  Narrowing and the handling of children are
@@ -1232,17 +1227,17 @@ Many optional ARGS.  See code."
 ;; * Actions
 ;;; Pre-built Actions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Actions are stateful sequences.  They live on a slide.  They usually work on
-;; either the section or the children, but there is no requirement that they are
-;; exclusive to either.
+;; Actions are stateful sequences.  They live on a slide.  They usually work
+;; on either the section or the children, but there is no requirement that
+;; they are exclusive to either.
 ;;
 ;; The marker slot, `dslide-marker' method, and `dslide-section-next' and
 ;; `dslide-section-previous' are of particular utility for "mapping" over
 ;; elements as the user calls `dslide-deck-forward'.
 ;;
-;; Slide actions should compose with section actions, such
-;; as a round-robin slide action cycling through each child's action's forward
-;; and backward methods.
+;; Slide actions should compose with section actions, such as a round-robin
+;; slide action cycling through each child's action's forward and backward
+;; methods.
 
 ;; ** Base Action
 (defclass dslide-action (dslide-stateful-sequence)
@@ -1260,8 +1255,8 @@ It is initialized to the same value as the `begin' slot.")
     :initform nil
     :initarg :inline
     :documentation "Draw as if surrounded by other contents.
-This option allows actions that perform some animation to degrade
-to some technique that works with contents above and below."))
+This option allows actions that perform some animation to degrade to
+some technique that works with contents above and below."))
   "Base class for most slide actions that work on a heading's contents."
   :abstract t)
 
@@ -1292,16 +1287,15 @@ Errors when asked for a marker before one has been set.")
                                     &optional pred reverse-in-place
                                     peek info no-recursion)
   "Return OBJ's next element of TYPE.
-Only matches elements beginning after the marker stored in the
-action OBJ.  Moves the marker forward to the beginning of the
-matched element or to the end of heading.
+Only matches elements beginning after the marker stored in the action
+OBJ.  Moves the marker forward to the beginning of the matched element
+or to the end of heading.
 
-Optional REVERSE-IN-PLACE is used when changing directions should
-return the same element, meaning your action reverses in-place.
-hiding and revealing list items works this way.  When non-nil,
-matches can include elements starting at the action's marker, and
-the marker is moved to the end rather than beginning of an
-element.
+Optional REVERSE-IN-PLACE is used when changing directions should return
+the same element, meaning your action reverses in-place.  hiding and
+revealing list items works this way.  When non-nil, matches can include
+elements starting at the action's marker, and the marker is moved to the
+end rather than beginning of an element.
 
 Set optional PEEK to non-nil to check for an element without moving the
 marker.  Otherwise, the action's marker is updated.
@@ -1327,14 +1321,14 @@ Optional PRED INFO and NO-RECURSION are the same as for
                                             &optional pred reverse-in-place
                                             peek info no-recursion)
   "Return previous element of TYPE.
-Only matches elements beginning before the marker stored in the
-action, OBJ.  Moves the marker backward to the beginning of the
-returned element or the beginning of OBJ's heading.
+Only matches elements beginning before the marker stored in the action,
+OBJ.  Moves the marker backward to the beginning of the returned element
+or the beginning of OBJ's heading.
 
-Optional REVERSE-IN-PLACE is used when changing directions should
-return the same element, meaning your action reverses in-place.
-hiding and revealing list items works this way.  When non-nil,
-matches can include elements starting at the action's marker.
+Optional REVERSE-IN-PLACE is used when changing directions should return
+the same element, meaning your action reverses in-place.  hiding and
+revealing list items works this way.  When non-nil, matches can include
+elements starting at the action's marker.
 
 Set optional PEEK to non-nil to check for an element without moving the
 marker.  Otherwise, the action's marker is moved to the beginning of the
@@ -1400,9 +1394,9 @@ for `dslide-contents-map'.")
       (overlay-put overlay 'invisible t)
       (push overlay dslide-overlays)))
 
-  ;; Ooooh! right, yeah, the element parser doesn't give you affiliated keywords
-  ;; when you ask for keywords.  As much sense as that would make, the only
-  ;; technique I've found for this is falling back to regex.
+  ;; Ooooh! right, yeah, the element parser doesn't give you affiliated
+  ;; keywords when you ask for keywords.  As much sense as that would make,
+  ;; the only technique I've found for this is falling back to regex.
   (when (member 'keyword dslide-hide-markup-types)
     (save-excursion
       (let ((bound (org-element-property :end (dslide-heading obj))))
@@ -1417,6 +1411,7 @@ for `dslide-contents-map'.")
   (dslide-begin obj))
 
 ;; ** Text Property Action
+;;
 ;; Interpret text properties via affiliated keyword into text properties for
 ;; more control over text display on slides.
 
@@ -1450,6 +1445,7 @@ for `dslide-contents-map'.")
   (dslide-begin obj))
 
 ;; ** Item Reveal Action
+;;
 ;; Reveal items has a somewhat fun implementation.  The end state is actually
 ;; simpler than the begin state.  Going forward, we must remove overlays and
 ;; animate items.  Going backward, we add overlays.  When starting at the end,
@@ -1512,17 +1508,16 @@ for `dslide-contents-map'.")
     :initform t
     :initarg :remove-results
     :description "Remove results when entering slides 🧪.
-Experimental.  File an issue if you see something weird.  There's
-a lot of behaviors that could potentially react to this option.
-Currently only blocks with results set to replace are removed and
-only when entering a slide.  Other options seem to suggest
-results should not be removed or will never be written to the
-buffer anyway."))
+Experimental.  File an issue if you see something weird.  There's a lot
+of behaviors that could potentially react to this option.  Currently
+only blocks with results set to replace are removed and only when
+entering a slide.  Other options seem to suggest results should not be
+removed or will never be written to the buffer anyway."))
   "Execute source blocks as steps.
 By default blocks execute one by one as individual steps with
-`dslide-deck-forward'.  To run blocks in another direction, set
-a :direction parameter on the block.  You can set a single
-parameter or a vector of parameters.
+`dslide-deck-forward'.  To run blocks in another direction, set a
+:direction parameter on the block.  You can set a single parameter or a
+vector of parameters.
 
 - forward:  The default, only run on `dslide-deck-forward'
 
@@ -1542,11 +1537,10 @@ The old #+attr_dslide: style will no longer be used.  This is to allow
 the keyword to be used to configure other actions, which need to be
 allowed to use the first element as the class identifier.
 
-Other than both, which executes in either step direction,
-these keywords correspond to the normal methods of the stateful
-sequence class.  Blocks with method begin, end, and final are all
-executed during the corresponding method and do not count as
-steps.")
+Other than both, which executes in either step direction, these keywords
+correspond to the normal methods of the stateful sequence class.  Blocks
+with method begin, end, and final are all executed during the
+corresponding method and do not count as steps.")
 
 
 (defun dslide--remove-babel-results (src-block)
@@ -1582,8 +1576,8 @@ steps.")
 
 (defun dslide--method-block-pred (methods &optional unnamed)
   "Return a predicate to match the METHODS.
-Optional UNNAMED will return unnamed blocks as well.  This is
-used when going forward, the default."
+Optional UNNAMED will return unnamed blocks as well.  This is used when
+going forward, the default."
   (lambda (block)
     (let* ((deprecated (dslide--old-babel-attr block))
            (raw-params (org-element-property :parameters block))
@@ -1615,10 +1609,11 @@ And warn the user to update so we can deprecate."
 
 ;; Executing babel seems to widen and also creates messages, and this would
 ;; result in flashing.  Re-display is inhibited at the deck level to prevent
-;; these unpleasantries.  The downside of just inhibiting re-display until after
-;; the call is that if re-display is needed, such as if calling `sleep-for' in a
-;; loop, then no updates will be visible.  However, the user should really
-;; handle this with a timer or process output and process sentinel etc.
+;; these unpleasantries.  The downside of just inhibiting re-display until
+;; after the call is that if re-display is needed, such as if calling
+;; `sleep-for' in a loop, then no updates will be visible.  However, the user
+;; should really handle this with a timer or process output and process
+;; sentinel etc.
 (defun dslide--block-execute (block-element)
   (let* ((block-begin (org-element-property :begin block-element))
          (block-end (org-element-property :end block-element))
@@ -1632,6 +1627,7 @@ And warn the user to update so we can deprecate."
     (save-excursion
       (without-restriction
         (goto-char block-begin)
+        ;; TODO Handle failure in a loop
         (condition-case user-wrote-flaky-babel
             ;; t for don't cache.  We likely want effects
             (progn
@@ -1651,6 +1647,7 @@ And warn the user to update so we can deprecate."
           ((debug error)
            (dslide--base-buffer-highlight-region
             block-begin block-end 'dslide-babel-error-highlight)
+
            ;; TODO consolidate moving the point & window points in base buffer
            ;; XXX out of step with other buffer movement
            (set-buffer (oref dslide--deck base-buffer))
@@ -1961,22 +1958,21 @@ result in some being larger and smaller.")
     :initform 0.4
     :initarg :jitter
     :documentation "Shape parameter for jitter between keystrokes.
-This simulates a human typing.  The math uses a long-tailed
-Laplace distribution (the only good distribution for serious
-work).  Larger values of jitter will result in more variation in
-frequency.  Values of 0.1 to 1.0 are reasonable.  Must be
-greater than 0.0.  Values of 0.0 will result in no jitter."))
+This simulates a human typing.  The math uses a long-tailed Laplace
+distribution (the only good distribution for serious work).  Larger
+values of jitter will result in more variation in frequency.  Values of
+0.1 to 1.0 are reasonable.  Must be greater than 0.0.  Values of 0.0
+will result in no jitter."))
   "🚧 UNSTABLE! Playback keyboard macros stored in keywords.
-We hope the new format is flexible enough to add features.  But
-we will break it as soon as possible to avoid pain if necessary
-and then advise you how to update inside the NEWS (Release notes
-on Github)
+We hope the new format is flexible enough to add features.  But we will
+break it as soon as possible to avoid pain if necessary and then advise
+you how to update inside the NEWS (Release notes on Github)
 
-Beware!  Macros run amok will sell your entire stock portfoloio,
-upload all your personal data to pastebin, and confess to
-multiple crimes you probably didn't commit.  They are not
-portable from configuration to configuration.  They are however
-very special in that they replicate how you use Emacs.")
+Beware!  Macros run amok will sell your entire stock portfoloio, upload
+all your personal data to pastebin, and confess to multiple crimes you
+probably didn't commit.  They are not portable from configuration to
+configuration.  They are however very special in that they replicate how
+you use Emacs.")
 
 (cl-defmethod dslide-final :after ((_obj dslide-action-kmacro))
   ;; todo clean up any animation
@@ -2037,10 +2033,10 @@ very special in that they replicate how you use Emacs.")
 ;; work.  Maybe threads will work.  We'll see.
 (defun dslide--kmacro-reanimate (&rest args)
   "Play keys in ARGS back like the piano man.
-This function recursively calls itself via a timer until it runs
-out of keys in ARGS.  It compares the most recent input with
-`last-input-event' so that it can detect if it has been
-interrupted by some other input event and quit."
+This function recursively calls itself via a timer until it runs out of
+keys in ARGS.  It compares the most recent input with `last-input-event'
+so that it can detect if it has been interrupted by some other input
+event and quit."
   (let ((frequency (plist-get args :frequency))
         (jitter (plist-get args :jitter))
         (keys (plist-get args :keys))
@@ -2065,14 +2061,14 @@ interrupted by some other input event and quit."
 
 (defun dslide--laplace-jitter (freq jitter)
   "Mutate FREQ by JITTER shape parameter.
-Jitter is the b parameter of the Laplace distribution, the only
-good distribution for serious work.  Larger b causes a fatter
-tail.  In practice, small JITTER will be more predictable, but
-never without some larger variations.
+Jitter is the b parameter of the Laplace distribution, the only good
+distribution for serious work.  Larger b causes a fatter tail.  In
+practice, small JITTER will be more predictable, but never without some
+larger variations.
 
-Because the Laplace distribution has a fat tail, you aren't
-forced to choose between good local refinement and good mixing
-speeds and lower auto-correlation.  💡"
+Because the Laplace distribution has a fat tail, you aren't forced to
+choose between good local refinement and good mixing speeds and lower
+auto-correlation.  💡"
   (cond ((integerp jitter) (error "Jitter was integer: %s" jitter))
         ((= jitter 0.0) freq)
         ((< jitter 0.0) (error "Jitter too low: %s" jitter))
@@ -2087,12 +2083,13 @@ speeds and lower auto-correlation.  💡"
              (* freq (expt float-e sample))))))
 
 ;; * Slide Actions
-;; A slide action will generally control the restriction, hydrate children, and
-;; pass through `dslide-stateful-sequence' calls to children.  There could be
-;; multiple children.  Children that are displayed in the same restriction as
-;; the parent will be hydrated with a non-nil `inline' slot value, which tells
-;; them not to try to manage the restriction on their own.  This also makes
-;; their section actions inline.
+;;
+;; A slide action will generally control the restriction, hydrate children,
+;; and pass through `dslide-stateful-sequence' calls to children.  There could
+;; be multiple children.  Children that are displayed in the same restriction
+;; as the parent will be hydrated with a non-nil `inline' slot value, which
+;; tells them not to try to manage the restriction on their own.  This also
+;; makes their section actions inline.
 
 (defclass dslide-slide-action (dslide-action)
   ((breadcrumbs
@@ -2148,9 +2145,9 @@ restriction, meaning no progress was made.")
 
 (cl-defgeneric dslide-hide-filtered-children (obj)
   "Hide all children that will be skipped.
-See `dslide-default-filter' and related settings.  Since these children will
-be mostly skipped by subsequent logic, we just cover them with overlays so
-they can be ignored for the slide's lifecycle.")
+See `dslide-default-filter' and related settings.  Since these children
+will be mostly skipped by subsequent logic, we just cover them with
+overlays so they can be ignored for the slide's lifecycle.")
 
 ;; TODO consolidate mapping over child headings
 (cl-defmethod dslide-hide-filtered-children ((obj dslide-slide-action))
@@ -2167,16 +2164,15 @@ they can be ignored for the slide's lifecycle.")
 
 (cl-defgeneric dslide-child-next (obj &optional reverse-in-place peek)
   "Return the next direct child heading element.
-Only matches headings beginning after the marker stored in the
-action OBJ.  Moves the marker forward to the beginning of the
-matched heading or to the end of heading.
+Only matches headings beginning after the marker stored in the action
+OBJ.  Moves the marker forward to the beginning of the matched heading
+or to the end of heading.
 
-Optional REVERSE-IN-PLACE is used when changing directions should
-return the same heading, meaning your action reverses in-place.
-Hiding and revealing list items works this way.  When non-nil,
-matches can include headings starting at the action's marker, and
-the marker is moved to the end rather than beginning of an
-heading.
+Optional REVERSE-IN-PLACE is used when changing directions should return
+the same heading, meaning your action reverses in-place.  Hiding and
+revealing list items works this way.  When non-nil, matches can include
+headings starting at the action's marker, and the marker is moved to the
+end rather than beginning of an heading.
 
 Set optional PEEK to non-nil to check for an element without moving the
 marker.  Otherwise, the action's marker is moved to the end of the
@@ -2213,14 +2209,14 @@ backwards step to process the most recently visited heading.")
 
 (cl-defgeneric dslide-child-previous (obj &optional reverse-in-place peek)
   "Return the previous direct child heading element.
-Only matches child headings beginning before the marker stored in
-the action, OBJ.  Moves the marker backward to the beginning of
-the returned heading or the beginning of OBJ's heading.
+Only matches child headings beginning before the marker stored in the
+action, OBJ.  Moves the marker backward to the beginning of the returned
+heading or the beginning of OBJ's heading.
 
-Optional REVERSE-IN-PLACE is used when changing directions should
-return the same heading, meaning your action reverses in-place.
-hiding and revealing list items works this way.  When non-nil,
-matches can include headings starting at the action's marker.
+Optional REVERSE-IN-PLACE is used when changing directions should return
+the same heading, meaning your action reverses in-place.  hiding and
+revealing list items works this way.  When non-nil, matches can include
+headings starting at the action's marker.
 
 Set optional PEEK to non-nil to check for an element without moving the
 marker.  Otherwise, the action's marker is moved to the end of the
@@ -2280,8 +2276,8 @@ Child headings become independent slides.")
   (dslide-narrow obj))
 
 (cl-defmethod dslide-forward ((obj dslide-slide-action-child))
-  ;; For child slides, we make a slide out of the next child heading and advance
-  ;; our progress forward to the end of that child
+  ;; For child slides, we make a slide out of the next child heading and
+  ;; advance our progress forward to the end of that child
   (or (when-let ((child (oref obj child)))
         (if-let ((progress (dslide-forward child)))
             progress
@@ -2296,8 +2292,8 @@ Child headings become independent slides.")
 
 (cl-defmethod dslide-backward ((obj dslide-slide-action-child))
   ;; For child slides, we make a slide out of the previous child heading and
-  ;; advance our progress backward to the beginning of that child.  If there are
-  ;; no more children, we narrow back to OBJ's heading
+  ;; advance our progress backward to the beginning of that child.  If there
+  ;; are no more children, we narrow back to OBJ's heading
   (or (when-let ((child (oref obj child)))
         (if-let ((progress (dslide-backward child)))
             progress
@@ -2501,8 +2497,8 @@ Return the heading unless it's filtered."
 
 (defun dslide-hide-region (beg end &optional keep-fill)
   "Return overlay hiding region between BEG and END.
-Optional KEEP-FILL will obscure but not change the contents of text, keeping
-its height and width for filling in other content."
+Optional KEEP-FILL will obscure but not change the contents of text,
+keeping its height and width for filling in other content."
   (let ((ov (make-overlay beg end)))
     (if keep-fill
         (let ((background (face-attribute 'default :background)))
@@ -2512,9 +2508,9 @@ its height and width for filling in other content."
 
 (defun dslide-hide-element (element &optional keep-fill)
   "Return an overlay that will hide ELEMENT.
-Element is an org element.Optional KEEP-FILL will obscure but not
-change the contents of text, keeping its height and width for
-filling in other content."
+Element is an org element.Optional KEEP-FILL will obscure but not change
+the contents of text, keeping its height and width for filling in other
+content."
   (dslide-hide-region
    (org-element-property :begin element)
    (org-element-property :end element)
@@ -2526,8 +2522,8 @@ See `org-item-struct' for structure of ITEM.  Note, this hides
 the entire item, which may contain sub-items, but revealing
 children of a hidden parent doesn't really make sense.
 
-Optional KEEP-FILL will obscure but not change the contents of text, keeping
-its height and width for filling in other content."
+Optional KEEP-FILL will obscure but not change the contents of text,
+keeping its height and width for filling in other content."
   (dslide-hide-region
    (car item) (car (last item)) keep-fill))
 
@@ -2537,8 +2533,8 @@ Element is an org element.  You should probably not use this on
 headings because their contents includes the sections and the
 children.  See `dslide-hide-section' and `dslide-hide-children'.
 
-Optional KEEP-FILL will obscure but not change the contents of text, keeping
-its height and width for filling in other content."
+Optional KEEP-FILL will obscure but not change the contents of text,
+keeping its height and width for filling in other content."
   (dslide-hide-region (org-element-property :contents-begin element)
                   (org-element-property :end element)
                   keep-fill))
@@ -2547,8 +2543,8 @@ its height and width for filling in other content."
   "Return an overlay that hides the section of HEADING.
 HEADING is a headline type org element.
 
-Optional KEEP-FILL will obscure but not change the contents of text, keeping
-its height and width for filling in other content."
+Optional KEEP-FILL will obscure but not change the contents of text,
+keeping its height and width for filling in other content."
   (dslide-hide-region
    (dslide--section-begin heading)
    (dslide--section-end heading)
@@ -2558,8 +2554,8 @@ its height and width for filling in other content."
   "Return an overlay that hides the children of HEADING.
 HEADING is a headline type org element.
 
-Optional KEEP-FILL will obscure but not change the contents of text, keeping
-its height and width for filling in other content."
+Optional KEEP-FILL will obscure but not change the contents of text,
+keeping its height and width for filling in other content."
   (dslide-hide-region
    (dslide--section-end heading)
    (org-element-property :end heading)
@@ -2567,9 +2563,9 @@ its height and width for filling in other content."
 
 ;; * Element Mapping
 
-;; Functions of headings are private so that corresponding slide methods can be
-;; public.  Private methods with public counterparts are at least as stable as
-;; the public method.
+;; Functions of headings are private so that corresponding slide methods can
+;; be public.  Private methods with public counterparts are at least as stable
+;; as the public method.
 
 (defun dslide--map
     (element type fun &optional info first-match no-recursion)
@@ -3145,11 +3141,11 @@ for commands without visible side effects."
 ;; actions needed to be configured per slide, not per element.  However, for
 ;; actions that operate mainly via their begin property, we need a trigger
 (defun dslide--parse-classes-with-args (property-data)
-  ;; To support org's multiple-value properties, we want to parse a string that
-  ;; looks like "class-name :arg val class-name :arg val :arg val", basically a
-  ;; space-separated list of either class names or key-value pairs that are
-  ;; arguments for those classes during instantiation.  The result is a form of
-  ;; ((CLASS . ARGS)) where ARGS is a plist.
+  ;; To support org's multiple-value properties, we want to parse a string
+  ;; that looks like "class-name :arg val class-name :arg val :arg val",
+  ;; basically a space-separated list of either class names or key-value pairs
+  ;; that are arguments for those classes during instantiation.  The result is
+  ;; a form of ((CLASS . ARGS)) where ARGS is a plist.
   (unless (string= "nil" property-data)
     (let ((tokens (split-string property-data))
           classes-with-args
@@ -3217,12 +3213,12 @@ terminal values will be interpreted as nil."
 
 (defun dslide-read-affiliated (element property &optional keywords merged)
   "Return plist for PROPERTY of ELEMENT.
-Affiliated keywords can have a list of value when several of the
-same affilated keyword annotate an object.  When optional
-KEYWORDS is t, non-keywords will signal wrong-type-argument.
-When optional MERGED is non-nil, return a merged plist.  The
-top-most affiliated keyword is considered the last to be called
-and thus overwrites the inner keywords when merging."
+Affiliated keywords can have a list of value when several of the same
+affilated keyword annotate an object.  When optional KEYWORDS is t,
+non-keywords will signal wrong-type-argument.  When optional MERGED is
+non-nil, return a merged plist.  The top-most affiliated keyword is
+considered the last to be called and thus overwrites the inner keywords
+when merging."
   (let ((found (org-element-property property element))
         read)
     (while-let ((f (pop found)))
@@ -3239,10 +3235,11 @@ and thus overwrites the inner keywords when merging."
 ;; * Contents Highlight Line
 
 ;; Basically we need to use the post-command hook to update a line with our
-;; handy-dandy face.  This is basically just a less feature-ful re-implementation
-;; of hl-line.  hl-line is kind of subtle and works across all buffers.  This is
-;; safer and defaults to the face attribute, :inverse-video, which is super high
-;; contrast, good when navigating slide headlines like a menu.
+;; handy-dandy face.  This is basically just a less feature-ful
+;; re-implementation of hl-line.  hl-line is kind of subtle and works across
+;; all buffers.  This is safer and defaults to the face attribute,
+;; :inverse-video, which is super high contrast, good when navigating slide
+;; headlines like a menu.
 (defun dslide--contents-hl-line ()
   (unless dslide--contents-hl-line-overlay
     (setq dslide--contents-hl-line-overlay
@@ -3292,9 +3289,9 @@ Optional FACE defaults to `dslide-highlight'."
 ;; TODO highlight ranges and elements
 (defun dslide--follow (progress &optional scroll)
   "Set the base buffer window point to PROGRESS.
-PROGRESS is a slide object, marker, buffer position, org element,
-org object or boolean (which will be ignored).  Optional scroll
-will advance the windows to the current buffer restriction"
+PROGRESS is a slide object, marker, buffer position, org element, org
+object or boolean (which will be ignored).  Optional scroll will advance
+the windows to the current buffer restriction"
   (unless (dslide-live-p)
     (error "Live deck not found"))
   (let ((pos (cond ((integerp progress) progress)
@@ -3337,16 +3334,16 @@ will advance the windows to the current buffer restriction"
 ;; TODO break into buffer & deck details
 (defun dslide--make-deck-and-slide-buffer ()
   "Prepare for starting the minor mode.
-Call this when writing commands that could be called before or
-after a deck exists but should create a deck if it does not exist.
+Call this when writing commands that could be called before or after a
+deck exists but should create a deck if it does not exist.
 
 In functions that should only be called when a deck is alive and
 associated with the current buffer,
 
 use `dslide-live-p' and throw an error if it's not live.
 
-This function sets up the deck.  Many operations such as calling
-hooks must occur in the deck's :slide-buffer."
+This function sets up the deck.  Many operations such as calling hooks
+must occur in the deck's :slide-buffer."
   (unless (dslide-live-p)
     ;; Prevent starting within indirect buffers
     (when (buffer-base-buffer (current-buffer))
@@ -3490,9 +3487,9 @@ could be called from another buffer."
 
 (defun dslide--display-slide-buffer (&optional another)
   "Make the slide buffer visible.
-Optional ANOTHER will pop up the buffer instead of whatever the
-normal actions are.  This is used when we have displayed one
-buffer and need to display the other just somehwere else."
+Optional ANOTHER will pop up the buffer instead of whatever the normal
+actions are.  This is used when we have displayed one buffer and need to
+display the other just somehwere else."
   (let ((slide-buffer (oref dslide--deck slide-buffer)))
     (unless (dslide--slide-buffer-visible-p)
       (if another
@@ -3501,9 +3498,9 @@ buffer and need to display the other just somehwere else."
 
 (defun dslide--display-base-buffer (&optional another)
   "Make the base buffer visible.
-Optional ANOTHER will pop up the buffer instead of whatever the
-normal actions are.  This is used when we have displayed one
-buffer and need to display the other just somehwere else."
+Optional ANOTHER will pop up the buffer instead of whatever the normal
+actions are.  This is used when we have displayed one buffer and need to
+display the other just somehwere else."
   (let ((base-buffer (oref dslide--deck base-buffer)))
     (unless (dslide--base-buffer-visible-p)
       (if another
@@ -3655,9 +3652,9 @@ source buffer."
 ;;;###autoload
 (defun dslide-deck-stop ()
   "Stop the presentation.
-It is recommended to not bind this to a controller button unless
-you have five buttons or will use the display button to stop and
-can reliably select displays via other means."
+It is recommended to not bind this to a controller button unless you
+have five buttons or will use the display button to stop and can
+reliably select displays via other means."
   (interactive)
   (unless (dslide-live-p)
     (user-error "No live presentation"))
@@ -3668,19 +3665,19 @@ can reliably select displays via other means."
 ;;;###autoload
 (defun dslide-deck-start ()
   "Start presentation or secondary action.
-Starts the mode if the mode is inactive.  Switches to the
-contents view when a presentation is already active.  Displays
-and selects the slide buffer if it is not currently visible.
+Starts the mode if the mode is inactive.  Switches to the contents view
+when a presentation is already active.  Displays and selects the slide
+buffer if it is not currently visible.
 
-It is recommended to bind this in the `org-mode-map'.  It is
-also recommended to bind this to the play button on a
-presentation controller.  Its behavior will be overloaded with a
-secondary action, such as playing a video on the slide, if one
-is available.  The default secondary task is the contents view.
+It is recommended to bind this in the `org-mode-map'.  It is also
+recommended to bind this to the play button on a presentation
+controller.  Its behavior will be overloaded with a secondary action,
+such as playing a video on the slide, if one is available.  The default
+secondary task is the contents view.
 
-🚧 Secondary actions will be overloaded onto this command
-whenever they are implemented.  Secondary actions allow
-non-linear kinds of steps to exist."
+🚧 Secondary actions will be overloaded onto this command whenever they
+are implemented.  Secondary actions allow non-linear kinds of steps to
+exist."
   (interactive)
   ;; `dslide-mode' errors if not an org buffer
   (if (dslide-live-p)
@@ -3774,8 +3771,8 @@ frame."
 (defun dslide-kmacro-transcribe-set-mark ()
   "Sets a current mark for trnascribing macros for plaback.
 Point must be on an empty line, in an org buffer.  Every call to
-`kmacro-end-macro' will check if there is a new macro and insert
-it as a dslide action."
+`kmacro-end-macro' will check if there is a new macro and insert it as a
+dslide action."
   (interactive)
   (unless (derived-mode-p 'org-mode)
     (user-error "Not org mode"))
