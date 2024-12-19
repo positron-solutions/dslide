@@ -3640,11 +3640,11 @@ source buffer."
       (setq dslide--present-frame nil))
     (when dslide--develop-window-config
       (condition-case nil
-          (set-window-configuration
-           dslide--develop-window-config)
+          (set-window-configuration dslide--develop-window-config)
         ((debug error) (delay-warning
                         '(dslide dslide-quit)
-                        "Could not restore window config"))))
+                        "Could not restore window config")))
+      (setq dslide--develop-window-config nil))
     (dslide--feedback :stop)))
 
 ;; * User Commands

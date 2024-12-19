@@ -11,7 +11,11 @@
 #+select_tags: latest
 #+export_file_name: RELEASE.md
 
-* v0.6.0 Fighting Spam 💌 :latest:
+* v0.6.1-pre :latest:
+Fixing bugs and filling in new features
+** Fixed 💩
+- Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
+* v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use
 - New actions (*KMACROS!*) fit a more clear pattern
