@@ -2502,8 +2502,13 @@ keeping its height and width for filling in other content."
   (let ((ov (make-overlay beg end)))
     (if keep-fill
         (let ((background (face-attribute 'default :background)))
-          (overlay-put ov 'face `(:foreground ,background :background ,background)))
-      (overlay-put ov 'display ""))
+          (overlay-put ov 'face `(:foreground ,background :background
+                                              ,background)))
+      ;; Before you try invisible t yet again, figure out if there's an
+      ;; off-by-one issue that can be avoided with child headlines
+      (overlay-put ov 'display "")
+      (overlay-put ov 'line-prefix "")
+      (overlay-put ov 'wrap-prefix ""))
     ov))
 
 (defun dslide-hide-element (element &optional keep-fill)
