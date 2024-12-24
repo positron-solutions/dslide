@@ -7,12 +7,37 @@
 # every release.
 
 #+link: demo.org https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org
-
+#+options: toc:nil
 #+select_tags: latest
-#+export_file_name: RELEASE.md
+#+export_file_name: RELEASE
+* V0.7.0 Breaking it Right 🥂
+The glass ceiling is no more.  Dslide is your ticket to boardroom success! 💹
+- per-element configuration
+- centralized action default configuration
+- interleaving action steps
+We're peeling that onion toward 1.0, but this is gaining traction.  The synergy.  Time to script outside the box!  This package is up & to the right! ↗️  Give them the Dslide 🍌
+** The New Pattern
+The configuration pattern is =KEYWORD_CLASS= =KEY= =VAL= =KEY= =VAL=...
 
-* v0.6.1-pre :latest:
-Fixing bugs and filling in new features
+- =KEYWORD= could be a regular or affiliated keyword
+- =CLASS-ID= is an action's short.  These will be configured in the upcoming action dispatch registry.
+- =VAL= can be a vector or list, but must have brackets or parantheses.
+*** The Variations
+Data can be added to elements in different ways.  Regular keywords can act as their own elements.
+
+- The =#+dslide_class:= keyword can be used for standalone content like kmacros.  When using regular keywords, *the keyword value is the content*.
+- The =#+attr_dslide_class:= affiliated keyword will be used to add configuration to the element it preceeds.  This is used if there is nowhere else to attach data to an element.
+- Babel blocks can have most of their configuration done with the =:dslide= parameter or other existing babel block parameters.
+- Headings still use the property drawer but mainly =:DSLIDE_ACTION:= to configure the slide action.
+- Some actions tend to work on every single element, like the hide-markup action.  Its configuration also lives on the heading, under =:DSLIDE_HIDE_MARKUP:=
+*** Opting Out of Always-On
+- Since everything is always on, we will recognize =#+attr_dslide: :ignore t= as meaning no class or "do nothing".  Using the class-specific version will affect only that action, allowing other actions to do what they normally do.
+*** Simpler Slide Action
+- With more always-on actions, the use of =:DSLIDE_ACTIONS:= is less likely needed and we can use =:DSLIDE_ACTION:= (singular) as an unambiguous way to declare the slide's action.  ⚠️ =:DSLIDE_SLIDE_ACTION:= will now warn.
+** Added
+- Images can be ignored with the =#+attr_dslide: :ignore t= affiliated keyword.  Links configured this way can be mixed with images configured other ways.
+* v0.6.1 (Pre-Release) :latest:
+Fixing bugs and filling some gaps in new features
 ** Fixed 💩
 - Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
 * v0.6.0 Fighting Spam 💌
