@@ -327,7 +327,7 @@ For blocks you want to be visible but are only running for effects, you can use 
 #+begin_src elisp :results none :direction begin
   (require 'moc)
 #+end_src
-#+begin_src elisp :results none :direction final backward
+#+begin_src elisp :results none :direction [final backward]
   (when-let ((buffer (get-buffer "*MoC Focus*")))
     (kill-buffer buffer))
 #+end_src
