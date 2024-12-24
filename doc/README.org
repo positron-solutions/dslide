@@ -14,6 +14,7 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 #+end_export
 #+begin_export html
 <a href="https://melpa.org/#/dslide"><img src="https://melpa.org/packages/dslide-badge.svg" alt="melpa package"></a> <a href="https://stable.melpa.org/#/dslide"><img src="https://stable.melpa.org/packages/dslide-badge.svg" alt="melpa stable package"></a>
+<a href="https://elpa.nongnu.org/nongnu-devel/dslide.html"><img src="https://elpa.nongnu.org/nongnu-devel/dslide.svg"></a>
 <a href="https://elpa.nongnu.org/nongnu/dslide.html"><img src="https://elpa.nongnu.org/nongnu/dslide.svg" alt="Non-GNU ELPA"></a>
 #+end_export
 ** Programmable Org Presentation 🦄
