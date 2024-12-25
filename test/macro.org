@@ -20,4 +20,4 @@ This is the best thing since 🔪🍞
 * Keys
 
 # birthday
-#+dslide_kmacro: :keys [M-x a n i m a t e SPC b i r t h <return> d s l i d e <return>]
+#+dslide_kmacro: :keys "M-x a n i m a t e SPC b i r t h <return> d s l i d e <return>"

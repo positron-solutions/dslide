@@ -445,7 +445,7 @@ Check the Dslide manual. =M-x info-display-manual dslide=.  There is a new comma
 Press ➡️ to run the (invisible) recorded macro 🤠.
 
 # M-x animate-birthday-present dslide
-#+dslide_kmacro: :frequency 0.09 :jitter 0.4 :keys [M-x a n i m a t e - b i r t h d a y - p r e s e n t <return> d s l i d e <return>]
+#+dslide_kmacro: :frequency 0.09 :jitter 0.4 :keys "M-x a n i m a t e - b i r t h d a y - p r e s e n t <return> d s l i d e <return>"
 
 🚧 Please try this feature.  Open issues.  Keep in mind that keyboard macros are not very reproducible.  They likely only work on your configuration.  It is a great way to demonstrate using your shell etc while not having to type. 💡
 

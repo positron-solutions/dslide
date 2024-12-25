@@ -1990,12 +1990,6 @@ you use Emacs.")
 (cl-defmethod dslide-end ((obj dslide-action-kmacro))
   (dslide-marker obj (org-element-property :end (dslide-heading obj))))
 
-(defun dslide--keys-to-events (keys)
-  "Convert a vector of symbols of keys into a list of events.
-Each KEY is a symbol for whose name is like that returned from
-`key-description'.  Events are like those returned from `kbd'."
-  (vconcat (seq-map (lambda (k) (aref (vconcat (kbd (symbol-name k))) 0)) keys)))
-
 (cl-defmethod dslide-forward ((obj dslide-action-kmacro))
   ;; TODO Erroring within an action usually allows retry.  Let's find out.  🤠
   (when dslide--kmacro-timer
@@ -2010,7 +2004,7 @@ Each KEY is a symbol for whose name is like that returned from
            (params (dslide-read-plist value))
            (events (or(plist-get params :events)
                       (if-let ((keys (plist-get params :keys)))
-                          (dslide--keys-to-events keys)
+                          (kbd keys)
                         (error "No keys or events at %s"
                                (without-restriction
                                  (line-number-at-pos
@@ -2038,7 +2032,7 @@ Each KEY is a symbol for whose name is like that returned from
            (params (dslide-read-plist value))
            (events (or(plist-get params :events)
                       (if-let ((keys (plist-get params :keys)))
-                          (dslide--keys-to-events keys)
+                          (kbd keys)
                         (error "No keys or events at %s"
                                (without-restriction
                                  (line-number-at-pos
@@ -3130,7 +3124,7 @@ for commands without visible side effects."
         ;; TODO add some highlighting of recorded macro
         (pcase dslide-kmacro-transcribe-type
           (:events (insert (format "#+dslide_kmacro: :events %S\n\n" macro)))
-          (:keys (insert (format "#+dslide_kmacro: :keys [%s]\n\n"
+          (:keys (insert (format "#+dslide_kmacro: :keys %S\n\n"
                                  (key-description macro))))
           (_ (error "dslide-kmacro-transcribe-type: %s not understood."
                     dslide-kmacro-transcribe-type)))
