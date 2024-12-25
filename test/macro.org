@@ -1,0 +1,23 @@
+#+title:	Kmacros
+#+author:	Positron
+#+email:	contact@positron.solutions
+
+* Keyboard.   Macros.
+This is the best thing since 🔪🍞
+
+** Let's Record
+1. ~dslide-kmacro-transribe-set-mark~
+2. Record some macros
+3. ~dslide-kmacro-transcribe-quit~
+* Events
+:PROPERTIES:
+:DSLIDE_ACTIONS: dslide-action-hide-markup :ignore-types (keyword)
+:END:
+
+# Good Macro
+#+dslide_kmacro: :events [134217839 24 98 104 109 109 109 return return return 97 111 119 105 101 106 112 97 111 119 101 106 102 111 112 97 119 101 102 106 112 105 111 106]
+
+* Keys
+
+# birthday
+#+dslide_kmacro: :keys [M-x a n i m a t e SPC b i r t h <return> d s l i d e <return>]

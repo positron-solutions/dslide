@@ -1,0 +1,60 @@
+#+title:	Ordering Actions
+#+author:	Positron
+#+email:	contact@positron.solutions
+
+* Top-Level Heading
+#+begin_src elisp :exports none :results none :direction init
+  (require 'notifications)
+#+end_src
+** First Child Heading
+#+begin_src elisp :exports none :results none
+  (notifications-notify
+   :title "First Child"
+   :body "Everything should be okay.")
+#+end_src
+** Second Child Heading
+#+begin_src elisp :exports none :results none
+  (notifications-notify
+   :title "Second Child"
+   :body "Go on")
+#+end_src
+*** COMMENT Should Not Affect Order
+This has section content
+*** COMMENT Should Not Affect Order
+This has section content
+** Third Child Heading
+#+begin_src elisp :exports none :results none
+  (notifications-notify
+   :title "Third Child"
+   :body "Go on, keep going")
+#+end_src
+* MoC Focus 🎁
+** First Focus
+#+begin_src elisp
+  (moc-focus :version 0 :text "first")
+#+end_src
+
+#+begin_src elisp :exports none :results none :direction final
+  (when-let ((buff (get-buffer "*MoC Focus*")))
+    (kill-buffer buff))
+#+end_src
+** Second Focus
+#+begin_src elisp
+  (moc-focus :version 0 :text "second")
+#+end_src
+
+#+begin_src elisp :exports none :results none :direction final
+  (when-let ((buff (get-buffer "*MoC Focus*")))
+    (kill-buffer buff))
+#+end_src
+** Third Focus
+#+begin_src elisp
+  (moc-focus :version 0 :text "third")
+#+end_src
+
+#+begin_src elisp :exports none :results none :direction final
+  (when-let ((buff (get-buffer "*MoC Focus*")))
+    (kill-buffer buff))
+#+end_src
+*** COMMENT Slide is Kill
+If the final slide is a child, the overlays etc are allowed to die even tough the slide should not be killed in such a way.
