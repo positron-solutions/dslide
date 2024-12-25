@@ -2650,8 +2650,13 @@ PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 
 (defun dslide--section (heading)
   "Get the section of a HEADING."
-  (dslide--map
-   heading 'section #'identity nil t t))
+  (cl-labels ((section-p (element)
+                (if (eq (org-element-property :begin (org-element-parent element))
+                        (org-element-property :begin heading))
+                    (throw 'section element)
+                  (throw 'section nil))))
+    (catch 'section
+      (dslide--map heading 'section #'section-p  nil t t))))
 
 (defun dslide--section-begin (heading)
   "Always return a point, even if HEADING is empty."
