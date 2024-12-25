@@ -434,6 +434,11 @@ they do.  Set this prompt to nil if you don't wish to be bothered while
 recording."
   :type 'string)
 
+(defcustom dslide-kmacro-transcribe-type :keys
+  "Input type for transcribed kmacros."
+  :type '(choice (const :tag "Human readable keys" :keys)
+                 (const :tag "Emacs char events" :events)))
+
 (defface dslide-contents-selection-face
   '((t :inherit org-level-1 :inverse-video t :extend t))
   "Face for highlighting the current slide root.")
@@ -3123,7 +3128,12 @@ for commands without visible side effects."
           (when-let ((comment (read-string dslide-kmacro-transcribe-prompt)))
             (insert (format "# %s\n" comment))))
         ;; TODO add some highlighting of recorded macro
-        (insert (format "#+dslide_kmacro: :keys %S\n\n" macro))
+        (pcase dslide-kmacro-transcribe-type
+          (:events (insert (format "#+dslide_kmacro: :events %S\n\n" macro)))
+          (:keys (insert (format "#+dslide_kmacro: :keys [%s]\n\n"
+                                 (key-description macro))))
+          (_ (error "dslide-kmacro-transcribe-type: %s not understood."
+                    dslide-kmacro-transcribe-type)))
         (set-marker dslide--kmacro-transcribe-mark (point))
         (run-hooks 'dslide-kmacro-transcribe-hook))
       (setq dslide--kmacro-transcribe-last macro)
