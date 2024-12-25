@@ -13,6 +13,10 @@
 
 * v0.6.1 (Pre-Release) :latest:
 Fixing bugs and filling some gaps in new features
+** Added 🎅
+- ~dslide-action-kmacro~ now understands the =:keys= vector to be human readable keys, similar to those understood by ~kbd~
+** Changed 🧑‍🔧
+- ~dslide-action-kmacro~ old =:keys= has been renamed to =:events=.  It is a vector of non-human-readable events.
 ** Fixed 💩
 - Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
 - Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.

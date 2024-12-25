@@ -1985,6 +1985,12 @@ you use Emacs.")
 (cl-defmethod dslide-end ((obj dslide-action-kmacro))
   (dslide-marker obj (org-element-property :end (dslide-heading obj))))
 
+(defun dslide--keys-to-events (keys)
+  "Convert a vector of symbols of keys into a list of events.
+Each KEY is a symbol for whose name is like that returned from
+`key-description'.  Events are like those returned from `kbd'."
+  (vconcat (seq-map (lambda (k) (aref (vconcat (kbd (symbol-name k))) 0)) keys)))
+
 (cl-defmethod dslide-forward ((obj dslide-action-kmacro))
   ;; TODO Erroring within an action usually allows retry.  Let's find out.  🤠
   (when dslide--kmacro-timer
@@ -1996,7 +2002,14 @@ you use Emacs.")
                                         "DSLIDE_KMACRO")
                            e)))))
     (let* ((value (org-element-property :value keyword))
-           (params (dslide-read-plist value)))
+           (params (dslide-read-plist value))
+           (events (or(plist-get params :events)
+                      (if-let ((keys (plist-get params :keys)))
+                          (dslide--keys-to-events keys)
+                        (error "No keys or events at %s"
+                               (without-restriction
+                                 (line-number-at-pos
+                                  (org-element-property :begin keyword))))))))
       ;; TODO warn when direction is wrong.
       (when (or (eq 'forward (plist-get params :direction))
                 (not (member :direction params)))
@@ -2005,7 +2018,7 @@ you use Emacs.")
          :frequency (or (plist-get params :frequency) (oref obj frequency))
          :jitter (or (plist-get params :jitter) (oref obj jitter))
          :index 0
-         :keys (plist-get params :keys))
+         :events events)
         (org-element-property :begin keyword)))))
 
 (cl-defmethod dslide-backward ((obj dslide-action-kmacro))
@@ -2015,16 +2028,23 @@ you use Emacs.")
                        obj 'keyword
                        (lambda (e) (when (string= (org-element-property :key e)
                                              "DSLIDE_KMACRO")
-                                     e)))))
+                                e)))))
     (let* ((value (org-element-property :value keyword))
-           (params (dslide-read-plist value)))
+           (params (dslide-read-plist value))
+           (events (or(plist-get params :events)
+                      (if-let ((keys (plist-get params :keys)))
+                          (dslide--keys-to-events keys)
+                        (error "No keys or events at %s"
+                               (without-restriction
+                                 (line-number-at-pos
+                                  (org-element-property :begin keyword))))))))
       (when (eq 'backwards (plist-get params :direction))
         (dslide--kmacro-reanimate
          :last-input last-command-event
          :frequency (or (plist-get params :frequency) (oref obj frequency))
          :jitter (or (plist-get params :jitter) (oref obj jitter))
          :index 0
-         :keys (plist-get params :keys))
+         :events events)
         (org-element-property :begin keyword)))))
 
 ;; ⚠️ The implementation needs to return or else the normal command loop is in
@@ -2032,26 +2052,26 @@ you use Emacs.")
 ;; Elisp.  For now, a recursive timer is the only way I've found to make this
 ;; work.  Maybe threads will work.  We'll see.
 (defun dslide--kmacro-reanimate (&rest args)
-  "Play keys in ARGS back like the piano man.
+  "Play events in ARGS back like the piano man.
 This function recursively calls itself via a timer until it runs out of
-keys in ARGS.  It compares the most recent input with `last-input-event'
-so that it can detect if it has been interrupted by some other input
-event and quit."
+events in ARGS.  It compares the most recent input with
+`last-input-event' so that it can detect if it has been interrupted by
+some other input event and quit."
   (let ((frequency (plist-get args :frequency))
         (jitter (plist-get args :jitter))
-        (keys (plist-get args :keys))
+        (events (plist-get args :events))
         (last-input (plist-get args :last-input))
         (index (plist-get args :index)))
     (if (eq last-input last-input-event)
-        (if (length> keys index)
-            (let ((k (aref keys index)))
+        (if (length> events index)
+            (let ((k (aref events index)))
               (setq unread-command-events (list k))
               (setq dslide--kmacro-timer
                     (run-with-timer
                      (dslide--laplace-jitter frequency jitter)
                      nil #'dslide--kmacro-reanimate
                      :last-input k
-                     :keys keys :index (1+ index)
+                     :events events :index (1+ index)
                      :frequency frequency :jitter jitter)))
           (setq dslide--kmacro-timer nil))
       ;; TODO attempt to block unwanted input.  Test other implementations.
