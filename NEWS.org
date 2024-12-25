@@ -16,6 +16,7 @@ Fixing bugs and filling some gaps in new features
 ** Fixed 💩
 - Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
 - Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.
+- Header graphical artifacts possibly fixed, but the solution uses ~:extend t~ and could lead to problems elsewhere.  File issues!
 * v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use

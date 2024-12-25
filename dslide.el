@@ -2879,7 +2879,8 @@ from existing state cleanup."
                               dslide-breadcrumb-separator)
                      (concat (dslide--get-parents
                               dslide-breadcrumb-separator)))
-                   (dslide--info-face "\n")
+                   (propertize "\n" 'face `(:background
+                                            (face-attribute 'default :background)))
                    (dslide--margin-lines dslide-margin-content)))
 
         (overlay-put dslide--header-overlay 'before-string
@@ -2892,10 +2893,13 @@ from existing state cleanup."
 (defun dslide--margin-lines (lines)
   (dslide--info-face
    (if (display-graphic-p)
-       (propertize "\n"
-                   'line-height (float lines)
-                   'face (when (< lines 1.0)
-                           (list :height lines)))
+       (let* ((default (face-attribute 'default :background))
+              (face (if (< lines 1.0)
+                        (list :height lines :background default :extend t)
+                      (list :background default :extend t))))
+         (propertize " \n"
+                     'line-height (float lines)
+                     'face face))
      (make-string (floor lines) ?\n))))
 
 (defun dslide--breadcrumbs-reducer (delim)
