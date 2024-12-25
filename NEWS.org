@@ -18,6 +18,7 @@ Fixing bugs and filling some gaps in new features
 - ~dslide-kmacro-transcribe-type~ defaults to =:keys= and can be set to =:events= if you encounter an issue (*which you should file*) with =:keys=.
 ** Changed 🧑‍🔧
 - ~dslide-action-kmacro~ old =:keys= has been renamed to =:events=.  It is a vector of non-human-readable events.
+- ~dslide-hide-todo~ and ~dslide-hide-tags~ now properly default to =t=, as advertised.  Thanks Ihor ⛄
 ** Fixed 💩
 - Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
 - Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.

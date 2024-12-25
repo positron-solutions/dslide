@@ -242,11 +242,11 @@ between breadcrumbs."
   "If non-nil, hide TODO states in the breadcrumbs."
   :type 'boolean)
 
-(defcustom dslide-hide-todo nil
+(defcustom dslide-hide-todo t
   "If non-nil, hide TODO states in headings."
   :type 'boolean)
 
-(defcustom dslide-hide-tags nil
+(defcustom dslide-hide-tags t
   "If non-nil, hide tags in headings."
   :type 'boolean)
 
