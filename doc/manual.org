@@ -17,7 +17,7 @@
 #+macro: year (eval (format-time-string "%Y"))
 #+texinfo_header: @comment !!!THIS FILE HAS BEEN GENERATED!!! Edit manual.org instead!
 
-#+link: demo.org https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org
+#+link: demo.org https://github.com/positron-solutions/dslide/blob/master/test/demo.org
 * Introduction 🤯
 :PROPERTIES:
 :DESCRIPTION: What is Dslide?
@@ -157,7 +157,7 @@ Some actions, such as ~dslide-action-propertize~, can't decide which elements to
 :END:
 For some actions, the configuration /is/ the content.  They use a keyword.  The value of the keyword is the content for the action.  As elsewhere, use plist =:key value= style configuration.
 #+begin_src org
-  ,#+dslide_kmacro: :keys [134217848 97 110]
+  ,#+dslide_kmacro: :keys "M-x a n i m a t e <return>"
 #+end_src
 *** Property Drawer
 :PROPERTIES:
@@ -210,7 +210,7 @@ Configuring is usually done by adding plist-style =:key value= arguments after t
   :END:
 
   # A keyword configuration
-  ,#+dslide_kmacro: :frequency 0.08 :jitter 0.5 :keys [134217848 97 110 ]
+  ,#+dslide_kmacro: :frequency 0.08 :jitter 0.5 :keys "M-x a n"
 
   # An affiliated keyword configuration
   ,#+attr_dslide_propertize: face '(:background "#ddddff")

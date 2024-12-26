@@ -4,7 +4,7 @@
 
 #+export_file_name: ../README.md
 #+options: toc:t broken-links:nil num:nil
-#+link: demo.org https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org
+#+link: demo.org https://github.com/positron-solutions/dslide/blob/master/test/demo.org
 #+begin_export html
 <!-- !!!THIS FILE HAS BEEN GENERATED!!! Edit README.org -->
 #+end_export
