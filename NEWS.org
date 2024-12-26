@@ -25,6 +25,7 @@ Fixing bugs and filling some gaps in new features
 - Header graphical artifacts possibly fixed, but the solution uses ~:extend t~ and could lead to problems elsewhere.  File issues!
 - Actions for a heading with an empty section (no section element) no longer map over the first child's section
 - Fixed keyboard macro backward steps
+- Fixed logic in ~dslide-deck-forward~ that could result in no-op do to missing else clause
 * v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use

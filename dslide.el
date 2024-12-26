@@ -3780,13 +3780,15 @@ frame."
         (while dslide--step-overlays
           (delete-overlay (pop dslide--step-overlays)))
         (dslide--follow (point)))
+    ;; TODO what is going on here lol.
     (if (eq (oref dslide--deck base-buffer)
             (window-buffer (selected-window)))
-        (if-let ((window (get-buffer-window
-                          (oref dslide--deck slide-buffer))))
-            (with-selected-window window
-              (dslide-forward dslide--deck)))
-      (dslide-forward dslide--deck))))
+        (dslide-forward dslide--deck)
+      (if-let ((window (get-buffer-window
+                        (oref dslide--deck slide-buffer))))
+          (with-selected-window window
+            (dslide-forward dslide--deck))
+        (dslide-forward dslide--deck)))))
 
 ;;;###autoload
 (defun dslide-deck-backward ()
