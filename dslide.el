@@ -1994,7 +1994,7 @@ you use Emacs.")
   ;; TODO Erroring within an action usually allows retry.  Let's find out.  🤠
   (when dslide--kmacro-timer
     (user-error "Dslide keyboard macro already running"))
-  (when-let ((keyword (dslide-section-next
+  (when-let ((keyword (dslide-section-previous
                        obj 'keyword
                        (lambda (e)
                          (when (string= (org-element-property :key e)
@@ -2037,7 +2037,7 @@ you use Emacs.")
                                (without-restriction
                                  (line-number-at-pos
                                   (org-element-property :begin keyword))))))))
-      (when (eq 'backwards (plist-get params :direction))
+      (when (eq 'backward (plist-get params :direction))
         (dslide--kmacro-reanimate
          :last-input last-command-event
          :frequency (or (plist-get params :frequency) (oref obj frequency))

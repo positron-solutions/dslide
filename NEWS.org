@@ -24,6 +24,7 @@ Fixing bugs and filling some gaps in new features
 - Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.
 - Header graphical artifacts possibly fixed, but the solution uses ~:extend t~ and could lead to problems elsewhere.  File issues!
 - Actions for a heading with an empty section (no section element) no longer map over the first child's section
+- Fixed keyboard macro backward steps
 * v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use

@@ -329,6 +329,8 @@ The callback function should accept a DIRECTION argument.  DIRECTION is forward,
 
 The ~dslide-action-kmacro~ will run pre-recorded sequences of keystrokes as if you are controlling the computer.  Through =:frequency= and =:jitter=, it plays back strokes at a human-feeling pace.
 
+Keyboard macros support :direction, but only forward and backward are recognized.  Forward is the default.
+
 By playing back keyboard macros, you can encode real Emacs workflows as steps in a presentation.  Don't just talk about how your software works.  Use the software with fully reproducible steps that users can understand in a tactile, human way.
 
 #+cindex: transcribing keyboard macros as steps
