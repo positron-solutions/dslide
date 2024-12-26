@@ -1137,7 +1137,7 @@ This text will be red
 
 For some actions@comma{} the configuration @emph{is} the content.  They use a keyword.  The value of the keyword is the content for the action.  As elsewhere@comma{} use plist @samp{:key value} style configuration.
 @example
-#+dslide_kmacro: :keys [134217848 97 110]
+#+dslide_kmacro: :keys "M-x a n i m a t e <return>"
 @end example
 
 @node Property Drawer
@@ -1198,7 +1198,7 @@ Configuring is usually done by adding plist-style @samp{:key value} arguments af
 :END:
 
 # A keyword configuration
-#+dslide_kmacro: :frequency 0.08 :jitter 0.5 :keys [134217848 97 110 ]
+#+dslide_kmacro: :frequency 0.08 :jitter 0.5 :keys "M-x a n"
 
 # An affiliated keyword configuration
 #+attr_dslide_propertize: face '(:background "#ddddff")
@@ -1230,7 +1230,7 @@ You can write custom scripts into your presentation as Org Babel blocks.  These 
 @node Controlling Direction ♻️
 @subsection Controlling Direction ♻️
 
-By default blocks only execute going forward@comma{} one block per step.  You need to label your blocks with @ref{Life Cycles, , lifecycle} methods if you want to perform setup (can be forward or backward) and teardown.  See the @code{dslide-action-babel} class and examples in @uref{https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org, ./test/demo.org}.
+By default blocks only execute going forward@comma{} one block per step.  You need to label your blocks with @ref{Life Cycles, , lifecycle} methods if you want to perform setup (can be forward or backward) and teardown.  See the @code{dslide-action-babel} class and examples in @uref{https://github.com/positron-solutions/dslide/blob/master/test/demo.org, ./test/demo.org}.
 
 The @samp{:direction} babel block parameter is used to configure which methods will run the block.  Block labels that are understood:
 
@@ -1331,6 +1331,8 @@ The callback function should accept a DIRECTION argument.  DIRECTION is forward@
 🧪 Experimental new feature.  Hopefully the configuration argument names are good.  Hopefully.
 
 The @code{dslide-action-kmacro} will run pre-recorded sequences of keystrokes as if you are controlling the computer.  Through @samp{:frequency} and @samp{:jitter}@comma{} it plays back strokes at a human-feeling pace.
+
+Keyboard macros support :direction@comma{} but only forward and backward are recognized.  Forward is the default.
 
 By playing back keyboard macros@comma{} you can encode real Emacs workflows as steps in a presentation.  Don't just talk about how your software works.  Use the software with fully reproducible steps that users can understand in a tactile@comma{} human way.
 
