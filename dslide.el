@@ -1990,61 +1990,71 @@ you use Emacs.")
 (cl-defmethod dslide-end ((obj dslide-action-kmacro))
   (dslide-marker obj (org-element-property :end (dslide-heading obj))))
 
+;; TODO because of the implicit progress tracking, non-local exit was not
+;; viable and I had to parse the direction twice 💀
+(defun dslide--kmacro-predicate (direction &optional no-direction)
+  "Return a predicate matching kmacros with DIRECTION.
+Optional NO-DIRECTION will match unlabelled kmacros."
+  (lambda (keyword)
+    (when (string= (org-element-property :key keyword) "DSLIDE_KMACRO")
+      (let* ((value (org-element-property :value keyword))
+             (params (dslide-read-plist value))
+             (found (plist-get params :direction)))
+        (when (and found (not (member found '(forward backward))))
+          (delay-warning '(dslide dslide-kmacro dslide-kmacro-direction)
+                         (format "Unrecognized direction on %s: %s"
+                                 (without-restriction
+                                   (line-number-at-pos
+                                    (org-element-property :begin keyword)))
+                                 found)))
+        (when (or (eq direction found)
+                  (and no-direction (not (member :direction params))))
+          keyword)))))
+
 (cl-defmethod dslide-forward ((obj dslide-action-kmacro))
   ;; TODO Erroring within an action usually allows retry.  Let's find out.  🤠
   (when dslide--kmacro-timer
     (user-error "Dslide keyboard macro already running"))
-  (when-let ((keyword (dslide-section-previous
-                       obj 'keyword
-                       (lambda (e)
-                         (when (string= (org-element-property :key e)
-                                        "DSLIDE_KMACRO")
-                           e)))))
-    (let* ((value (org-element-property :value keyword))
-           (params (dslide-read-plist value))
-           (events (or(plist-get params :events)
+  (when-let* ((keyword (dslide-section-next
+                        obj 'keyword (dslide--kmacro-predicate 'forward t)))
+              (value (org-element-property :value keyword))
+              (params (dslide-read-plist value)))
+    (let ((events (or (plist-get params :events)
                       (if-let ((keys (plist-get params :keys)))
                           (kbd keys)
                         (error "No keys or events at %s"
                                (without-restriction
                                  (line-number-at-pos
                                   (org-element-property :begin keyword))))))))
-      ;; TODO warn when direction is wrong.
-      (when (or (eq 'forward (plist-get params :direction))
-                (not (member :direction params)))
-        (dslide--kmacro-reanimate
-         :last-input last-command-event
-         :frequency (or (plist-get params :frequency) (oref obj frequency))
-         :jitter (or (plist-get params :jitter) (oref obj jitter))
-         :index 0
-         :events events)
-        (org-element-property :begin keyword)))))
+      (dslide--kmacro-reanimate
+       :last-input last-command-event
+       :frequency (or (plist-get params :frequency) (oref obj frequency))
+       :jitter (or (plist-get params :jitter) (oref obj jitter))
+       :index 0
+       :events events)
+      (org-element-property :begin keyword))))
 
 (cl-defmethod dslide-backward ((obj dslide-action-kmacro))
   (when dslide--kmacro-timer
     (user-error "Dslide keboard macro already running"))
-  (when-let ((keyword (dslide-section-next
-                       obj 'keyword
-                       (lambda (e) (when (string= (org-element-property :key e)
-                                             "DSLIDE_KMACRO")
-                                e)))))
-    (let* ((value (org-element-property :value keyword))
-           (params (dslide-read-plist value))
-           (events (or(plist-get params :events)
+  (when-let* ((keyword (dslide-section-previous
+                        obj 'keyword (dslide--kmacro-predicate 'backward)))
+              (value (org-element-property :value keyword))
+              (params (dslide-read-plist value)))
+    (let ((events (or (plist-get params :events)
                       (if-let ((keys (plist-get params :keys)))
                           (kbd keys)
                         (error "No keys or events at %s"
                                (without-restriction
                                  (line-number-at-pos
                                   (org-element-property :begin keyword))))))))
-      (when (eq 'backward (plist-get params :direction))
-        (dslide--kmacro-reanimate
+      (dslide--kmacro-reanimate
          :last-input last-command-event
          :frequency (or (plist-get params :frequency) (oref obj frequency))
          :jitter (or (plist-get params :jitter) (oref obj jitter))
          :index 0
          :events events)
-        (org-element-property :begin keyword)))))
+        (org-element-property :begin keyword))))
 
 ;; ⚠️ The implementation needs to return or else the normal command loop is in
 ;; the way of the keys being read and only the last event pops out.  Thanks,

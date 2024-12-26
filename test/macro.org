@@ -15,11 +15,17 @@ This is the best thing since 🔪🍞
 :END:
 
 # Good Macro
-#+dslide_kmacro: :events [134217839 24 98 104 109 109 109 return return return 97 111 119 105 101 106 112 97 111 119 101 106 102 111 112 97 119 101 102 106 112 105 111 106]
+ #+dslide_kmacro: :events [134217848 101 118 101 110 116 115]
 
-* Keys
-# birthday
-#+dslide_kmacro: :keys "M-x a n i m a t e SPC b i r t h <return> d s l i d e <return>"
 * Backward
 # Positrons go forward in reverse
-#+dslide_kmacro: :direction backward :keys "M-x"
+#+dslide_kmacro: :direction backward :keys "M-x b a c k w a r d"
+
+# Don't hit this going backward
+#+dslide_kmacro: :keys "M-x f o r w a r d"
+* Forward
+# Positrons go forward in reverse
+#+dslide_kmacro: :direction forward :keys "M-x f o r w a r d"
+
+# Go forward with no direction
+#+dslide_kmacro: :keys "M-x n o d i r e c t i o n"

@@ -26,6 +26,7 @@ Fixing bugs and filling some gaps in new features
 - Actions for a heading with an empty section (no section element) no longer map over the first child's section
 - Fixed keyboard macro backward steps
 - Fixed logic in ~dslide-deck-forward~ that could result in no-op do to missing else clause
+- Fixed kmacro progress predicates when both forward and backward elements are present
 * v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use
