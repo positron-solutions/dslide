@@ -12,6 +12,13 @@
    :title "First Child"
    :body "Everything should be okay.")
 #+end_src
+
+#+begin_src elisp :results none :direction final
+  (notifications-notify
+   :title "First Child"
+   :body "The final block.")
+#+end_src
+*** Just a Heading to Narrow
 ** Second Child Heading
 #+begin_src elisp :exports none :results none
   (notifications-notify
