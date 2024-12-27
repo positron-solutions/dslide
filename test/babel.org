@@ -45,6 +45,8 @@
   (message "I go backward, but I do warn")
 #+end_src
 
+# Has to be some space between for some reason
+
 #+attr_dslide: forward
 #+begin_src elisp
   (message "I go forward, but I do warn")
@@ -59,6 +61,7 @@
 #+begin_src elisp :exports results
   (message "Im results only")
 #+end_src
+
 * Push Step
 This block will take one extra step, due to the non-nil return value
 #+begin_src elisp :direction forward
@@ -71,3 +74,8 @@ This block will take one extra step, due to the non-nil return value
 
 * Next Slide
 Did the previous slide take an extra step?
+
+* Failure
+#+begin_src elisp
+  (+ 3 'a)
+#+end_src

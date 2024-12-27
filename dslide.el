@@ -1609,8 +1609,10 @@ And warn the user to update so we can deprecate."
                    (format "Old style babel configuration found at line %s"
                            (without-restriction
                              (line-number-at-pos
-                              (org-element-property :begin block)))))
-    (mapcar #'intern-soft found)))
+                              (org-element-property :begin block))))
+                   :warning)
+    (when found
+      (vconcat (mapcar #'intern-soft found)))))
 
 ;; Executing babel seems to widen and also creates messages, and this would
 ;; result in flashing.  Re-display is inhibited at the deck level to prevent
@@ -1631,10 +1633,10 @@ And warn the user to update so we can deprecate."
                            (overlays-in block-begin block-end)))
          (old-point (point-marker))
          block-point)
-    (goto-char (org-element-property :begin block-element))
-    (setq block-point (point-marker))
     (without-restriction
       ;; TODO Handle failure in a loop
+      (goto-char (org-element-property :begin block-element))
+      (setq block-point (point-marker))
       (condition-case user-wrote-flaky-babel
           ;; t for don't cache.  We likely want effects
           (progn
@@ -1652,30 +1654,21 @@ And warn the user to update so we can deprecate."
                       (move-overlay overlay block-begin block-end))
                     export-overlays)))
         ((debug error)
+         ;; TODO remove overlays after one command, like pulse
          (dslide--base-buffer-highlight-region
           block-begin block-end 'dslide-babel-error-highlight)
-
-         ;; TODO consolidate moving the point & window points in base buffer
-         ;; XXX out of step with other buffer movement
-         (set-buffer (oref dslide--deck base-buffer))
-         (goto-char block-begin)
-         (if-let ((windows (get-buffer-window-list)))
-             ;; TODO I don't think updating every single window point is
-             ;; correct here.
+         (message "Block failed at: %s with error: %s"
+                  (line-number-at-pos block-begin)
+                  user-wrote-flaky-babel)
+         (if (y-or-n-p "Block failed.  Visit failed block?")
              (progn
-               (mapc (lambda (w) (set-window-point w block-begin)) windows)
-               (select-window (car windows)))
-           ;; TODO asking `y-or-n-p' defies the two-button interface
-           (when (y-or-n-p "Block failed.  Visit failed block?")
-             (switch-to-buffer (oref dslide--deck base-buffer))
-             (goto-char block-begin)
-             ;; TODO remove overlays after one command, like pulse
-             (recenter)))
-         ;; TODO option to try again / skip
-         ;; TODO integrate with dslide--debug
-         (error "Babel block at %s failed: %s"
-                (org-element-property :begin block-element)
-                user-wrote-flaky-babel))))
+               (switch-to-buffer (oref dslide--deck base-buffer))
+               (goto-char block-begin)
+               (recenter))
+           ;; TODO option to try again / skip
+           ;; TODO integrate with dslide--debug
+           (message "Skipping block at: %s"
+                    (line-number-at-pos block-begin))))))
     (set-buffer (marker-buffer old-point))
     (when (= (point) (marker-position block-point))
       (goto-char (marker-position old-point)))
