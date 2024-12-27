@@ -2111,8 +2111,7 @@ auto-correlation.  💡"
   (cond ((integerp jitter) (error "Jitter was integer: %s" jitter))
         ((= jitter 0.0) freq)
         ((< jitter 0.0) (error "Jitter too low: %s" jitter))
-        ;; Elisp has no random float because 💩
-        (t (let* ((p (/ (random 1000000) 1000000.0))
+        (t (let* ((p (cl-random 1.0))
                   (p (min 0.99 (max 0.01 p))) ; clamp extreme 2%
                   (sample (if (> p 0.5)
                               ;; - (self.b * (2.0 - 2.0 * p).ln())
