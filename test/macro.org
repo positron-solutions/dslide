@@ -29,3 +29,10 @@ This is the best thing since 🔪🍞
 
 # Go forward with no direction
 #+dslide_kmacro: :keys "M-x n o d i r e c t i o n"
+* COMMENT Closed Conversion
+Record something using =M-RET= and =M-DEL=.
+
+# M-RET test
+#+dslide_kmacro: :keys "M-> M-RET"
+
+# Plays back after this point

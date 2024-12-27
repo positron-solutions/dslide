@@ -3124,6 +3124,14 @@ for commands without visible side effects."
   (unless dslide--kmacro-transcribe-mark
     (dslide-kmacro-transcribe-quit))
   (when-let ((macro last-kbd-macro))
+    ;; TODO I have forgotten the full list of events that can be recorded in
+    ;; `last-kbd-macro' but do not properly round-trip through
+    ;; `key-description' and back through `kbd'.  Pretty sure it's small.
+    (cl-loop for i from 0 below (length macro)
+             do (let ((key (aref macro i)))
+                  (pcase key
+                    ('M-return (aset macro i 134217741))
+                    ('M-backspace (aset macro i 134217855)))))
     ;; TODO seems like kmacro-end-macro is smart enough that we don't need to
     ;; check this
     (if (eq macro dslide--kmacro-transcribe-last)
