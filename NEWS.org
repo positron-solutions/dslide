@@ -6,13 +6,13 @@
 # page.  Include changes in this file to avoid having to compile it all at
 # every release.
 
-#+link: demo.org https://github.com/positron-solutions/dslide/blob/v0.6.0/test/demo.org
+#+link: demo.org https://github.com/positron-solutions/dslide/blob/%s/test/demo.org
 #+options: toc:nil
 #+select_tags: latest
 #+export_file_name: RELEASE
 
-* v0.6.1 (Pre-Release) :latest:
-Fixing bugs and filling some gaps in new features
+* v0.6.1 The Toddling :latest:
+Fixing bugs and filling some gaps in new features.
 ** Added 🎅
 - ~dslide-action-kmacro~ now understands the =:keys= string to be human readable keys, similar to those understood by ~kbd~
 - ~dslide-kmacro-transcribe-type~ defaults to =:keys= and can be set to =:events= if you encounter an issue (*which you should file*) with =:keys=.
@@ -22,12 +22,12 @@ Fixing bugs and filling some gaps in new features
 - 🚧 Babel blocks will only restore the point location in the base buffer and only if it remains where it was set to evaluate the block.  This allows babel blocks to better set up for kmacros in other buffers.
 ** Fixed 💩
 - Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
-- Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.
-- Header graphical artifacts possibly fixed, but the solution uses ~:extend t~ and could lead to problems elsewhere.  File issues!
+- 🚧 Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.
+- 🚧 Header graphical artifacts possibly fixed, but the solution uses ~:extend t~ and could lead to problems elsewhere.  File issues!
 - Actions for a heading with an empty section (no section element) no longer map over the first child's section
-- Fixed keyboard macro backward steps
-- Fixed logic in ~dslide-deck-forward~ that could result in no-op do to missing else clause
-- Fixed kmacro progress predicates when both forward and backward elements are present
+- Keyboard macro backward steps are implemented
+- ~dslide-deck-forward~ no longer no-ops in some circumstances
+- kmacro action properly skips over non-matching directions when both forward and backward elements are present in a slide
 * v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use
