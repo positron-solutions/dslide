@@ -2931,7 +2931,7 @@ from existing state cleanup."
                      (concat (dslide--get-parents
                               dslide-breadcrumb-separator)))
                    (propertize "\n" 'face `(:background
-                                            (face-attribute 'default :background)))
+                                            ,(face-attribute 'default :background)))
                    (dslide--margin-lines dslide-margin-content)))
 
         (overlay-put dslide--header-overlay 'before-string
