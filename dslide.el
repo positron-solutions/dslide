@@ -1623,55 +1623,64 @@ And warn the user to update so we can deprecate."
   (let* ((block-begin (org-element-property :begin block-element))
          (block-end (org-element-property :end block-element))
          (block-marker (copy-marker block-begin))
-         (args (org-babel-parse-header-arguments
-                (org-element-property :parameters block-element)))
+         (block-params (org-element-property :parameters block-element))
+         (params (when block-params (dslide-read-plist block-params)))
          (export-overlays (seq-filter
                            (lambda (o) (overlay-get o
                                                'dslide-babel-export-control))
-                           (overlays-in block-begin block-end))))
-    (save-excursion
-      (without-restriction
-        (goto-char block-begin)
-        ;; TODO Handle failure in a loop
-        (condition-case user-wrote-flaky-babel
-            ;; t for don't cache.  We likely want effects
-            (progn
-              (org-babel-execute-src-block t)
-              ;; block location could be updated
-              (setq block-element (org-element-at-point block-marker))
-              (setq block-begin
-                    (org-element-property :begin block-element))
-              (setq block-end (org-element-property :end block-element))
-              (dslide--base-buffer-highlight-region
-               block-begin block-end 'dslide-babel-success-highlight)
-              ;; updated hiding overlays to not obscure results
-              (when (string= (cdr (assq :exports args)) "results")
-                (mapc (lambda (overlay)
-                        (move-overlay overlay block-begin block-end))
-                      export-overlays)))
-          ((debug error)
-           (dslide--base-buffer-highlight-region
-            block-begin block-end 'dslide-babel-error-highlight)
+                           (overlays-in block-begin block-end)))
+         (old-point (point-marker))
+         block-point)
+    (goto-char (org-element-property :begin block-element))
+    (setq block-point (point-marker))
+    (without-restriction
+      ;; TODO Handle failure in a loop
+      (condition-case user-wrote-flaky-babel
+          ;; t for don't cache.  We likely want effects
+          (progn
+            (org-babel-execute-src-block t)
+            ;; block location could be updated
+            (setq block-element (org-element-at-point block-marker))
+            (setq block-begin
+                  (org-element-property :begin block-element))
+            (setq block-end (org-element-property :end block-element))
+            (dslide--base-buffer-highlight-region
+             block-begin block-end 'dslide-babel-success-highlight)
+            ;; updated hiding overlays to not obscure results
+            (when (eq (plist-get params :exports) 'results)
+              (mapc (lambda (overlay)
+                      (move-overlay overlay block-begin block-end))
+                    export-overlays)))
+        ((debug error)
+         (dslide--base-buffer-highlight-region
+          block-begin block-end 'dslide-babel-error-highlight)
 
-           ;; TODO consolidate moving the point & window points in base buffer
-           ;; XXX out of step with other buffer movement
-           (set-buffer (oref dslide--deck base-buffer))
-           (goto-char block-begin)
-           (if-let ((windows (get-buffer-window-list)))
-               (progn
-                 (mapc (lambda (w) (set-window-point w block-begin)) windows)
-                 (select-window (car windows)))
-             ;; TODO asking `y-or-n-p' defies the two-button interface
-             (when (y-or-n-p "Block failed.  Visit failed block?")
-               (switch-to-buffer (oref dslide--deck base-buffer))
-               (goto-char block-begin)
-               ;; TODO remove overlays after one command, like pulse
-               (recenter)))
-           ;; TODO option to try again / skip
-           ;; TODO integrate with dslide--debug
-           (error "Babel block at %s failed: %s"
-                  (org-element-property :begin block-element)
-                  user-wrote-flaky-babel)))))))
+         ;; TODO consolidate moving the point & window points in base buffer
+         ;; XXX out of step with other buffer movement
+         (set-buffer (oref dslide--deck base-buffer))
+         (goto-char block-begin)
+         (if-let ((windows (get-buffer-window-list)))
+             ;; TODO I don't think updating every single window point is
+             ;; correct here.
+             (progn
+               (mapc (lambda (w) (set-window-point w block-begin)) windows)
+               (select-window (car windows)))
+           ;; TODO asking `y-or-n-p' defies the two-button interface
+           (when (y-or-n-p "Block failed.  Visit failed block?")
+             (switch-to-buffer (oref dslide--deck base-buffer))
+             (goto-char block-begin)
+             ;; TODO remove overlays after one command, like pulse
+             (recenter)))
+         ;; TODO option to try again / skip
+         ;; TODO integrate with dslide--debug
+         (error "Babel block at %s failed: %s"
+                (org-element-property :begin block-element)
+                user-wrote-flaky-babel))))
+    (set-buffer (marker-buffer old-point))
+    (when (= (point) (marker-position block-point))
+      (goto-char (marker-position old-point)))
+    (set-marker old-point nil)
+    (set-marker block-point nil)))
 
 (cl-defmethod dslide--get-blocks ((obj dslide-action-babel) &optional method-name)
   "Return OBJ's block with keyword value METHOD-NAME.
