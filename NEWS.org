@@ -19,7 +19,7 @@ Fixing bugs and filling some gaps in new features.
 ** Changed 🧑‍🔧
 - ~dslide-action-kmacro~ old =:keys= has been renamed to =:events=.  It is a vector of non-human-readable events.
 - ~dslide-hide-todo~ and ~dslide-hide-tags~ now properly default to =t=, as advertised.  Thanks Ihor ⛄
-- 🚧 Babel blocks will only restore the point location in the base buffer and only if it remains where it was set to evaluate the block.  This allows babel blocks to better set up for kmacros in other buffers.
+- 🚧 Babel blocks will only restore the point location in the slide buffer and only if it remains where it was set to evaluate the block.  This allows babel blocks to better set up for kmacros in other buffers.
 ** Fixed 💩
 - Develop window configuration was not cleaned up, resulting in improper window configuration "restoration"
 - 🚧 Line prefixes, such as those used by org modern to draw pretty source blocks, will be hidden by the markup hiding overlays.
