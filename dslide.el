@@ -2031,7 +2031,7 @@ Optional NO-DIRECTION will match unlabelled kmacros."
               (params (dslide-read-plist value)))
     (let ((events (or (plist-get params :events)
                       (if-let ((keys (plist-get params :keys)))
-                          (kbd keys)
+                          (read-kbd-macro keys)
                         (error "No keys or events at %s"
                                (without-restriction
                                  (line-number-at-pos
@@ -2046,14 +2046,14 @@ Optional NO-DIRECTION will match unlabelled kmacros."
 
 (cl-defmethod dslide-backward ((obj dslide-action-kmacro))
   (when dslide--kmacro-timer
-    (user-error "Dslide keboard macro already running"))
+    (user-error "Dslide keyboard macro already running"))
   (when-let* ((keyword (dslide-section-previous
                         obj 'keyword (dslide--kmacro-predicate 'backward)))
               (value (org-element-property :value keyword))
               (params (dslide-read-plist value)))
     (let ((events (or (plist-get params :events)
                       (if-let ((keys (plist-get params :keys)))
-                          (kbd keys)
+                          (read-kbd-macro keys)
                         (error "No keys or events at %s"
                                (without-restriction
                                  (line-number-at-pos
@@ -2084,7 +2084,10 @@ some other input event and quit."
     (if (eq last-input last-input-event)
         (if (length> events index)
             (let ((k (aref events index)))
-              (setq unread-command-events (list k))
+              (setq unread-command-events (if unread-command-events
+                                              (append unread-command-events
+                                                    (cons k))
+                                            (cons k)))
               (setq dslide--kmacro-timer
                     (run-with-timer
                      (dslide--laplace-jitter frequency jitter)
@@ -3124,14 +3127,6 @@ for commands without visible side effects."
   (unless dslide--kmacro-transcribe-mark
     (dslide-kmacro-transcribe-quit))
   (when-let ((macro last-kbd-macro))
-    ;; TODO I have forgotten the full list of events that can be recorded in
-    ;; `last-kbd-macro' but do not properly round-trip through
-    ;; `key-description' and back through `kbd'.  Pretty sure it's small.
-    (cl-loop for i from 0 below (length macro)
-             do (let ((key (aref macro i)))
-                  (pcase key
-                    ('M-return (aset macro i 134217741))
-                    ('M-backspace (aset macro i 134217855)))))
     ;; TODO seems like kmacro-end-macro is smart enough that we don't need to
     ;; check this
     (if (eq macro dslide--kmacro-transcribe-last)

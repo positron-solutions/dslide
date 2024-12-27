@@ -29,10 +29,24 @@ This is the best thing since 🔪🍞
 
 # Go forward with no direction
 #+dslide_kmacro: :keys "M-x n o d i r e c t i o n"
+* Play Funky
+#+begin_comment
+This macro is interpreted by ~kbd~ to a string, which will fail if used as a key sequence vector.
+#+end_comment
+#+dslide_kmacro: :keys "<tab>"
+- The content here will be folded when the macro plays successfully
 * COMMENT Closed Conversion
-Record something using =M-RET= and =M-DEL=.
+Record something using =M-<return>= and =M-<backspace>=.
 
-# M-RET test
-#+dslide_kmacro: :keys "M-> M-RET"
+# M-<return> test
+#+dslide_kmacro: :keys "M-> M-<return>"
 
 # Plays back after this point
+* Recording Strange Events
+- M-<return>
+- M-<backspace>
+- <backspace>
+- <return>
+...possibly many more
+# weird keys
+#+dslide_kmacro: :keys "M-<return> M-<backspace> a a a <backspace> <backspace> <backspace> <return> <return> <return> a a"
