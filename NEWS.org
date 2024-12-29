@@ -29,6 +29,7 @@ Fixing bugs and filling some gaps in new features.
 - ~dslide-deck-forward~ no longer no-ops in some circumstances
 - kmacro action properly skips over non-matching directions when both forward and backward elements are present in a slide
 - 🚧 kmacro playback of =M-<return>= and =M-<backspace>= and others is now correct.  There are likely more events that don't round trip nicely from ~last-kbd-macro~ through ~key-description~ and back through ~read-kbd-macro~.  *File issues*.
+- 🚧 kmacro playback no longer aborts when inputs from file-notify etc occur.  It can be quit with =C-g=.  A more comprehensive solution is being developed.
 * v0.6.0 Fighting Spam 💌
 - There is less markup (especially for babel)
 - Old actions are easier to use

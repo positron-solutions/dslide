@@ -2079,9 +2079,8 @@ some other input event and quit."
   (let ((frequency (plist-get args :frequency))
         (jitter (plist-get args :jitter))
         (events (plist-get args :events))
-        (last-input (plist-get args :last-input))
         (index (plist-get args :index)))
-    (if (eq last-input last-input-event)
+    (if (not (eq last-input-event 7))
         (if (length> events index)
             (let ((k (aref events index)))
               (setq unread-command-events (if unread-command-events
@@ -2092,14 +2091,12 @@ some other input event and quit."
                     (run-with-timer
                      (dslide--laplace-jitter frequency jitter)
                      nil #'dslide--kmacro-reanimate
-                     :last-input k
                      :events events :index (1+ index)
                      :frequency frequency :jitter jitter)))
           (setq dslide--kmacro-timer nil))
       ;; TODO attempt to block unwanted input.  Test other implementations.
       (setq dslide--kmacro-timer nil)
-      (message "Out-of-band input detected: %s" last-input-event)
-      (message "Aborting playback."))))
+      (message "Playback quit."))))
 
 (defun dslide--laplace-jitter (freq jitter)
   "Mutate FREQ by JITTER shape parameter.
