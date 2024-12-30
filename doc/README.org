@@ -24,8 +24,11 @@ https://github.com/positron-solutions/dslide/assets/73710933/06a66e42-a172-48ba-
 - Convenient API for quickly writing reliable custom actions for reuse
 - Decent out-of-the-box results with existing org documents
 *** Status 💹
-Version 0.6.0 retains bearable yee-haw 🤠.  Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates and related demonstrations.
+Everything in [[demo.org][./test/demo.org]] is maintained.  File issues.
+
 #+include: "manual.org::*Status 🤠" :only-contents t
+
+Subscribe to Positron's [[https://www.youtube.com/@Positron-gv7do][YouTube]] for updates and related demonstrations.
 ** Installation
 :PROPERTIES:
 :UNNUMBERED: notoc

@@ -11,7 +11,7 @@
 #+texinfo_dir_category: Emacs
 #+texinfo_dir_title: Dslide: (dslide).
 #+texinfo_dir_desc: A presentation framework
-#+macro: package-version (eval (if (require 'erk nil t) (erk-package-version) "0.5.6"))
+#+macro: package-version (eval (if (require 'erk nil t) (erk-package-version) "0.6.1"))
 #+macro: package-author (eval (if (require 'erk nil t) (erk-package-author) "Positron"))
 #+macro: package-email (eval (if (require 'erk nil t) (erk-package-email "contact@positron.solutions")))
 #+macro: year (eval (format-time-string "%Y"))
@@ -56,8 +56,7 @@ Dslide is also particularly good for presentations that are for internal use or 
 * Status 🤠
 - Still pre-1.0.  See the [[https://github.com/positron-solutions/dslide/issues/20][version 1.0 feature roadmap]].  Read the NEWS.org file for changes.
 - Expect less markup over time.  Old markup should warn.
-- Accepting PR's and issue reports. Read the manual section on [[Hacking 🧑‍🔬][hacking]]
-- Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you are trying to do. File issues.
+- Accepting PR's. Read the manual section on [[Hacking 🧑‍🔬][hacking]].
 
 Emojis indicate work-in-progress 🚧, intended deprecation ⛔, or experimental features 🧪.
 * Glossary 🔤

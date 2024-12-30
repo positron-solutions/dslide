@@ -962,9 +962,7 @@ Still pre-1.0.  See the @uref{https://github.com/positron-solutions/dslide/issue
 @item
 Expect less markup over time.  Old markup should warn.
 @item
-Accepting PR's and issue reports. Read the manual section on @ref{Hacking 🧑‍🔬, , hacking}
-@item
-Some behaviors may be advertised as working already when they are only 90% implemented. I have no idea what you are trying to do. File issues.
+Accepting PR's. Read the manual section on @ref{Hacking 🧑‍🔬, , hacking}.
 @end itemize
 
 Emojis indicate work-in-progress 🚧@comma{} intended deprecation ⛔@comma{} or experimental features 🧪.
