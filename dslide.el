@@ -4,7 +4,7 @@
 ;; Copyright (C) 2024 Positron
 ;;
 ;; Author: Positron <contact@positron.solutions>
-;; Version: 0.6.1
+;; Version: 0.6.2
 ;; Package-Requires: ((emacs "29.2"))
 ;; Maintainer: Positron <contact@positron.solutions>
 ;; URL: https://github.com/positron-solutions/dslide
@@ -2689,7 +2689,8 @@ PRED, INFO, FIRST-MATCH, and NO-RECURSION are described in
 (defun dslide--section (heading)
   "Get the section of a HEADING."
   (cl-labels ((section-p (element)
-                (if (eq (org-element-property :begin (org-element-parent element))
+                (if (eq (org-element-property
+                         :begin (org-element-property :parent element))
                         (org-element-property :begin heading))
                     (throw 'section element)
                   (throw 'section nil))))

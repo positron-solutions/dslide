@@ -11,6 +11,8 @@
 #+select_tags: latest
 #+export_file_name: RELEASE
 
+* v0.6.2 Minor Bug Fix :latest:
+💩 ~org-element-parent~ call was removed
 * v0.6.1 The Toddling :latest:
 Fixing bugs and filling some gaps in new features.
 ** Added 🎅
@@ -30,7 +32,7 @@ Fixing bugs and filling some gaps in new features.
 - kmacro action properly skips over non-matching directions when both forward and backward elements are present in a slide
 - 🚧 kmacro playback of =M-<return>= and =M-<backspace>= and others is now correct.  There are likely more events that don't round trip nicely from ~last-kbd-macro~ through ~key-description~ and back through ~read-kbd-macro~.  *File issues*.
 - 🚧 kmacro playback no longer aborts when inputs from file-notify etc occur.  It can be quit with =C-g=.  A more comprehensive solution is being developed.
-* v0.6.0 Fighting Spam 💌
+* v0.6.0 Fighting Spam 💌 :latest:
 - There is less markup (especially for babel)
 - Old actions are easier to use
 - New actions (*KMACROS!*) fit a more clear pattern
